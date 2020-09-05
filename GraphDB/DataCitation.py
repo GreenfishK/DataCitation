@@ -116,6 +116,44 @@ class DataVersioning:
 
         return qres
 
+    def update(self, select_statement, new_value):
+        statement = """
+            PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+            PREFIX citing: <http://ontology.ontotext.com/citing/>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            
+            delete {
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
+            }
+            insert {
+                # outdate old triple with date as of now()
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
+                
+                # update new row with value and timestamp as of now()
+                ?subjectToUpdate ?predicateToUpdate ?newValue . # new value
+                # assign new version. if variable is used, multiple ?newVersion are retrieved leading to multiple updates. TODO: fix this
+                <<?subjectToUpdate ?predicateToUpdate ?newValue>> citing:valid_from ?newVersion ;
+                                                                        citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+            }
+            # unfortunatelly, no nested triples statements <<?s ?p ?o>> are allowed in the where clause of a insert/delete statement.
+            where {
+                # business logic - rows to update
+                %s
+                bind('%s' as ?newValue). #new Value
+            
+                # versioning
+                ?triple citing:valid_until ?valid_until .
+                BIND(xsd:dateTime(NOW()) AS ?newVersion). # multiple ?versions are retrieved leading to multiple updates. TODO: fix this
+                filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
+                filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
+            }
+        """
+        statement = statement % (select_statement, new_value)
+        self.sparql_post.setQuery(statement)
+        self.sparql_post.query()
+        print("rows updated")
+
+
     def delete_triples(self, triple):
         sparql = SPARQLWrapper('http://192.168.0.242:7200/repositories/DataCitation/statements')
 
@@ -134,6 +172,8 @@ class DataVersioning:
 
         results = sparql.query()
         print(results.response.read())
+
+
 
     def insert_triple(self, triple, initNs=None): #, triple, initNs):
         init_ns_nodes = {}
