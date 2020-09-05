@@ -1,0 +1,5 @@
+Libraries needed:
+- rdflib:conda install -c conda-forge rdflib
+- bsddb3: conda install -c conda-forge bsddb3
+- prettytable: conda install -c conda-forge prettytable
+The libraries were installed in a virtual conda environment labeled 'TripleStoreCitationFramework'
