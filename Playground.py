@@ -23,12 +23,13 @@ triples_to_update_statement = """
             bind(?person as ?subjectToUpdate)
             bind(pub:occupation as ?predicateToUpdate) 
             bind(?occupation as ?objectToUpdate) 
+            
         }
         """
 
 
 def test_read():
-    citing.get_triples_to_update(triples_to_update_statement)
+    citing.get_triples_to_update(triples_to_update_statement, prefixes)
 
 
 def test_versioning():
@@ -44,9 +45,18 @@ def test_update():
 
 def test_update_with_versioning():
     new_value = 'Cashier'
-    citing.update(triples_to_update_statement, new_value)
+    citing.update(triples_to_update_statement, new_value, prefixes)
 
 
-test_update_with_versioning()
+def test_insert():
+    s = "<http://ontology.ontotext.com/resource/tsk9hdnas934>"
+    p = "pub:occupation"
+    o = Literal("Merchant")
+    citing.insert_triple((s,p,o), prefixes)
+
+
+#test_read()
+#test_update_with_versioning()
+test_insert()
 
 
