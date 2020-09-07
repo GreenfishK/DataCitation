@@ -12,6 +12,7 @@ prefixes = {'citing': 'http://ontology.ontotext.com/citing/',
 prefixes_2 = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
 
 triples_to_update_statement = """
+    select * where {
             # business logic - rows to update
             ?person a pub:Person .
             ?person pub:preferredLabel ?label .
@@ -22,6 +23,7 @@ triples_to_update_statement = """
             bind(?person as ?subjectToUpdate)
             bind(pub:occupation as ?predicateToUpdate) 
             bind(?occupation as ?objectToUpdate) 
+        }
         """
 
 
@@ -41,7 +43,7 @@ def test_update():
 
 
 def test_update_with_versioning():
-    new_value = 'Mechanic'
+    new_value = 'Cashier'
     citing.update(triples_to_update_statement, new_value)
 
 

@@ -135,24 +135,25 @@ class DataVersioning:
                 <<?subjectToUpdate ?predicateToUpdate ?newValue>> citing:valid_from ?newVersion ;
                                                                         citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
             }
-            # unfortunatelly, no nested triples statements <<?s ?p ?o>> are allowed in the where clause of a insert/delete statement.
             where {
-                # business logic - rows to update
-                %s
+                # business logic - rows to update as nested select statement
+                {%s
+                    
+                    
+                }
                 bind('%s' as ?newValue). #new Value
-            
                 # versioning
-                ?triple citing:valid_until ?valid_until .
-                BIND(xsd:dateTime(NOW()) AS ?newVersion). # multiple ?versions are retrieved leading to multiple updates. TODO: fix this
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . 
+                BIND(xsd:dateTime(NOW()) AS ?newVersion). 
                 filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
                 filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
             }
         """
         statement = statement % (select_statement, new_value)
         self.sparql_post.setQuery(statement)
-        self.sparql_post.query()
-        print("rows updated")
-
+        #self.sparql_post.addExtraURITag('pub','http://ontology.ontotext.com/taxonomy/')
+        result = self.sparql_post.query()
+        print("%s rows updated" % result)
 
     def delete_triples(self, triple):
         sparql = SPARQLWrapper('http://192.168.0.242:7200/repositories/DataCitation/statements')
