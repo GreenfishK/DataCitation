@@ -162,13 +162,22 @@ class DataVersioning:
 
         return result
 
-    def get_data_at_timestamp(self, select_statement, timestamp, prefixes:dict):
+    def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict):
+        """
+
+        :param select_statement:
+        :param timestamp: timestamp of the snapshot. The timestamp must be in format: yyyy-MM-ddTHH:mm:ss.SSS+ZZ:ZZ
+        :param prefixes:
+        :return:
+        """
         statement = """
         {0}
         
-        construct ?s ?p ?o  where {
+        Select *  where {{
 
+            {{ 
             {1}
+            }}
             bind("{2}"^^xsd:dateTime as ?TimeOfCiting)
         
             <<?s ?p ?o>> citing:valid_from ?valid_from.
@@ -176,16 +185,21 @@ class DataVersioning:
             filter(?valid_from <= ?TimeOfCiting) # get data at a certain point in time
             filter(?TimeOfCiting < ?valid_until)
         
-        }  
+        }}
         """
+        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+
         sparql_prefixes = ""
         if prefixes:
             sparql_prefixes = prefixes_to_sparql(prefixes)
-        statement = statement % (sparql_prefixes, select_statement, timestamp)
-        self.sparql_post.setQuery(statement)
-        result = self.sparql_post.query()
+        statement = statement.format(sparql_prefixes, select_statement, timestamp)
+        self.sparql_get.setQuery(statement)
+        result = self.sparql_get.query()
+        result.print_results()
 
-    def update(self, select_statement, new_value, prefixes:dict):
+        return result
+
+    def update(self, select_statement, new_value, prefixes: dict):
         """
         All objects from the select statement's returned triples will be updated with the new value.
 

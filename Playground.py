@@ -1,5 +1,7 @@
 import GraphDB.DataCitation as dc
 from rdflib import URIRef, Literal
+from datetime import datetime, timedelta, timezone
+
 
 # Playground
 citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
@@ -43,8 +45,19 @@ triples_to_outdate_statement = """
     }
 """
 
-data_to_cite_statement = """
-
+test_data_set_statement = """
+select ?s ?p ?o where {
+        # business logic - rows to update
+        ?person a pub:Person .
+        ?person pub:preferredLabel ?label .
+        ?person pub:occupation ?occupation .
+        filter(?label = "Fernando Alonso"@en)
+        
+        # Inputs to provide
+        bind(?person as ?s)
+        bind(pub:occupation as ?p)
+        bind(?occupation as ?o) 
+    }
 
 """
 
@@ -82,10 +95,18 @@ def test_outdate():
     citing.outdate_triples(triples_to_outdate_statement, prefixes)
 
 def test_read_timestamp():
-    citing.get_data_at_timestamp()
+    vieTimeDelta = timedelta(hours=2)
+    vieTZObject = timezone(vieTimeDelta, name="VIE")
+    timestamp = datetime(2020, 9, 8, 12, 11, 21, 941000, vieTZObject)
+
+    citing.get_data_at_timestamp(test_data_set_statement, timestamp, prefixes)
+
+
 #test_update_with_versioning()
 #test_outdate()
 #test_insert()
 #test_delete()
 #test_read_triples_to_update()
 test_read_timestamp()
+
+
