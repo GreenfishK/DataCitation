@@ -121,27 +121,77 @@ class DataVersioning:
         self.sparql_post.query()
         print("All rows have been annotated with the current timestamp")
 
-    def get_triples_to_update(self, statement, prefixes):
+    def get_triples_to_update(self, select_statement, new_value, prefixes: dict):
         """
+        :param new_value: The new value to override the select statement's objects.
         :param prefixes: aliases in SPARQL for URIs. Need to be passed as a dict
-        :param statement: a select statement returning a set of triples where the object should be updated. The
+        :param select_statement: a select statement returning a set of triples where the object should be updated. The
         returned variables must be as follows: ?subjectToUpdate, ?predicateToUpdate, ?objectToUpdate
         :return: a set of triples in JSON format where the object should be updated.
         """
 
-        sparql_prefixes = prefixes_to_sparql(prefixes)
-        statement = sparql_prefixes + statement
+        statement = """
+            # prefixes
+            %s
+
+            
+            select ?subjectToUpdate ?predicateToUpdate ?objectToUpdate ?newValue
+            where {
+                # business logic - rows to update as select statement
+                {%s
+                
+                
+                }
+                
+                bind('%s' as ?newValue). #new Value
+                
+                # versioning
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . 
+                BIND(xsd:dateTime(NOW()) AS ?newVersion). 
+                filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
+                filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
+            }
+        """
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
+        statement = statement % (sparql_prefixes, select_statement, new_value)
         self.sparql_get.setQuery(statement)
         result = self.sparql_get.query()
         result.print_results()
 
         return result
 
-    def update(self, select_statement, new_value, prefixes):
+    def get_data_at_timestamp(self, select_statement, timestamp, prefixes:dict):
+        statement = """
+        {0}
+        
+        construct ?s ?p ?o  where {
+
+            {1}
+            bind("{2}"^^xsd:dateTime as ?TimeOfCiting)
+        
+            <<?s ?p ?o>> citing:valid_from ?valid_from.
+            <<?s ?p ?o>> citing:valid_until ?valid_until.
+            filter(?valid_from <= ?TimeOfCiting) # get data at a certain point in time
+            filter(?TimeOfCiting < ?valid_until)
+        
+        }  
         """
-        :param select_statement:
-        :param new_value:
-        :param prefixes:
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
+        statement = statement % (sparql_prefixes, select_statement, timestamp)
+        self.sparql_post.setQuery(statement)
+        result = self.sparql_post.query()
+
+    def update(self, select_statement, new_value, prefixes:dict):
+        """
+        All objects from the select statement's returned triples will be updated with the new value.
+
+        :param select_statement: set of triples to update.
+        :param new_value: The new value which replaces the objects of the select statement's returned triples
+        :param prefixes: aliases of provided URIs which are resolved to these URIs during the execution.
         :return:
         """
 
@@ -176,14 +226,16 @@ class DataVersioning:
                 filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
             }
         """
-        sparql_prefixes = prefixes_to_sparql(prefixes)
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
         statement = statement % (sparql_prefixes, select_statement, new_value)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
 
         print("%s rows updated" % result)
 
-    def insert_triple(self, triple, prefixes):
+    def insert_triple(self, triple, prefixes:dict):
         """
 
         :param triple:
@@ -200,6 +252,99 @@ class DataVersioning:
         where {{
             BIND(xsd:dateTime(NOW()) AS ?newVersion). 
         }}
+        """
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
+        statement = sparql_prefixes + statement
+
+        if type(triple[0]) == Literal:
+            s = "'" + triple[0] + "'"
+        else:
+            s = triple[0]
+        if type(triple[1]) == Literal:
+            p = "'" + triple[1] + "'"
+        else:
+            p = triple[1]
+        if type(triple[2]) == Literal:
+            o = "'" + triple[2] + "'"
+        else:
+            o = triple[2]
+
+        statement = statement.format(s,p,o)
+        self.sparql_post.setQuery(statement)
+        result = self.sparql_post.query()
+        return result
+
+    def outdate_triples(self, select_statement, prefixes):
+        """
+        Triples provided as input will be outdated and marked with an valid_until timestamp. Thus, they will
+        not appear in result sets queried from the most recent graph version or any other version that came after
+        their expiration.
+        The triples provided must exist in the triple store.
+        :param select_statement:
+        :param prefixes:
+        :return:
+        """
+
+        statement = """
+            # prefixes
+            %s
+
+            delete {
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
+            }
+            insert {
+                # outdate old triples with date as of now()
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
+            }
+            where {
+                # business logic - rows to outdate as select statement
+                {%s
+
+
+                }
+
+                # versioning
+                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . 
+                BIND(xsd:dateTime(NOW()) AS ?newVersion). 
+                filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
+            }
+        """
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
+        statement = statement % (sparql_prefixes, select_statement)
+        self.sparql_post.setQuery(statement)
+        result = self.sparql_post.query()
+
+        print("%s rows outdated" % result)
+
+    def _delete_triples(self, triple, prefixes):
+        '''
+        Deletes the triples and its version annotations from the history. Should be used with care
+        as it is most of times not intended to delete triples but to outdate them. This way they will
+        still appear in the history and will not appear when querying more recent versions.
+
+        :param triple:
+        :param prefixes:
+        :return:
+        '''
+
+        statement = """
+
+       delete {{    
+            <<?s ?p ?o>>  citing:valid_from ?valid_from.
+            <<?s ?p ?o>>  citing:valid_until ?valid_until.
+            ?s ?p ?o.
+        }} where {{
+            bind({0} as ?s)
+            bind({1} as ?p)
+            bind({2} as ?o)
+            <<?s ?p ?o>> citing:valid_from ?valid_from.
+            <<?s ?p ?o>> citing:valid_until ?valid_until.
+        }}
+        
         """
         sparql_prefixes = prefixes_to_sparql(prefixes)
         statement = sparql_prefixes + statement
@@ -221,29 +366,5 @@ class DataVersioning:
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
         return result
-
-
-
-    def delete_triples(self, triple):
-        sparql = SPARQLWrapper('http://192.168.0.242:7200/repositories/DataCitation/statements')
-
-        sparql.setHTTPAuth(DIGEST)
-        #sparql.setCredentials("dataCitation", "datacitation")
-        sparql.setMethod(POST)
-
-
-        sparql.setQuery("""
-        PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-
-        delete {
-            <http://ontology.ontotext.com/resource/tsk9hdnas934> pub:occupation "Cook".
-        }
-        """)
-
-        results = sparql.query()
-        print(results.response.read())
-
-
-
 
 

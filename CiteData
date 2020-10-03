@@ -1,0 +1,21 @@
+import GraphDB.DataCitation as dc
+from rdflib import URIRef, Literal
+citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
+                           'http://192.168.0.242:7200/repositories/DataCitation/statements') #POST
+
+
+query_of_dataset_to_cite = """
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+ select * where {
+            # business logic - rows to update
+            ?person a pub:Person .
+            ?person pub:preferredLabel ?label .
+            ?person pub:occupation ?occupation .
+            filter(?label = "Fernando Alonso"@en)
+        }
+"""
+
+citing.cite(query_of_dataset_to_cite)
