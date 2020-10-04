@@ -3,5 +3,7 @@ Libraries needed:
 - bsddb3: conda install -c conda-forge bsddb3
 - prettytable: conda install -c conda-forge prettytable
 - SPARQLWrapper: conda install -c conda-forge sparqlwrapper
+- sqllite3
+- sqlalchemy
 
 The libraries were installed in a virtual conda environment labeled 'TripleStoreCitationFramework'

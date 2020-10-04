@@ -1,21 +1,25 @@
 import GraphDB.DataCitation as dc
 from rdflib import URIRef, Literal
+from datetime import datetime, timedelta, timezone
+import queries_for_testing as q
+
 citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
                            'http://192.168.0.242:7200/repositories/DataCitation/statements') #POST
 
 
-query_of_dataset_to_cite = """
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX citing: <http://ontology.ontotext.com/citing/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+# Use Case 1: Cite a data set and get the citation text for it
+# Current problems: Query results are not always triples.
+# E.g. what are the stored triples of the query_of_dataset_to_cite_2 query? What nested and versioned triples
+# need to be filtered here?
+# In order to make this solution work stored triples that are
+# connected to the result set need to be retrieved somehow and pivoted into the output format <?s ?p ?o>
+# To be able to assign a query timestamp based on the last update to the selection of data affected by the query (R7)
+# we need to retrieve the version timestamps of all underlying stored and versioned triples of the result set
+citing.cite(q.query_of_dataset_to_cite)
 
- select * where {
-            # business logic - rows to update
-            ?person a pub:Person .
-            ?person pub:preferredLabel ?label .
-            ?person pub:occupation ?occupation .
-            filter(?label = "Fernando Alonso"@en)
-        }
-"""
+vieTZObject = timezone(timedelta(hours=2))
+timestamp = datetime(2020, 9, 8, 12, 11, 21, 941000, vieTZObject)
+#citing.get_data_at_timestamp(query_of_dataset_to_cite,timestamp, prefixes)
 
-citing.cite(query_of_dataset_to_cite)
+
+

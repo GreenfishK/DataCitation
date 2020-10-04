@@ -182,8 +182,7 @@ class DataVersioning:
         
             <<?s ?p ?o>> citing:valid_from ?valid_from.
             <<?s ?p ?o>> citing:valid_until ?valid_until.
-            filter(?valid_from <= ?TimeOfCiting) # get data at a certain point in time
-            filter(?TimeOfCiting < ?valid_until)
+            filter(?valid_from <= ?TimeOfCiting && ?TimeOfCiting < ?valid_until) # get data at a certain point in time
         
         }}
         """
@@ -380,5 +379,19 @@ class DataVersioning:
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
         return result
+
+    def get_all_stored_triples_from_dataset(self):
+        """
+        Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
+        stored triples connected to the result set of the input query.
+        :return: transformed result set with columns: s, p, o
+        """
+        pass
+
+    def cite(self, select_statement):
+        pass
+        # normalize query
+        # embed query timestamp (max valid_from of dataset)
+    
 
 
