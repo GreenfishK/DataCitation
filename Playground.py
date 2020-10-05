@@ -3,6 +3,8 @@ import queries_for_testing as q
 from rdflib import term
 from datetime import datetime, timedelta, timezone
 from GraphDB.DataCitation import get_all_triples_from_stmt
+import pandas as pd
+import numpy as np
 
 # Playground
 citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
@@ -63,16 +65,10 @@ def test_extend_query_with_version_timestamp():
 #test_delete()
 #test_read_triples_to_update()
 #test_read_timestamp()
-test_extend_query_with_version_timestamp()
+#test_extend_query_with_version_timestamp()
 
 # Outdate triple
 #citing.outdate_triples(q.query_triples_to_outdate,w.prefixes)
 #citing.outdate_triples(q.query_triples_to_outdate_2,q.prefixes)
 
-# Parse triple patterns
-#triples = get_all_triples_from_query(q.query_parser_test)
-#print(triples)
-#triples_2 = get_all_triples_from_query(q.query_parser_test_3)
-#for x in triples_2:
-   # print(x)
 

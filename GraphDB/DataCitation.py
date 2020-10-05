@@ -1,6 +1,6 @@
 from rdflib.plugins.sparql import prepareQuery
 from prettytable import PrettyTable
-from SPARQLWrapper import SPARQLWrapper, SmartWrapper, POST, DIGEST, GET, JSON
+from SPARQLWrapper import SPARQLWrapper, SmartWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import URIRef, Literal, BNode, Variable
 from rdflib.plugins.sparql.parser import parseQuery
 import rdflib.plugins.sparql.algebra as algebra
@@ -164,6 +164,31 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
     return statement
 
 
+def QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
+    """
+
+    :param result:
+    :return: Dataframe
+    """
+    #results = result._convertJSON()
+    results = result.convert()
+
+    column_names = []
+    for var in results["head"]["vars"]:
+        column_names.append(var)
+    df = pd.DataFrame(columns=column_names)
+
+    values = []
+    for r in results["results"]["bindings"]:
+        row = []
+        for var in results["head"]["vars"]:
+            result_value = r[var]["value"]
+            row.append(result_value)
+        values.append(row)
+    df = df.append(pd.DataFrame(values, columns=df.columns))
+    return df
+
+
 class DataVersioning:
     """
 
@@ -289,16 +314,15 @@ class DataVersioning:
         :param select_statement:
         :param timestamp: timestamp of the snapshot. The timestamp must be in format: yyyy-MM-ddTHH:mm:ss.SSS+ZZ:ZZ
         :param prefixes:
-        :return:
+        :return: Dataframe object
         """
 
         ext_query = extend_query_with_timestamp(select_statement, timestamp, prefixes)
 
         self.sparql_get.setQuery(ext_query)
         result = self.sparql_get.query()
-        result.print_results()
-
-        return result
+        df = QueryResult_to_dataframe(result)
+        return df
 
     def update(self, select_statement, new_value, prefixes: dict):
         """
