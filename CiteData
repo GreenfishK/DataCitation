@@ -16,11 +16,11 @@ citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation'
 # connected to the result set need to be retrieved somehow and pivoted into the output format <?s ?p ?o>
 # To be able to assign a query timestamp based on the last update to the selection of data affected by the query (R7)
 # we need to retrieve the version timestamps of all underlying stored and versioned triples of the result set
-citing.cite(q.query_parser_test)
+#citing.cite(q.query_parser_test)
 
 vieTZObject = timezone(timedelta(hours=2))
 timestamp = datetime(2020, 9, 8, 12, 11, 21, 941000, vieTZObject)
-#citing.get_data_at_timestamp(query_of_dataset_to_cite,timestamp, prefixes)
+citing.get_data_at_timestamp(q.query_parser_test,timestamp, q.prefixes)
 
 
 

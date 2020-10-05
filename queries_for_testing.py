@@ -54,7 +54,7 @@ select ?s ?p ?o where {
 """
 
 query_parser_test = """
-select * where {
+select ?document ?mention ?person ?personLabel ?party ?value where {
 
         ?document publishing:containsMention ?mention .
         ?mention publishing:hasInstance ?person .

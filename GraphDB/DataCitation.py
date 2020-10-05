@@ -5,6 +5,7 @@ from rdflib.term import URIRef, Literal, BNode, Variable
 from rdflib.plugins.sparql.parser import parseQuery
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
+import pandas as pd
 
 
 def _init_ns_to_nodes(initNs):
@@ -59,9 +60,38 @@ def get_all_triples_from_stmt(query, prefixes):
     statement = statement.format(prefixes, query)
 
     q_desc = parseQuery(statement)
+    # q_algebra = algebra.translateQuery(q_desc) is a Query object. Query object has prologue attribute which holds
+    # a method called "bind" to bind prefixes to URIs
     q_algebra = algebra.translateQuery(q_desc).algebra
     triples = nested_lookup('triples', q_algebra)
     return triples
+
+
+def get_all_variables_from_stmt(query, prefixes):
+    statement = """
+    {0} 
+
+    {1}
+    """
+
+    statement = statement.format(prefixes, query)
+
+    q_desc = parseQuery(statement)
+    q_algebra = algebra.translateQuery(q_desc).algebra
+    variables = nested_lookup('_vars', q_algebra)
+
+    var_sets = []
+    for var in variables:
+        if var not in var_sets:
+            var_sets.append(var)
+
+    variables = []
+    for s in var_sets:
+        for var in s:
+            if isinstance(var, Variable):
+                variables.append(var)
+
+    return variables
 
 
 def normalize_query(query):
@@ -72,6 +102,66 @@ def normalize_query(query):
 def generate_query_PID(normalized_query):
     query_PID = ""
     return query_PID
+
+
+    # TODO: finish this
+def extend_query_with_timestamp(select_statement, timestamp, prefixes):
+    statement = """
+    # prefixes
+    {0} 
+    
+    Select {1}  where {{
+        {{ 
+        # original query
+        {2}
+        }}
+        # version timestamp
+        bind("{3}"^^xsd:dateTime as ?TimeOfCiting) 
+
+        # data versioning query extension
+        {4} 
+
+    }}
+    """
+
+    # Prefixes, and timestamp injection
+    timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+
+    sparql_prefixes = ""
+    if prefixes:
+        sparql_prefixes = prefixes_to_sparql(prefixes)
+
+    # columns of result set. Will be as in original query
+    variables = get_all_variables_from_stmt(select_statement, sparql_prefixes)
+    variables_injection_string = ""
+    for v in variables:
+        variables_injection_string += v.n3() + " "
+
+    # Query extensions for versioning injection
+    triples = get_all_triples_from_stmt(select_statement, sparql_prefixes)
+
+    versioning_query_extensions_template = """
+            <<{0}>> citing:valid_from {1}.
+            <<{0}>> citing:valid_until {2}.
+            filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2}) # get data at a certain point in time
+
+            """
+    versioning_query_extensions = ""
+    i = 0
+    for triple_list in triples:
+        for triple in triple_list:
+            t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+            v = versioning_query_extensions_template
+            versioning_query_extensions += v.format(t, "?valid_from_" + str(i), "?valid_until_" + str(i))
+            i += 1
+
+    statement = statement.format(sparql_prefixes,
+                                 variables_injection_string,
+                                 select_statement,
+                                 timestamp,
+                                 versioning_query_extensions)
+
+    return statement
 
 
 class DataVersioning:
@@ -201,82 +291,14 @@ class DataVersioning:
         :param prefixes:
         :return:
         """
-        statement = """
-        {0}
-        
-        Select *  where {{
 
-            {{ 
-            {1}
-            }}
-            bind("{2}"^^xsd:dateTime as ?TimeOfCiting)
-        
-            <<?s ?p ?o>> citing:valid_from ?valid_from.
-            <<?s ?p ?o>> citing:valid_until ?valid_until.
-            filter(?valid_from <= ?TimeOfCiting && ?TimeOfCiting < ?valid_until) # get data at a certain point in time
-        
-        }}
-        """
-        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+        ext_query = extend_query_with_timestamp(select_statement, timestamp, prefixes)
 
-        sparql_prefixes = ""
-        if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
-        statement = statement.format(sparql_prefixes, select_statement, timestamp)
-        self.sparql_get.setQuery(statement)
+        self.sparql_get.setQuery(ext_query)
         result = self.sparql_get.query()
         result.print_results()
 
         return result
-
-    # TODO: finish this
-    def extend_query_with_timestamp(self, select_statement, timestamp, prefixes):
-        statement = """
-        # prefixes
-        {0} 
-        
-        Select *  where {{
-
-            {{ 
-            # original query
-            {1}
-            }}
-            # version timestamp
-            bind("{2}"^^xsd:dateTime as ?TimeOfCiting) 
-
-            # data versioning query extension
-            {3} 
-
-        }}
-        """
-
-        # Prefixes, and timestamp injection
-        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
-
-        sparql_prefixes = ""
-        if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
-
-        # Query extensions for versioning injection
-        triples = get_all_triples_from_stmt(select_statement, sparql_prefixes)
-        versioning_query_extensions_template = """
-                <<{0}>> citing:valid_from {1}.
-                <<{0}>> citing:valid_until {2}.
-                filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2}) # get data at a certain point in time
-                
-                """
-        versioning_query_extensions = ""
-        i = 0
-        for triple_list in triples:
-            for triple in triple_list:
-                t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-                v = versioning_query_extensions_template
-                versioning_query_extensions += v.format(t, "?valid_from_" + str(i), "?valid_until_" + str(i))
-                i += 1
-
-        statement = statement.format(sparql_prefixes, select_statement, timestamp, versioning_query_extensions)
-
-        return statement
 
     def update(self, select_statement, new_value, prefixes: dict):
         """
