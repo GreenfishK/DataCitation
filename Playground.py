@@ -1,10 +1,8 @@
 import GraphDB.DataCitation as dc
 import queries_for_testing as q
-from rdflib import URIRef, Literal
+from rdflib import term
 from datetime import datetime, timedelta, timezone
-from rdflib.plugins.sparql.parser import parseQuery
-import rdflib.plugins.sparql.algebra as algebra
-import rdflib.plugins.sparql.parserutils as parserutils
+from GraphDB.DataCitation import get_all_triples_from_stmt
 
 # Playground
 citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
@@ -32,19 +30,19 @@ def test_update_with_versioning():
 def test_insert():
     s = "<http://ontology.ontotext.com/resource/tsk9hdnas934>"
     p = "pub:occupation"
-    o = Literal("Football player")
+    o = term.Literal("Football player")
     citing.insert_triple((s, p, o), q.prefixes)
 
 def test_delete():
     s = "<http://ontology.ontotext.com/resource/tsk9hdnas934>"
     p = "pub:occupation"
-    o = Literal("Football player")
+    o = term.Literal("Football player")
     citing._delete_triples((s, p, o), q.prefixes)
 
 def test_outdate():
     s = "<http://ontology.ontotext.com/resource/tsk9hdnas934>"
     p = "pub:occupation"
-    o = Literal("Football player")
+    o = term.Literal("Football player")
     citing.outdate_triples(q.triples_to_outdate_statement, q.prefixes)
 
 def test_read_timestamp():
@@ -53,6 +51,11 @@ def test_read_timestamp():
 
     citing.get_data_at_timestamp(q.test_data_set_statement, timestamp, q.prefixes)
 
+def test_extend_query_with_version_timestamp():
+    vieTZObject = timezone(timedelta(hours=2))
+    timestamp = datetime(2020, 10, 4, 12, 11, 21, 941000, vieTZObject)
+    extended_query = citing.extend_query_with_timestamp(q.query_parser_test_2,timestamp, q.prefixes)
+    print(extended_query)
 
 #test_update_with_versioning()
 #test_outdate()
@@ -60,31 +63,16 @@ def test_read_timestamp():
 #test_delete()
 #test_read_triples_to_update()
 #test_read_timestamp()
+test_extend_query_with_version_timestamp()
 
 # Outdate triple
-#citing.outdate_triples(query_triples_to_outdate,prefixes)
-#citing.outdate_triples(query_triples_to_outdate_2,prefixes)
+#citing.outdate_triples(q.query_triples_to_outdate,w.prefixes)
+#citing.outdate_triples(q.query_triples_to_outdate_2,q.prefixes)
 
 # Parse triple patterns
-q_desc = parseQuery(q.query_parser_test)
-q_algebra = algebra.translateQuery(q_desc).algebra
-#pprintAlgebra(q_trans)
-print(type(q_desc))
+#triples = get_all_triples_from_query(q.query_parser_test)
+#print(triples)
+#triples_2 = get_all_triples_from_query(q.query_parser_test_3)
+#for x in triples_2:
+   # print(x)
 
-
-#print(q[1]['where']['part'])##
-#for x in q[1]['where']['part'][0]['triples']:
-#    print(x)
-
-def get_val_from_path_1(d, p):
-    sentinel = object()
-    d = d.get(p[0], sentinel)
-    if d == sentinel:
-        return None
-    if len(p) > 1:
-        return get_val_from_path_1(d, p[1:])
-    return d
-
-get_val_from_path_1(q_algebra, 'triples')
-
-parserutils.prettify_parsetree(q_desc)

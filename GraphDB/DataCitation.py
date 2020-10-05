@@ -1,10 +1,10 @@
 from rdflib.plugins.sparql import prepareQuery
-from rdflib.term import Node
-
 from prettytable import PrettyTable
-from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON
-from rdflib import URIRef, Literal, BNode, Graph
-from rdflib.namespace import DC, FOAF
+from SPARQLWrapper import SPARQLWrapper, SmartWrapper, POST, DIGEST, GET, JSON
+from rdflib.term import URIRef, Literal, BNode, Variable
+from rdflib.plugins.sparql.parser import parseQuery
+import rdflib.plugins.sparql.algebra as algebra
+from nested_lookup import nested_lookup
 
 
 def _init_ns_to_nodes(initNs):
@@ -41,6 +41,37 @@ def prefixes_to_sparql(prefixes):
     for key, value in prefixes.items():
         sparql_prefixes += "PREFIX " + key + ":" + "<" + value + "> \n"
     return sparql_prefixes
+
+
+def get_all_triples_from_stmt(query, prefixes):
+    """
+    Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
+    stored triples connected to the result set of the input query.
+    :return: transformed result set with columns: s, p, o
+    """
+
+    statement = """
+    {0} 
+    
+    {1}
+    """
+
+    statement = statement.format(prefixes, query)
+
+    q_desc = parseQuery(statement)
+    q_algebra = algebra.translateQuery(q_desc).algebra
+    triples = nested_lookup('triples', q_algebra)
+    return triples
+
+
+def normalize_query(query):
+    normalized_query = query
+    return normalized_query
+
+
+def generate_query_PID(normalized_query):
+    query_PID = ""
+    return query_PID
 
 
 class DataVersioning:
@@ -198,6 +229,55 @@ class DataVersioning:
 
         return result
 
+    # TODO: finish this
+    def extend_query_with_timestamp(self, select_statement, timestamp, prefixes):
+        statement = """
+        # prefixes
+        {0} 
+        
+        Select *  where {{
+
+            {{ 
+            # original query
+            {1}
+            }}
+            # version timestamp
+            bind("{2}"^^xsd:dateTime as ?TimeOfCiting) 
+
+            # data versioning query extension
+            {3} 
+
+        }}
+        """
+
+        # Prefixes, and timestamp injection
+        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
+
+        # Query extensions for versioning injection
+        triples = get_all_triples_from_stmt(select_statement, sparql_prefixes)
+        versioning_query_extensions_template = """
+                <<{0}>> citing:valid_from {1}.
+                <<{0}>> citing:valid_until {2}.
+                filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2}) # get data at a certain point in time
+                
+                """
+        versioning_query_extensions = ""
+        i = 0
+        for triple_list in triples:
+            for triple in triple_list:
+                t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+                v = versioning_query_extensions_template
+                versioning_query_extensions += v.format(t, "?valid_from_" + str(i), "?valid_until_" + str(i))
+                i += 1
+
+        statement = statement.format(sparql_prefixes, select_statement, timestamp, versioning_query_extensions)
+
+        return statement
+
     def update(self, select_statement, new_value, prefixes: dict):
         """
         All objects from the select statement's returned triples will be updated with the new value.
@@ -266,6 +346,7 @@ class DataVersioning:
             BIND(xsd:dateTime(NOW()) AS ?newVersion). 
         }}
         """
+
         sparql_prefixes = ""
         if prefixes:
             sparql_prefixes = prefixes_to_sparql(prefixes)
@@ -380,18 +461,42 @@ class DataVersioning:
         result = self.sparql_post.query()
         return result
 
-    def get_all_stored_triples_from_dataset(self):
-        """
-        Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
-        stored triples connected to the result set of the input query.
-        :return: transformed result set with columns: s, p, o
-        """
-        pass
+    def cite(self, select_statement, result_set_description):
+        citation_text = ""
+        normalized_query = normalize_query(select_statement)
 
-    def cite(self, select_statement):
-        pass
-        # normalize query
+        # extend query with version timestamp
+
+        # extend query with sort operation
+
+        # compute checksum
+
+        # check query against query store
+
+        # case 1: query exists: get query from query store
+
+        # execute query
+
+        # compute hash value of result set
+
+        # compare hash values
+
+        # generate citation text
+
+        # case 2: query does not exist:
+
+        # generate query PID
+        query_PID = generate_query_PID(normalized_query)
+
+        # execute query
+
+        # compute hash value of result set
+
+        # store: query PID, query checksum, query, normalized query, version timestamp, execution timestamp, result
+        # result set check sum, result set description
+
+        return citation_text
+
         # embed query timestamp (max valid_from of dataset)
-    
 
 

@@ -54,11 +54,19 @@ select ?s ?p ?o where {
 """
 
 query_parser_test = """
-PREFIX publishing: <http://ontology.ontotext.com/publishing#>
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX citing: <http://ontology.ontotext.com/citing/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+select * where {
 
+        ?document publishing:containsMention ?mention .
+        ?mention publishing:hasInstance ?person .
+        ?person pub:preferredLabel ?personLabel .
+        ?person pub:memberOfPoliticalParty ?party .
+        ?party pub:hasValue ?value .
+        ?value pub:preferredLabel "Democratic Party"@en .
+        filter(?personLabel = "Judy Chu"@en)
+}
+"""
+
+query_parser_test_2 = """
 select * where {
     {
         ?document publishing:containsMention ?mention .
@@ -68,11 +76,6 @@ select * where {
         ?party pub:hasValue ?value .
         ?value pub:preferredLabel "Democratic Party"@en .
         filter(?personLabel = "Judy Chu"@en)
-        
-        bind(?document as ?s)
-        bind (publishing:containsMention as  ?p )
-        bind(?mention as ?o) 
-        bind("2020-10-03T14:11:21.941000+02:00"^^xsd:dateTime as ?TimeOfCiting)
 
     }
     union
@@ -85,37 +88,43 @@ select * where {
         ?value pub:preferredLabel "Democratic Party"@en .
         filter(?personLabel = "Marlon Brando"@en)
 
-        bind(?document as ?s)
-        bind (publishing:containsMention as  ?p )
-        bind(?mention as ?o) 
-        bind("2020-10-03T14:11:21.941000+02:00"^^xsd:dateTime as ?TimeOfCiting)
-
     }
 }
 """
 
-query_parser_test_2 = """
-PREFIX publishing: <http://ontology.ontotext.com/publishing#>
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+query_parser_test_3 = """
+
+# get data that were valid at a certain timestamp - update
 PREFIX citing: <http://ontology.ontotext.com/citing/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-select * where {
-    
-        ?document publishing:containsMention ?mention .
-        ?mention publishing:hasInstance ?person .
-        ?person pub:preferredLabel ?personLabel .
-        ?person pub:memberOfPoliticalParty ?party .
-        ?party pub:hasValue ?value .
-        ?value pub:preferredLabel "Democratic Party"@en .
-        filter(?personLabel = "Judy Chu"@en)
+select ?s ?p ?o ?valid_from ?valid_until  where {
 
-        bind(?document as ?s)
-        bind (publishing:containsMention as  ?p )
-        bind(?mention as ?o) 
-        bind("2020-10-03T14:11:21.941000+02:00"^^xsd:dateTime as ?TimeOfCiting)
+    ?s ?p ?c.
+    {select ?s ?p ?o where {
+        # business logic - rows to update
+        ?person a pub:Person .
+        ?person pub:preferredLabel ?label .
+        ?person pub:occupation ?occupation .
+               {select ?occupation where
+                {
+                    ?occupation a pub:occupation.
+                    ?occupation owl:ObjectProperty rdf:type.
+                }    
+            }
+        filter(?label = "Fernando Alonso"@en)
         
-   
+        # Inputs to provide
+        bind(?person as ?s)
+        bind(pub:occupation as ?p)
+        bind(?occupation as ?o) 
+    }}
+    
+    bind("2020-10-03T14:11:21.941000+02:00"^^xsd:dateTime as ?TimeOfCiting)
+
 }
 """
 
@@ -149,10 +158,10 @@ select * WHERE {
     ?value pub:preferredLabel "Democratic Party"@en .
 
     filter(?value = <http://ontology.ontotext.com/resource/tsk5a9unh5a8>)
-
-    bind(?document as ?subjectToUpdate)
-    bind(publishing:containsMention as  ?predicateToUpdate)
-    bind(?mention as ?objectToUpdate) 
+    
+    bind(?mention as ?subjectToUpdate)
+    bind(publishing:hasInstance as  ?predicateToUpdate)
+    bind(?person as ?objectToUpdate) 
 
 }
 
