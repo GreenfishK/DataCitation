@@ -1,7 +1,6 @@
-from rdflib.plugins.sparql import prepareQuery
 from prettytable import PrettyTable
-from SPARQLWrapper import SPARQLWrapper, SmartWrapper, POST, DIGEST, GET, JSON, Wrapper
-from rdflib.term import URIRef, Literal, BNode, Variable
+from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
+from rdflib.term import URIRef, Literal, Variable
 from rdflib.plugins.sparql.parser import parseQuery
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
@@ -44,7 +43,7 @@ def prefixes_to_sparql(prefixes):
     return sparql_prefixes
 
 
-def get_all_triples_from_stmt(query, prefixes):
+def __get_all_triples_from_stmt(query, prefixes):
     """
     Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
     stored triples connected to the result set of the input query.
@@ -67,7 +66,7 @@ def get_all_triples_from_stmt(query, prefixes):
     return triples
 
 
-def get_all_variables_from_stmt(query, prefixes):
+def __get_all_variables_from_stmt(query, prefixes):
     statement = """
     {0} 
 
@@ -94,17 +93,24 @@ def get_all_variables_from_stmt(query, prefixes):
     return variables
 
 
+# TODO: implement this
 def normalize_query(query):
     normalized_query = query
     return normalized_query
 
 
+# TODO: implement this
+def extend_query_with_sort_operation(query):
+    sorted_query = query
+    return sorted_query
+
+
+# TODO: implement this
 def generate_query_PID(normalized_query):
-    query_PID = ""
+    query_PID = 12345
     return query_PID
 
 
-    # TODO: finish this
 def extend_query_with_timestamp(select_statement, timestamp, prefixes):
     statement = """
     # prefixes
@@ -132,13 +138,13 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
         sparql_prefixes = prefixes_to_sparql(prefixes)
 
     # columns of result set. Will be as in original query
-    variables = get_all_variables_from_stmt(select_statement, sparql_prefixes)
+    variables = __get_all_variables_from_stmt(select_statement, sparql_prefixes)
     variables_injection_string = ""
     for v in variables:
         variables_injection_string += v.n3() + " "
 
     # Query extensions for versioning injection
-    triples = get_all_triples_from_stmt(select_statement, sparql_prefixes)
+    triples = __get_all_triples_from_stmt(select_statement, sparql_prefixes)
 
     versioning_query_extensions_template = """
             <<{0}>> citing:valid_from {1}.
@@ -164,13 +170,26 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
     return statement
 
 
+def __get_prettyprint_string_sparql_var_result(result):
+    value = result["value"]
+    lang = result.get("xml:lang", None)
+    datatype = result.get("datatype", None)
+    if lang is not None:
+        value += "@"+lang
+    if datatype is not None:
+        value += " ["+datatype+"]"
+    return value
+
+
 def QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     """
 
     :param result:
     :return: Dataframe
     """
-    #results = result._convertJSON()
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_colwidth', None)
+
     results = result.convert()
 
     column_names = []
@@ -182,7 +201,7 @@ def QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     for r in results["results"]["bindings"]:
         row = []
         for var in results["head"]["vars"]:
-            result_value = r[var]["value"]
+            result_value = __get_prettyprint_string_sparql_var_result(r[var])
             row.append(result_value)
         values.append(row)
     df = df.append(pd.DataFrame(values, columns=df.columns))
@@ -374,7 +393,7 @@ class DataVersioning:
 
         print("%s rows updated" % result)
 
-    def insert_triple(self, triple, prefixes:dict):
+    def insert_triple(self, triple, prefixes: dict):
         """
 
         :param triple:
@@ -411,7 +430,7 @@ class DataVersioning:
         else:
             o = triple[2]
 
-        statement = statement.format(s,p,o)
+        statement = statement.format(s, p, o)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
         return result
@@ -461,7 +480,7 @@ class DataVersioning:
         print("%s rows outdated" % result)
 
     def _delete_triples(self, triple, prefixes):
-        '''
+        """
         Deletes the triples and its version annotations from the history. Should be used with care
         as it is most of times not intended to delete triples but to outdate them. This way they will
         still appear in the history and will not appear when querying more recent versions.
@@ -469,7 +488,7 @@ class DataVersioning:
         :param triple:
         :param prefixes:
         :return:
-        '''
+        """
 
         statement = """
 
@@ -502,7 +521,7 @@ class DataVersioning:
         else:
             o = triple[2]
 
-        statement = statement.format(s,p,o)
+        statement = statement.format(s, p, o)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
         return result
@@ -544,5 +563,3 @@ class DataVersioning:
         return citation_text
 
         # embed query timestamp (max valid_from of dataset)
-
-
