@@ -550,7 +550,7 @@ class DataVersioning:
         result = self.sparql_post.query()
         return result
 
-    def compute_checksume(self, type):
+    def compute_checksum(self, type):
         """
 
         :param type:

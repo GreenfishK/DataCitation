@@ -1,10 +1,8 @@
-import GraphDB.TSDataCitation as dc
+import DataCitationFramework.TSDataCitation as dc
 import queries_for_testing as q
 from rdflib import term
 from datetime import datetime, timedelta, timezone
-from GraphDB.TSDataCitation import get_all_triples_from_stmt
-import pandas as pd
-import numpy as np
+
 
 # Playground
 citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
