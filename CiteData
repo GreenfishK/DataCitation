@@ -1,4 +1,4 @@
-import GraphDB.DataCitation as dc
+import GraphDB.TSDataCitation as dc
 from rdflib import term
 from datetime import datetime, timedelta, timezone
 import queries_for_testing as q

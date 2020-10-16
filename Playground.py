@@ -1,8 +1,8 @@
-import GraphDB.DataCitation as dc
+import GraphDB.TSDataCitation as dc
 import queries_for_testing as q
 from rdflib import term
 from datetime import datetime, timedelta, timezone
-from GraphDB.DataCitation import get_all_triples_from_stmt
+from GraphDB.TSDataCitation import get_all_triples_from_stmt
 import pandas as pd
 import numpy as np
 

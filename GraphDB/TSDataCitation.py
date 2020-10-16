@@ -43,7 +43,7 @@ def prefixes_to_sparql(prefixes):
     return sparql_prefixes
 
 
-def __get_all_triples_from_stmt(query, prefixes):
+def _get_all_triples_from_stmt(query, prefixes):
     """
     Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
     stored triples connected to the result set of the input query.
@@ -66,7 +66,7 @@ def __get_all_triples_from_stmt(query, prefixes):
     return triples
 
 
-def __get_all_variables_from_stmt(query, prefixes):
+def _get_all_variables_from_stmt(query, prefixes):
     statement = """
     {0} 
 
@@ -138,13 +138,13 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
         sparql_prefixes = prefixes_to_sparql(prefixes)
 
     # columns of result set. Will be as in original query
-    variables = __get_all_variables_from_stmt(select_statement, sparql_prefixes)
+    variables = _get_all_variables_from_stmt(select_statement, sparql_prefixes)
     variables_injection_string = ""
     for v in variables:
         variables_injection_string += v.n3() + " "
 
     # Query extensions for versioning injection
-    triples = __get_all_triples_from_stmt(select_statement, sparql_prefixes)
+    triples = _get_all_triples_from_stmt(select_statement, sparql_prefixes)
 
     versioning_query_extensions_template = """
             <<{0}>> citing:valid_from {1}.
@@ -170,7 +170,7 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
     return statement
 
 
-def __get_prettyprint_string_sparql_var_result(result):
+def _get_prettyprint_string_sparql_var_result(result):
     value = result["value"]
     lang = result.get("xml:lang", None)
     datatype = result.get("datatype", None)
@@ -181,7 +181,7 @@ def __get_prettyprint_string_sparql_var_result(result):
     return value
 
 
-def QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
+def _QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     """
 
     :param result:
@@ -201,7 +201,7 @@ def QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     for r in results["results"]["bindings"]:
         row = []
         for var in results["head"]["vars"]:
-            result_value = __get_prettyprint_string_sparql_var_result(r[var])
+            result_value = _get_prettyprint_string_sparql_var_result(r[var])
             row.append(result_value)
         values.append(row)
     df = df.append(pd.DataFrame(values, columns=df.columns))
@@ -327,6 +327,30 @@ class DataVersioning:
 
         return result
 
+    def get_data(self, select_statement, prefixes: dict):
+        """
+        :param select_statement:
+        :param prefixes:
+        :return:
+        """
+
+        statement = """
+            # prefixes
+            {0} 
+
+            {1}
+            """
+
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = prefixes_to_sparql(prefixes)
+
+        statement = statement.format(sparql_prefixes, select_statement)
+        self.sparql_get.setQuery(statement)
+        result = self.sparql_get.query()
+        df = _QueryResult_to_dataframe(result)
+        return df
+
     def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict):
         """
 
@@ -340,7 +364,7 @@ class DataVersioning:
 
         self.sparql_get.setQuery(ext_query)
         result = self.sparql_get.query()
-        df = QueryResult_to_dataframe(result)
+        df = _QueryResult_to_dataframe(result)
         return df
 
     def update(self, select_statement, new_value, prefixes: dict):
@@ -525,6 +549,14 @@ class DataVersioning:
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
         return result
+
+    def compute_checksume(self, type):
+        """
+
+        :param type:
+        :return:
+        """
+        pass
 
     def cite(self, select_statement, result_set_description):
         citation_text = ""
