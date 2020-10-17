@@ -5,7 +5,7 @@ from rdflib.plugins.sparql.parser import parseQuery
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import pandas as pd
-
+import termcolor
 
 def _init_ns_to_nodes(initNs):
     """
@@ -111,23 +111,51 @@ def generate_query_PID(normalized_query):
     return query_PID
 
 
-def extend_query_with_timestamp(select_statement, timestamp, prefixes):
-    statement = """
-    # prefixes
-    {0} 
+def extend_query_with_timestamp(select_statement, timestamp, prefixes, colored: bool = False):
+    """
+    :param select_statement:
+    :param timestamp:
+    :param prefixes:
+    :param colored: If colored is true, the injected strings within the statement template will be colored.
+    Use this parameter only for presentation purpose as the code for color encoding will malform the SPARQL query!
+    :return:
+    """
+
+    if colored:
+        statement = """
+# prefixes
+\x1b[36m{0}\x1b[0m
     
-    Select {1}  where {{
-        {{ 
-        # original query
-        {2}
-        }}
-        # version timestamp
-        bind("{3}"^^xsd:dateTime as ?TimeOfCiting) 
-
-        # data versioning query extension
-        {4} 
-
+Select \x1b[31m{1}\x1b[0m where {{
+    # original query comes here
+    {{ 
+        \x1b[32m{2}\x1b[0m
     }}
+    # version timestamp
+    bind("\x1b[34m{3}\x1b[0m"^^xsd:dateTime as ?TimeOfCiting) 
+
+    # data versioning query extension
+    \x1b[35m{4}\x1b[0m
+
+}}
+    """
+    else:
+        statement = """
+# prefixes
+{0} 
+
+Select {1} where {{
+    # original query comes here
+    {{ 
+        {2}
+    }}
+    # version timestamp
+    bind("{3}"^^xsd:dateTime as ?TimeOfCiting) 
+
+    # data versioning query extension
+    {4} 
+
+}}
     """
 
     # Prefixes, and timestamp injection
@@ -147,11 +175,11 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
     triples = _get_all_triples_from_stmt(select_statement, sparql_prefixes)
 
     versioning_query_extensions_template = """
-            <<{0}>> citing:valid_from {1}.
-            <<{0}>> citing:valid_until {2}.
-            filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2}) # get data at a certain point in time
+    <<{0}>> citing:valid_from {1}.
+    <<{0}>> citing:valid_until {2}.
+    filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2}) # get data at a certain point in time
+"""
 
-            """
     versioning_query_extensions = ""
     i = 0
     for triple_list in triples:
@@ -160,6 +188,10 @@ def extend_query_with_timestamp(select_statement, timestamp, prefixes):
             v = versioning_query_extensions_template
             versioning_query_extensions += v.format(t, "?valid_from_" + str(i), "?valid_until_" + str(i))
             i += 1
+
+    # Formatting and styling select statement
+    indent = '        '
+    select_statement = select_statement.replace('\n', '\n' + indent)
 
     statement = statement.format(sparql_prefixes,
                                  variables_injection_string,
