@@ -2,7 +2,7 @@ import DataCitationFramework.TSDataCitation as dc
 import queries_for_testing as q
 from rdflib import term
 from datetime import datetime, timedelta, timezone
-
+import re
 
 # Playground
 citing = dc.DataVersioning('http://192.168.0.242:7200/repositories/DataCitation', #GET
@@ -70,3 +70,5 @@ def test_extend_query_with_version_timestamp():
 #citing.outdate_triples(q.query_triples_to_outdate_2,q.prefixes)
 
 
+s = [1,2,3]
+print(s[0])

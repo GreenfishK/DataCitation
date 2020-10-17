@@ -5,7 +5,7 @@ from rdflib.plugins.sparql.parser import parseQuery
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import pandas as pd
-import termcolor
+import re
 
 def _init_ns_to_nodes(initNs):
     """
@@ -21,29 +21,14 @@ def _init_ns_to_nodes(initNs):
     return pfx
 
 
-def print_triples(qres):
-    """
-    :param qres: result of the SPARQL select statement in JSON format
-    :return:
-    """
-    t = PrettyTable(['subjectToUpdate', 'predicateToUpdate', 'objectToUpdate'])
-    for row in qres["results"]["bindings"]:
-        t.add_row([row["subjectToUpdate"]["value"],
-                   row["predicateToUpdate"]["value"],
-                   row["objectToUpdate"]["value"],
-                   ])
-
-    print(t)
-
-
-def prefixes_to_sparql(prefixes):
+def _prefixes_to_sparql(prefixes):
     sparql_prefixes = ""
     for key, value in prefixes.items():
         sparql_prefixes += "PREFIX " + key + ":" + "<" + value + "> \n"
     return sparql_prefixes
 
 
-def _get_all_triples_from_stmt(query, prefixes):
+def _get_all_triples_from_stmt(query, prefixes: str = None) -> list:
     """
     Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
     stored triples connected to the result set of the input query.
@@ -56,24 +41,43 @@ def _get_all_triples_from_stmt(query, prefixes):
     {1}
     """
 
-    statement = statement.format(prefixes, query)
+    if prefixes:
+        statement = statement.format(prefixes, query)
+    else:
+        statement = statement.format("", query)
 
     q_desc = parseQuery(statement)
-    # q_algebra = algebra.translateQuery(q_desc) is a Query object. Query object has prologue attribute which holds
-    # a method called "bind" to bind prefixes to URIs
     q_algebra = algebra.translateQuery(q_desc).algebra
     triples = nested_lookup('triples', q_algebra)
-    return triples
+
+    n3_triples = []
+    for triple_list in triples:
+        for triple in triple_list:
+            t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+            n3_triples.append(t)
+
+    return n3_triples
 
 
-def _get_all_variables_from_stmt(query, prefixes):
+def _get_all_variables_from_stmt(query, prefixes: str = None) -> list:
+    """
+    The query must be a valid query including prefixes. They can be already embedded in the query or will
+    be embedded by providing them separately with the 'prefix' parameter
+    :param query: The query which will be searched for variables
+    :param prefixes: The prefixes used in the query.
+    :return: a list of variables used in the query
+    """
+
     statement = """
     {0} 
 
     {1}
     """
 
-    statement = statement.format(prefixes, query)
+    if prefixes:
+        statement = statement.format(prefixes, query)
+    else:
+        statement = statement.format("", query)
 
     q_desc = parseQuery(statement)
     q_algebra = algebra.translateQuery(q_desc).algebra
@@ -88,14 +92,62 @@ def _get_all_variables_from_stmt(query, prefixes):
     for s in var_sets:
         for var in s:
             if isinstance(var, Variable):
-                variables.append(var)
+                variables.append(var.n3())
 
-    return variables
+    return sorted(variables, reverse=False)
 
 
 # TODO: implement this
-def normalize_query(query):
+def normalize_query(query: str, prefixes: dict = None):
     normalized_query = query
+    sparql_prefixes = _prefixes_to_sparql(prefixes)
+
+    """
+    #3
+    Variables will always be explicitely mentioned and ordered alphabetically
+    """
+    variables_in_stmt = _get_all_variables_from_stmt(query, sparql_prefixes)
+    variables_string = "select "
+    for v in variables_in_stmt:
+        variables_string += v + " "
+
+    normalized_query = re.sub('select *\\*', variables_string, normalized_query)
+
+    """
+        #1
+        A where clause will always be inserted
+        """
+    replacement_string = variables_string + " where {"
+    normalized_query = re.sub('select.*{', replacement_string, normalized_query )
+
+    """
+    #7
+    Variables will be replaced by letters from the alphabet. For each variable a letter from the alphabet will
+     be assigned starting with 'a' and in chronological order. Two letters will be used 
+     and chronological combinations will be assigned should there be more than 26 variables.
+    """
+    variables = _get_all_variables_from_stmt(query, sparql_prefixes)
+    init_norm_var = 'a'
+    for i, v in enumerate(variables):
+        next_norm_var = chr(ord(init_norm_var) + i)
+        normalized_query = normalized_query.replace(v + " ", "?"+next_norm_var + " ")
+
+    """
+    #5
+    Triple statements will be ordered alphabetically by subject, predicate, object
+    """
+    all_triples = _get_all_triples_from_stmt(normalized_query, sparql_prefixes)
+    # TODO: order triples somehow
+
+    """pattern = re.compile('[\\?|<].*\\.')
+    unsorted_triples = []
+    for t in re.findall(pattern, normalized_query):
+        unsorted_triples.append(t)
+    sorted_tripes = sorted(unsorted_triples, reverse=False)
+
+    for i, t in enumerate(re.findall(pattern, normalized_query)):
+        normalized_query = normalized_query.replace(t, sorted_tripes[i])"""
+
     return normalized_query
 
 
@@ -163,13 +215,13 @@ Select {1} where {{
 
     sparql_prefixes = ""
     if prefixes:
-        sparql_prefixes = prefixes_to_sparql(prefixes)
+        sparql_prefixes = _prefixes_to_sparql(prefixes)
 
     # columns of result set. Will be as in original query
     variables = _get_all_variables_from_stmt(select_statement, sparql_prefixes)
     variables_injection_string = ""
     for v in variables:
-        variables_injection_string += v.n3() + " "
+        variables_injection_string += v + " "
 
     # Query extensions for versioning injection
     triples = _get_all_triples_from_stmt(select_statement, sparql_prefixes)
@@ -181,13 +233,10 @@ Select {1} where {{
 """
 
     versioning_query_extensions = ""
-    i = 0
-    for triple_list in triples:
-        for triple in triple_list:
-            t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-            v = versioning_query_extensions_template
-            versioning_query_extensions += v.format(t, "?valid_from_" + str(i), "?valid_until_" + str(i))
-            i += 1
+    for i, triple in enumerate(triples):
+        v = versioning_query_extensions_template
+        versioning_query_extensions += v.format(triple, "?valid_from_" + str(i), "?valid_until_" + str(i))
+
 
     # Formatting and styling select statement
     indent = '        '
@@ -351,7 +400,7 @@ class DataVersioning:
         """
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = _prefixes_to_sparql(prefixes)
         statement = statement % (sparql_prefixes, select_statement, new_value)
         self.sparql_get.setQuery(statement)
         result = self.sparql_get.query()
@@ -359,7 +408,7 @@ class DataVersioning:
 
         return result
 
-    def get_data(self, select_statement, prefixes: dict):
+    def get_data(self, select_statement, prefixes: dict = None):
         """
         :param select_statement:
         :param prefixes:
@@ -375,7 +424,7 @@ class DataVersioning:
 
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = _prefixes_to_sparql(prefixes)
 
         statement = statement.format(sparql_prefixes, select_statement)
         self.sparql_get.setQuery(statement)
@@ -442,7 +491,7 @@ class DataVersioning:
         """
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = _prefixes_to_sparql(prefixes)
         statement = statement % (sparql_prefixes, select_statement, new_value)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
@@ -470,7 +519,7 @@ class DataVersioning:
 
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = _prefixes_to_sparql(prefixes)
         statement = sparql_prefixes + statement
 
         if type(triple[0]) == Literal:
@@ -528,7 +577,7 @@ class DataVersioning:
         """
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = _prefixes_to_sparql(prefixes)
         statement = statement % (sparql_prefixes, select_statement)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
@@ -561,7 +610,7 @@ class DataVersioning:
         }}
         
         """
-        sparql_prefixes = prefixes_to_sparql(prefixes)
+        sparql_prefixes = _prefixes_to_sparql(prefixes)
         statement = sparql_prefixes + statement
 
         if type(triple[0]) == Literal:
@@ -582,10 +631,10 @@ class DataVersioning:
         result = self.sparql_post.query()
         return result
 
-    def compute_checksum(self, type):
+    def compute_checksum(self, input, query_or_result):
         """
 
-        :param type:
+        :param query_or_result:
         :return:
         """
         pass
