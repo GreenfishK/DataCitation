@@ -6,19 +6,7 @@ import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import pandas as pd
 import re
-
-def _init_ns_to_nodes(initNs):
-    """
-    :param initNs: prefixes to use as a dict where the key is the prefix and the value which the key resolves to.
-    :return: the initial Namespace dictionary where the values are node objects
-    """
-
-    pfx = {}
-    for key in initNs:
-        node = URIRef(initNs[key])
-        pfx[key] = node
-        print("set %s = %s" % (key, node))
-    return pfx
+from datetime import datetime, timedelta, timezone
 
 
 def _prefixes_to_sparql(prefixes):
@@ -28,38 +16,24 @@ def _prefixes_to_sparql(prefixes):
     return sparql_prefixes
 
 
-def _get_all_triples_from_stmt(query, prefixes: str = None) -> list:
-    """
-    Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
-    stored triples connected to the result set of the input query.
-    :return: transformed result set with columns: s, p, o
-    """
-
-    statement = """
-    {0} 
-    
-    {1}
-    """
-
-    if prefixes:
-        statement = statement.format(prefixes, query)
+def _extend_query_with_sort_operation(query, variables: list = [], colored: bool = False):
+    if colored:
+        sort_extension = "\x1b[36m" + "order by " + ' '.join(variables) + "\x1b[0m"
     else:
-        statement = statement.format("", query)
+        sort_extension = "order by " + ' '.join(variables)
 
-    q_desc = parseQuery(statement)
-    q_algebra = algebra.translateQuery(q_desc).algebra
-    triples = nested_lookup('triples', q_algebra)
+    sorted_query = """
+{0}
+{1}
+    """
 
-    n3_triples = []
-    for triple_list in triples:
-        for triple in triple_list:
-            t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-            n3_triples.append(t)
+    if query is not None:
+        sorted_query = sorted_query.format(query, sort_extension)
 
-    return n3_triples
+    return sorted_query
 
 
-def _get_all_variables_from_stmt(query, prefixes: str = None) -> list:
+def _query_variables(query, sparql_prefixes: str = None) -> list:
     """
     The query must be a valid query including prefixes. They can be already embedded in the query or will
     be embedded by providing them separately with the 'prefix' parameter
@@ -74,107 +48,143 @@ def _get_all_variables_from_stmt(query, prefixes: str = None) -> list:
     {1}
     """
 
-    if prefixes:
-        statement = statement.format(prefixes, query)
+    if sparql_prefixes:
+        statement = statement.format(sparql_prefixes, query)
     else:
         statement = statement.format("", query)
 
-    q_desc = parseQuery(statement)
-    q_algebra = algebra.translateQuery(q_desc).algebra
-    variables = nested_lookup('_vars', q_algebra)
-
-    var_sets = []
-    for var in variables:
-        if var not in var_sets:
-            var_sets.append(var)
+    pattern = re.compile('\\?[^\s\?]*')
 
     variables = []
-    for s in var_sets:
-        for var in s:
-            if isinstance(var, Variable):
-                variables.append(var.n3())
+    for v in re.findall(pattern, statement):
+        variables.append(v)
 
-    return sorted(variables, reverse=False)
+    distinct_variables = list(dict.fromkeys(variables))
+
+    sorted_variables = sorted(distinct_variables, reverse=False)
+    return sorted_variables
 
 
-# TODO: implement this
-def normalize_query(query: str, prefixes: dict = None):
-    normalized_query = query
-    sparql_prefixes = _prefixes_to_sparql(prefixes)
-
+def _query_triples(query, sparql_prefixes: str = None) -> list:
     """
-    #3
-    Variables will always be explicitely mentioned and ordered alphabetically
+    Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
+    stored triples connected to the result set of the input query.
+    :return: transformed result set with columns: s, p, o
     """
-    variables_in_stmt = _get_all_variables_from_stmt(query, sparql_prefixes)
-    variables_string = "select "
-    for v in variables_in_stmt:
-        variables_string += v + " "
 
-    normalized_query = re.sub('select *\\*', variables_string, normalized_query)
+    statement = """
+    {0} 
 
+    {1}
     """
+
+    if sparql_prefixes:
+        statement = statement.format(sparql_prefixes, query)
+    else:
+        statement = statement.format("", query)
+
+    pattern = re.compile('([<?]\S*|".*"\S*)\s(\S*|".*"\S*)\s*(\S*|".*"\S*)\s*\.') # only explicit triples
+    # TODO: also consider triples like ?a ?b ?c; ?b ?c. and ?a ?b / ?c ?d
+    unsorted_triples = []
+    for t in re.findall(pattern, query):
+        triple_string = t[0] + " " + t[1] + " " + t[2]
+        unsorted_triples.append(triple_string)
+    sorted_triples = sorted(unsorted_triples, reverse=False)
+
+    """q_desc = parseQuery(statement)
+    q_algebra = algebra.translateQuery(q_desc).algebra
+    triples = nested_lookup('triples', q_algebra)
+
+    n3_triples = []
+    for triple_list in triples:
+        for triple in triple_list:
+            t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+            n3_triples.append(t)
+    """
+    return sorted_triples
+
+
+class Query:
+
+    def __init__(self, query: str, prefixes: dict = None):
+        """
+
+        :param query: The SPARQL select statement that is used to retrieve the data set for citing
+        :param prefixes: prefixes used in the SPARQL query
+        """
+
+        self.query = query
+        self.normalized_query = query
+        self.normalized_query_timestamped = query
+        if prefixes is not None:
+            self.sparql_prefixes = _prefixes_to_sparql(prefixes)
+        else:
+            self.sparql_prefixes = ""
+        self.variables = _query_variables(query, self.sparql_prefixes)
+        self.triples = _query_triples(query, self.sparql_prefixes)
+        self.query_pid = None
+        # self.query_result = None # include this?
+
+    def normalize_query(self):
+        self.normalized_query = self.query
+
+        """
+        #3
+        Variables will always be explicitly mentioned and ordered alphabetically
+        """
+        select_block_string = "select "
+        for v in self.variables:
+            select_block_string += v + " "
+
+        self.normalized_query = re.sub('select *\\*', select_block_string, self.normalized_query)
+
+        """
         #1
         A where clause will always be inserted
         """
-    replacement_string = variables_string + " where {"
-    normalized_query = re.sub('select.*{', replacement_string, normalized_query )
+        replacement_string = select_block_string + " where {"
+        self.normalized_query = re.sub('select.*{', replacement_string, self.normalized_query)
 
-    """
-    #7
-    Variables will be replaced by letters from the alphabet. For each variable a letter from the alphabet will
-     be assigned starting with 'a' and in chronological order. Two letters will be used 
-     and chronological combinations will be assigned should there be more than 26 variables.
-    """
-    variables = _get_all_variables_from_stmt(query, sparql_prefixes)
-    init_norm_var = 'a'
-    for i, v in enumerate(variables):
-        next_norm_var = chr(ord(init_norm_var) + i)
-        normalized_query = normalized_query.replace(v + " ", "?"+next_norm_var + " ")
+        """
+        #7
+        Variables will be replaced by letters from the alphabet. For each variable a letter from the alphabet will
+         be assigned starting with 'a' and in chronological order. Two letters will be used 
+         and chronological combinations will be assigned should there be more than 26 variables.
+        """
+        init_norm_var = 'a'
+        for i, v in enumerate(self.variables):
+            next_norm_var = chr(ord(init_norm_var) + i)
+            self.normalized_query = self.normalized_query.replace(v + " ", "?"+next_norm_var + " ")
 
-    """
-    #5
-    Triple statements will be ordered alphabetically by subject, predicate, object
-    """
-    all_triples = _get_all_triples_from_stmt(normalized_query, sparql_prefixes)
-    # TODO: order triples somehow
+        """
+        #5
+        Triple statements will be ordered alphabetically by subject, predicate, object
+        """
+        all_triples = self.triples
+        # TODO: order triples somehow. Maybe it is not necessary because changing the order of triples will
+        #  result in the same algebra
 
-    """pattern = re.compile('[\\?|<].*\\.')
-    unsorted_triples = []
-    for t in re.findall(pattern, normalized_query):
-        unsorted_triples.append(t)
-    sorted_tripes = sorted(unsorted_triples, reverse=False)
+        """pattern = re.compile('[\\?|<].*\\.')
+        unsorted_triples = []
+        for t in re.findall(pattern, normalized_query):
+            unsorted_triples.append(t)
+        sorted_tripes = sorted(unsorted_triples, reverse=False)
+    
+        for i, t in enumerate(re.findall(pattern, normalized_query)):
+            normalized_query = normalized_query.replace(t, sorted_tripes[i])"""
 
-    for i, t in enumerate(re.findall(pattern, normalized_query)):
-        normalized_query = normalized_query.replace(t, sorted_tripes[i])"""
+        return self.normalized_query
 
-    return normalized_query
+    def extend_query_with_timestamp(self, timestamp, colored: bool = False):
+        """
+        :param timestamp:
+        :param colored: If colored is true, the injected strings within the statement template will be colored.
+        Use this parameter only for presentation purpose as the code for color encoding will malform the SPARQL query!
+        :return:
+        """
 
-
-# TODO: implement this
-def extend_query_with_sort_operation(query):
-    sorted_query = query
-    return sorted_query
-
-
-# TODO: implement this
-def generate_query_PID(normalized_query):
-    query_PID = 12345
-    return query_PID
-
-
-def extend_query_with_timestamp(select_statement, timestamp, prefixes, colored: bool = False):
-    """
-    :param select_statement:
-    :param timestamp:
-    :param prefixes:
-    :param colored: If colored is true, the injected strings within the statement template will be colored.
-    Use this parameter only for presentation purpose as the code for color encoding will malform the SPARQL query!
-    :return:
-    """
-
-    if colored:
-        statement = """
+        if colored:
+            template = """
 # prefixes
 \x1b[36m{0}\x1b[0m
     
@@ -191,8 +201,8 @@ Select \x1b[31m{1}\x1b[0m where {{
 
 }}
     """
-    else:
-        statement = """
+        else:
+            template = """
 # prefixes
 {0} 
 
@@ -210,45 +220,56 @@ Select {1} where {{
 }}
     """
 
-    # Prefixes, and timestamp injection
-    timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+        # Prefixes, and timestamp injection
+        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
 
-    sparql_prefixes = ""
-    if prefixes:
-        sparql_prefixes = _prefixes_to_sparql(prefixes)
+        # columns of result set. Will be as in normalized query
+        variables_injection_string = ""
+        normalized_variables = _query_variables(self.normalized_query, self.sparql_prefixes)
+        for v in normalized_variables:
+            variables_injection_string += v + " "
 
-    # columns of result set. Will be as in original query
-    variables = _get_all_variables_from_stmt(select_statement, sparql_prefixes)
-    variables_injection_string = ""
-    for v in variables:
-        variables_injection_string += v + " "
+        # Query extensions for versioning injection
+        normalized_triples = _query_triples(self.normalized_query, self.sparql_prefixes)
 
-    # Query extensions for versioning injection
-    triples = _get_all_triples_from_stmt(select_statement, sparql_prefixes)
+        versioning_query_extensions_template = """
+        <<{0}>> citing:valid_from {1}.
+        <<{0}>> citing:valid_until {2}.
+        filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2})
+    """
 
-    versioning_query_extensions_template = """
-    <<{0}>> citing:valid_from {1}.
-    <<{0}>> citing:valid_until {2}.
-    filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2}) # get data at a certain point in time
-"""
+        versioning_query_extensions = ""
+        for i, triple in enumerate(normalized_triples):
+            v = versioning_query_extensions_template
+            versioning_query_extensions += v.format(triple, "?valid_from_" + str(i), "?valid_until_" + str(i))
 
-    versioning_query_extensions = ""
-    for i, triple in enumerate(triples):
-        v = versioning_query_extensions_template
-        versioning_query_extensions += v.format(triple, "?valid_from_" + str(i), "?valid_until_" + str(i))
+        # Formatting and styling select statement
+        indent = '        '
+        normalized_query_formatted = self.normalized_query.replace('\n', '\n' + indent)
 
+        self.normalized_query_timestamped = template.format(self.sparql_prefixes,
+                                                            variables_injection_string,
+                                                            normalized_query_formatted,
+                                                            timestamp,
+                                                            versioning_query_extensions)
 
-    # Formatting and styling select statement
-    indent = '        '
-    select_statement = select_statement.replace('\n', '\n' + indent)
+        return self.normalized_query_timestamped
 
-    statement = statement.format(sparql_prefixes,
-                                 variables_injection_string,
-                                 select_statement,
-                                 timestamp,
-                                 versioning_query_extensions)
+    # TODO: implement this
+    def generate_query_pid(self):
+        self.query_pid = 12345
+        return self.query_pid
 
-    return statement
+    def compute_checksum(self, input, query_or_result):
+        """
+
+        :param query_or_result:
+        :return:
+        """
+        if query_or_result == "query":
+            pass
+        if query_or_result == "result":
+            pass
 
 
 def _get_prettyprint_string_sparql_var_result(result):
@@ -305,6 +326,7 @@ class DataVersioning:
 
         self.query_endpoint = query_endpoint
         self.update_endpoint = update_endpoint
+        self.query_object = None
         self.prefixes = prefixes
         self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_post = SPARQLWrapper(update_endpoint)
@@ -375,64 +397,56 @@ class DataVersioning:
         returned variables must be as follows: ?subjectToUpdate, ?predicateToUpdate, ?objectToUpdate
         :return: a set of triples in JSON format where the object should be updated.
         """
-
+        query = Query(select_statement, prefixes)
         statement = """
             # prefixes
-            %s
+            {0}
 
             
             select ?subjectToUpdate ?predicateToUpdate ?objectToUpdate ?newValue
-            where {
+            where {{
                 # business logic - rows to update as select statement
-                {%s
+                {{
+                {1}
                 
                 
-                }
+                }}
                 
-                bind('%s' as ?newValue). #new Value
+                bind('{2}' as ?newValue). #new Value
                 
                 # versioning
                 <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . 
                 BIND(xsd:dateTime(NOW()) AS ?newVersion). 
                 filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
                 filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
-            }
+            }}
         """
-        sparql_prefixes = ""
-        if prefixes:
-            sparql_prefixes = _prefixes_to_sparql(prefixes)
-        statement = statement % (sparql_prefixes, select_statement, new_value)
+
+        statement = statement.format(query.sparql_prefixes, query.query, new_value)
         self.sparql_get.setQuery(statement)
         result = self.sparql_get.query()
         result.print_results()
 
         return result
 
-    def get_data(self, select_statement, prefixes: dict = None):
+    def get_data(self, select_statement, prefixes: dict = None, is_timestamped: bool = False):
         """
         :param select_statement:
         :param prefixes:
         :return:
         """
 
-        statement = """
-            # prefixes
-            {0} 
-
-            {1}
-            """
-
-        sparql_prefixes = ""
-        if prefixes:
-            sparql_prefixes = _prefixes_to_sparql(prefixes)
-
-        statement = statement.format(sparql_prefixes, select_statement)
-        self.sparql_get.setQuery(statement)
-        result = self.sparql_get.query()
-        df = _QueryResult_to_dataframe(result)
+        if is_timestamped:
+            self.sparql_get.setQuery(select_statement)
+            result = self.sparql_get.query()
+            df = _QueryResult_to_dataframe(result)
+        else:
+            vieTZObject = timezone(timedelta(hours=2))
+            current_timestamp = datetime.now(vieTZObject)
+            df = self.get_data_at_timestamp(select_statement, current_timestamp, prefixes)
         return df
 
-    def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict):
+    def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict = None):
         """
 
         :param select_statement:
@@ -440,10 +454,10 @@ class DataVersioning:
         :param prefixes:
         :return: Dataframe object
         """
+        query = Query(select_statement, prefixes)
+        timestamped_query = query.extend_query_with_timestamp(timestamp)
 
-        ext_query = extend_query_with_timestamp(select_statement, timestamp, prefixes)
-
-        self.sparql_get.setQuery(ext_query)
+        self.sparql_get.setQuery(timestamped_query)
         result = self.sparql_get.query()
         df = _QueryResult_to_dataframe(result)
         return df
@@ -457,7 +471,7 @@ class DataVersioning:
         :param prefixes: aliases of provided URIs which are resolved to these URIs during the execution.
         :return:
         """
-
+        query = Query(select_statement, prefixes)
         statement = """
             # prefixes
             %s
@@ -489,10 +503,8 @@ class DataVersioning:
                 filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
             }
         """
-        sparql_prefixes = ""
-        if prefixes:
-            sparql_prefixes = _prefixes_to_sparql(prefixes)
-        statement = statement % (sparql_prefixes, select_statement, new_value)
+
+        statement = statement % (query.sparql_prefixes, query.query, new_value)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
 
@@ -631,17 +643,10 @@ class DataVersioning:
         result = self.sparql_post.query()
         return result
 
-    def compute_checksum(self, input, query_or_result):
-        """
-
-        :param query_or_result:
-        :return:
-        """
-        pass
-
     def cite(self, select_statement, result_set_description):
         citation_text = ""
-        normalized_query = normalize_query(select_statement)
+        query = Query(select_statement)
+        normalized_query = query.normalize_query()
 
         # extend query with version timestamp
 
@@ -664,7 +669,7 @@ class DataVersioning:
         # case 2: query does not exist:
 
         # generate query PID
-        query_PID = generate_query_PID(normalized_query)
+        query_PID = query.generate_query_PID()
 
         # execute query
 

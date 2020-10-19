@@ -70,5 +70,13 @@ def test_extend_query_with_version_timestamp():
 #citing.outdate_triples(q.query_triples_to_outdate_2,q.prefixes)
 
 
-s = [1,2,3]
-print(s[0])
+string ='"Democratic Party"@en'
+#pattern = re.compile('[\\?|<|\"].*\s[^ |\".*\"]*\s[\S*|".*"\S*]\s*\.')  # explicit triples
+pattern = re.compile('([<?]\S*|".*"\S*)\s(\S*|".*"\S*)\s*(\S*|".*"\S*)\s*\.')
+# TODO: also consider triples like ?a ?b ?c; ?b ?c. and ?a ?b / ?c ?d
+unsorted_triples = []
+for t in re.findall(pattern, q.query_parser_test):
+    triple_string = t[0] + " " + t[1] + " " + t[2]
+    unsorted_triples.append(triple_string)
+sorted_triples = sorted(unsorted_triples, reverse=False)
+print(sorted_triples)
