@@ -1,7 +1,8 @@
 from prettytable import PrettyTable
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import URIRef, Literal, Variable
-from rdflib.plugins.sparql.parser import parseQuery
+import rdflib.plugins.sparql.parser as parser
+import pyparsing
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import pandas as pd
@@ -84,14 +85,14 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
         statement = statement.format("", query)
 
     pattern = re.compile('([<?]\S*|".*"\S*)\s(\S*|".*"\S*)\s*(\S*|".*"\S*)\s*\.') # only explicit triples
-    # TODO: also consider triples like ?a ?b ?c; ?b ?c. and ?a ?b / ?c ?d
+    # TODO: also consider triples like "?a ?b ?c; ?b ?c." and "?a ?b / ?c ?d"
     unsorted_triples = []
     for t in re.findall(pattern, query):
         triple_string = t[0] + " " + t[1] + " " + t[2]
         unsorted_triples.append(triple_string)
     sorted_triples = sorted(unsorted_triples, reverse=False)
 
-    """q_desc = parseQuery(statement)
+    """q_desc = parser.parseQuery(statement)
     q_algebra = algebra.translateQuery(q_desc).algebra
     triples = nested_lookup('triples', q_algebra)
 
@@ -120,13 +121,30 @@ class Query:
             self.sparql_prefixes = _prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
+        self.query_tree = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
         self.variables = _query_variables(query, self.sparql_prefixes)
         self.triples = _query_triples(query, self.sparql_prefixes)
         self.query_pid = None
         # self.query_result = None # include this?
 
-    def normalize_query(self):
+    def normalize_query_tree(self):
+        """
+        Parses the query into a tree object as "query description" first and then normalizes the tree object
+        instead of the actual query string. To check whether two queries are semantically identical the
+        hash values of the stored query descriptions (tree objects) can be later on compared.
+        :return: normalized query tree object
+        """
         self.normalized_query = self.query
+
+        """
+        q_algebra = algebra.translateQuery(self.query_tree).algebra
+        triples = nested_lookup('triples', q_algebra)
+         
+        n3_triples = []
+        for triple_list in triples:
+            for triple in triple_list:
+                t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+                n3_triples.append(t)"""
 
         """
         #3
@@ -159,10 +177,13 @@ class Query:
         """
         #5
         Triple statements will be ordered alphabetically by subject, predicate, object
+        Triple statements within q_desc could be ordered instead of ordering the triple statements of the actual query.
+        The modified q_desc could be stored in the query store
         """
         all_triples = self.triples
         # TODO: order triples somehow. Maybe it is not necessary because changing the order of triples will
         #  result in the same algebra
+
 
         """pattern = re.compile('[\\?|<].*\\.')
         unsorted_triples = []
@@ -173,7 +194,8 @@ class Query:
         for i, t in enumerate(re.findall(pattern, normalized_query)):
             normalized_query = normalized_query.replace(t, sorted_tripes[i])"""
 
-        return self.normalized_query
+        self.query_tree = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
+        return self.query_tree
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
         """
@@ -260,14 +282,16 @@ Select {1} where {{
         self.query_pid = 12345
         return self.query_pid
 
-    def compute_checksum(self, input, query_or_result):
+    def compute_checksum(self, query_or_result):
         """
-
+        :param input: can be either a result set or a query object tree. In case of a query object tree
+        the hash value will be computed of the object string as the hash value of the tree itself is not ambiguous
+        for multiple executions of the same query.
         :param query_or_result:
-        :return:
+        :return: the hash value of either the query or query result
         """
         if query_or_result == "query":
-            pass
+            return hash(str(self.query_tree))
         if query_or_result == "result":
             pass
 
@@ -646,7 +670,7 @@ class DataVersioning:
     def cite(self, select_statement, result_set_description):
         citation_text = ""
         query = Query(select_statement)
-        normalized_query = query.normalize_query()
+        normalized_query = query.normalize_query_tree()
 
         # extend query with version timestamp
 
