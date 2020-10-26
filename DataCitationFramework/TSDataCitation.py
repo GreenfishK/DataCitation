@@ -4,7 +4,7 @@ from rdflib.term import URIRef, Literal, Variable
 import rdflib.plugins.sparql.parser as parser
 import pyparsing
 import rdflib.plugins.sparql.algebra as algebra
-from nested_lookup import nested_lookup
+from nested_lookup import nested_lookup, get_all_keys
 import pandas as pd
 import re
 from datetime import datetime, timedelta, timezone
@@ -121,7 +121,7 @@ class Query:
             self.sparql_prefixes = _prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
-        self.query_tree = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
+        self.query_algebra = None
         self.variables = _query_variables(query, self.sparql_prefixes)
         self.triples = _query_triples(query, self.sparql_prefixes)
         self.query_pid = None
@@ -176,26 +176,17 @@ class Query:
 
         """
         #5
-        Triple statements will be ordered alphabetically by subject, predicate, object
-        Triple statements within q_desc could be ordered instead of ordering the triple statements of the actual query.
-        The modified q_desc could be stored in the query store
+        Triple statements will be ordered alphabetically by subject, predicate, object.
         """
-        all_triples = self.triples
-        # TODO: order triples somehow. Maybe it is not necessary because changing the order of triples will
-        #  result in the same algebra
+        # The triple order is already unambiguous in the query algebra. Nothing to do if the query algebra is used
+        # for the computation of the checksum.
 
-
-        """pattern = re.compile('[\\?|<].*\\.')
-        unsorted_triples = []
-        for t in re.findall(pattern, normalized_query):
-            unsorted_triples.append(t)
-        sorted_tripes = sorted(unsorted_triples, reverse=False)
-    
-        for i, t in enumerate(re.findall(pattern, normalized_query)):
-            normalized_query = normalized_query.replace(t, sorted_tripes[i])"""
-
-        self.query_tree = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
-        return self.query_tree
+        """
+        Re-compute the query algebra of the normalized query and update the member variable query_algebra
+        """
+        parse_result = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
+        self.query_algebra = algebra.translateQuery(parse_result).algebra
+        return self.query_algebra
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
         """
@@ -291,7 +282,7 @@ Select {1} where {{
         :return: the hash value of either the query or query result
         """
         if query_or_result == "query":
-            return hash(str(self.query_tree))
+            return hash(str(self.query_algebra))
         if query_or_result == "result":
             pass
 
