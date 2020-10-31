@@ -54,7 +54,7 @@ select ?s ?p ?o where {
 """
 
 query_parser_test = """
-select ?document ?mention ?person ?personLabel ?party ?value where {
+    select ?document ?mention ?person ?personLabel ?value ?party where {
 
         ?document publishing:containsMention ?mention .
         ?mention publishing:hasInstance ?person .
@@ -63,7 +63,7 @@ select ?document ?mention ?person ?personLabel ?party ?value where {
         ?party pub:hasValue ?value .
         ?value pub:preferredLabel "Democratic Party"@en .
         filter(?personLabel = "Judy Chu"@en)
-}
+} 
 """
 
 query_parser_test_2 = """
@@ -125,6 +125,35 @@ select ?s ?p ?o ?valid_from ?valid_until  where {
     
     bind("2020-10-03T14:11:21.941000+02:00"^^xsd:dateTime as ?TimeOfCiting)
 
+}
+"""
+
+query_parser_test_4 = """
+
+select ?document ?mention ?person ?personLabel ?value ?party where {
+    ?document publishing:containsMention ?mention .
+    ?mention publishing:hasInstance ?person .
+    ?person pub:preferredLabel ?personLabel .
+    ?value pub:preferredLabel "Democratic Party"@en .
+    {
+        select ?person ?party where {
+            ?person pub:memberOfPoliticalParty ?party .
+            ?party pub:hasValue ?value .
+        }
+    }
+    filter(?personLabel = "Judy Chu"@en)
+}
+"""
+
+query_parser_test_5 = """
+select ?a ?b ?c ?d ?e ?f  {
+    ?b publishing:hasInstance ?d .
+    ?a publishing:containsMention ?b . 
+    ?d pub:memberOfPoliticalParty ?c .
+    ?d pub:preferredLabel ?e .
+    ?c pub:hasValue ?f .
+    ?f pub:preferredLabel "Democratic Party"@en .
+    filter(?e = "Judy Chu"@en)
 }
 """
 

@@ -8,7 +8,7 @@ from nested_lookup import nested_lookup, get_all_keys
 import pandas as pd
 import re
 from datetime import datetime, timedelta, timezone
-
+import hashlib
 
 def _prefixes_to_sparql(prefixes):
     sparql_prefixes = ""
@@ -129,22 +129,19 @@ class Query:
 
     def normalize_query_tree(self):
         """
-        Parses the query into a tree object as "query description" first and then normalizes the tree object
-        instead of the actual query string. To check whether two queries are semantically identical the
-        hash values of the stored query descriptions (tree objects) can be later on compared.
+        Normalizes the query by computing its algebra first. Most of the ambiguities are implicitly solved by the query
+        algebra as different ways of writing a query usually boil down to one algebra. For case where normalization is
+        still needed, the query algebra will be updated.
         :return: normalized query tree object
         """
         self.normalized_query = self.query
 
         """
-        q_algebra = algebra.translateQuery(self.query_tree).algebra
-        triples = nested_lookup('triples', q_algebra)
-         
-        n3_triples = []
-        for triple_list in triples:
-            for triple in triple_list:
-                t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-                n3_triples.append(t)"""
+        #1
+        A where clause will always be inserted
+        """
+        # Implicitly solved by query algebra
+        pass
 
         """
         #3
@@ -157,35 +154,40 @@ class Query:
         self.normalized_query = re.sub('select *\\*', select_block_string, self.normalized_query)
 
         """
-        #1
-        A where clause will always be inserted
+        #5
+        Triple statements will be ordered alphabetically by subject, predicate, object.
         """
-        replacement_string = select_block_string + " where {"
-        self.normalized_query = re.sub('select.*{', replacement_string, self.normalized_query)
+        # The triple order is already unambiguous in the query algebra. The only requirement is
+        # that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
+        pass
 
         """
         #7
         Variables will be replaced by letters from the alphabet. For each variable a letter from the alphabet will
-         be assigned starting with 'a' and in chronological order. Two letters will be used 
-         and chronological combinations will be assigned should there be more than 26 variables.
+        be assigned starting with 'a' and in chronological order. Two letters will be used 
+        and combinations of letters will be assigned should there be more than 26 variables. Furthermore,
+        variables in the select clause will be sorted as after the replacement it is not guaranteed that 
+        the letters will be ordered. Currently no nested selects are supported.
         """
         init_norm_var = 'a'
         for i, v in enumerate(self.variables):
             next_norm_var = chr(ord(init_norm_var) + i)
+            #print("%s replaced by %s" % (v, next_norm_var))
             self.normalized_query = self.normalized_query.replace(v + " ", "?"+next_norm_var + " ")
 
-        """
-        #5
-        Triple statements will be ordered alphabetically by subject, predicate, object.
-        """
-        # The triple order is already unambiguous in the query algebra. Nothing to do if the query algebra is used
-        # for the computation of the checksum.
+        pattern = re.compile('(?<=select)(?:\s+\?\w+)+(?=\s+where\s*{)')
+        print(re.findall(pattern, self.normalized_query))
+        #selected_variables = re.findall(pattern, self.normalized_query)[0].lstrip()
+        #sorted_variables_list = sorted(str.split(selected_variables, " "))
+        #sorted_variables_sorted = " ".join(sorted_variables_list)
+        #self.normalized_query = self.normalized_query.replace(selected_variables, sorted_variables_sorted)
 
         """
         Re-compute the query algebra of the normalized query and update the member variable query_algebra
         """
         parse_result = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
         self.query_algebra = algebra.translateQuery(parse_result).algebra
+        #print(self.query_algebra)
         return self.query_algebra
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
@@ -281,8 +283,13 @@ Select {1} where {{
         :param query_or_result:
         :return: the hash value of either the query or query result
         """
+
         if query_or_result == "query":
-            return hash(str(self.query_algebra))
+            query_algebra_string = str(self.query_algebra)
+            checksum = hashlib.sha256()
+            checksum.update(str.encode(query_algebra_string))
+
+            return checksum.hexdigest()
         if query_or_result == "result":
             pass
 
