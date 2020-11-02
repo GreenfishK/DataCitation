@@ -10,6 +10,7 @@ import re
 from datetime import datetime, timedelta, timezone
 import hashlib
 
+
 def _prefixes_to_sparql(prefixes):
     sparql_prefixes = ""
     for key, value in prefixes.items():
@@ -32,38 +33,6 @@ def _extend_query_with_sort_operation(query, variables: list = [], colored: bool
         sorted_query = sorted_query.format(query, sort_extension)
 
     return sorted_query
-
-
-def _query_variables(query, sparql_prefixes: str = None) -> list:
-    """
-    The query must be a valid query including prefixes. They can be already embedded in the query or will
-    be embedded by providing them separately with the 'prefix' parameter
-    :param query: The query which will be searched for variables
-    :param prefixes: The prefixes used in the query.
-    :return: a list of variables used in the query
-    """
-
-    statement = """
-    {0} 
-
-    {1}
-    """
-
-    if sparql_prefixes:
-        statement = statement.format(sparql_prefixes, query)
-    else:
-        statement = statement.format("", query)
-
-    pattern = re.compile('\\?[^\s\?]*')
-
-    variables = []
-    for v in re.findall(pattern, statement):
-        variables.append(v)
-
-    distinct_variables = list(dict.fromkeys(variables))
-
-    sorted_variables = sorted(distinct_variables, reverse=False)
-    return sorted_variables
 
 
 def _query_triples(query, sparql_prefixes: str = None) -> list:
@@ -105,6 +74,11 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     return sorted_triples
 
 
+def _intersection(lst1, lst2):
+    lst3 = [value for value in lst1 if value in lst2]
+    return lst3
+
+
 class Query:
 
     def __init__(self, query: str, prefixes: dict = None):
@@ -121,11 +95,41 @@ class Query:
             self.sparql_prefixes = _prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
-        self.query_algebra = None
-        self.variables = _query_variables(query, self.sparql_prefixes)
-        self.triples = _query_triples(query, self.sparql_prefixes)
+        q_desc = parser.parseQuery(self.sparql_prefixes + " " + query)
+        self.query_algebra = algebra.translateQuery(q_desc).algebra
+        self.variables = self._query_variables(query, self.sparql_prefixes)
+        # self.triples = _query_triples(query, self.sparql_prefixes) # include this?
         self.query_pid = None
         # self.query_result = None # include this?
+
+    def _query_variables(self, query, sparql_prefixes: str = None) -> list:
+        """
+        The query must be a valid query including prefixes. They can be already embedded in the query or will
+        be embedded by providing them separately with the 'prefix' parameter.
+        The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
+        variables within a list. However, each of these lists enumerates the same variables only the first list
+        will be selected and returned.
+
+        :param query: The query which will be searched for variables
+        :param prefixes: The prefixes used in the query.
+        :return: a list of variables used in the query
+        """
+
+        query_triples = nested_lookup('triples', self.query_algebra)
+        triple_variables = []
+        for triple_list in query_triples:
+            for triple in triple_list:
+                if isinstance(triple[0], Variable):
+                    triple_variables.append(triple[0])
+                if isinstance(triple[1], Variable):
+                    triple_variables.append(triple[1])
+                if isinstance(triple[2], Variable):
+                    triple_variables.append(triple[2])
+
+        distinct_triple_variables = list(dict.fromkeys(triple_variables))
+        query_variables = nested_lookup('PV', self.query_algebra)[0]
+        select_variables = _intersection(distinct_triple_variables, query_variables)
+        return select_variables
 
     def normalize_query_tree(self):
         """
@@ -137,57 +141,63 @@ class Query:
         self.normalized_query = self.query
 
         """
-        #1
-        A where clause will always be inserted
-        """
-        # Implicitly solved by query algebra
-        pass
-
-        """
         #3
-        Variables will always be explicitly mentioned and ordered alphabetically
+        In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
+        and ordered alphabetically.
         """
         select_block_string = "select "
         for v in self.variables:
-            select_block_string += v + " "
+            select_block_string += v.n3() + " "
 
         self.normalized_query = re.sub('select *\\*', select_block_string, self.normalized_query)
 
         """
+        #1
+        A where clause will always be inserted
+        """
+        # Implicitly solved by query algebra
+        replacement_string = select_block_string + " where {"
+        self.normalized_query = re.sub('select.*{', replacement_string, self.normalized_query)
+
+        """
         #5
         Triple statements will be ordered alphabetically by subject, predicate, object.
+
+        The triple order is already unambiguous in the query algebra. The only requirement is
+        that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
         """
-        # The triple order is already unambiguous in the query algebra. The only requirement is
-        # that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
         pass
 
         """
         #7
-        Variables will be replaced by letters from the alphabet. For each variable a letter from the alphabet will
-        be assigned starting with 'a' and in chronological order. Two letters will be used 
-        and combinations of letters will be assigned should there be more than 26 variables. Furthermore,
-        variables in the select clause will be sorted as after the replacement it is not guaranteed that 
-        the letters will be ordered. Currently no nested selects are supported.
+        Variables in the query tree will be replaced by letters from the alphabet. For each variable 
+        a letter from the alphabet will be assigned starting with 'a' and continuing in alphabetic order. 
+        Two letters will be used  and combinations of letters will be assigned should there be more than 26 variables. 
+        There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
+        are sorted by their bindings where the ones with the most bindings come first.
         """
-        init_norm_var = 'a'
+        int_norm_var = 'a'
+        variables_mapping = {}
         for i, v in enumerate(self.variables):
-            next_norm_var = chr(ord(init_norm_var) + i)
-            #print("%s replaced by %s" % (v, next_norm_var))
-            self.normalized_query = self.normalized_query.replace(v + " ", "?"+next_norm_var + " ")
+            next_norm_var = chr(ord(int_norm_var) + i)
+            variables_mapping.update({v: next_norm_var})
+            self.normalized_query = self.normalized_query.replace(v.n3() + " ", "?" + next_norm_var + " ")
 
-        pattern = re.compile('(?<=select)(?:\s+\?\w+)+(?=\s+where\s*{)')
-        print(re.findall(pattern, self.normalized_query))
-        #selected_variables = re.findall(pattern, self.normalized_query)[0].lstrip()
-        #sorted_variables_list = sorted(str.split(selected_variables, " "))
-        #sorted_variables_sorted = " ".join(sorted_variables_list)
-        #self.normalized_query = self.normalized_query.replace(selected_variables, sorted_variables_sorted)
+        algebra.traverse(self.query_algebra,
+                         lambda var: variables_mapping.get(var) if isinstance(var, Variable) else None
+                         )
+
+        pattern = re.compile('(?<=select)(?:\s*\?\w+)+(?=\s+where\s*{)')
+        selected_variables = re.findall(pattern, self.normalized_query)[0].lstrip()
+        sorted_variables_list = sorted(str.split(selected_variables, " "))
+        sorted_variables_sorted = " ".join(sorted_variables_list)
+        self.normalized_query = self.normalized_query.replace(selected_variables, sorted_variables_sorted)
 
         """
         Re-compute the query algebra of the normalized query and update the member variable query_algebra
         """
         parse_result = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
         self.query_algebra = algebra.translateQuery(parse_result).algebra
-        #print(self.query_algebra)
         return self.query_algebra
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
@@ -240,9 +250,9 @@ Select {1} where {{
 
         # columns of result set. Will be as in normalized query
         variables_injection_string = ""
-        normalized_variables = _query_variables(self.normalized_query, self.sparql_prefixes)
+        normalized_variables = self._query_variables(self.normalized_query, self.sparql_prefixes)
         for v in normalized_variables:
-            variables_injection_string += v + " "
+            variables_injection_string += v.n3() + " "
 
         # Query extensions for versioning injection
         normalized_triples = _query_triples(self.normalized_query, self.sparql_prefixes)
@@ -278,8 +288,7 @@ Select {1} where {{
     def compute_checksum(self, query_or_result):
         """
         :param input: can be either a result set or a query object tree. In case of a query object tree
-        the hash value will be computed of the object string as the hash value of the tree itself is not ambiguous
-        for multiple executions of the same query.
+        the hash value will be computed of the object string.
         :param query_or_result:
         :return: the hash value of either the query or query result
         """

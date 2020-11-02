@@ -70,10 +70,10 @@ def test_extend_query_with_version_timestamp():
 #citing.outdate_triples(q.query_triples_to_outdate_2,q.prefixes)
 
 
-pattern = re.compile('(?<=select)(?:\s+\?\w+)+(?=\s+where\s*{)')
-print(re.findall(pattern, q.query_parser_test_5))
-selected_variables = re.findall(pattern, q.query_parser_test_5)[0].lstrip()
-sorted_variables = sorted(str.split(selected_variables, " "))
-sorted_variables_select_clause = " ".join(sorted_variables)
-
-print(sorted_variables_select_clause)
+#pattern = re.compile('(?<=select)(?:\s*\?\w+)+(?=\s+where\s*{)')
+pattern = re.compile('(([<?\w]\S*|".*"\S*)\s*){3}\.')
+#pattern = re.compile('(.*\s*){3}(?=\.)')
+selected_variables = re.findall(pattern, q.query_parser_test_5)
+normalized_query = re.sub(pattern,'test', q.query_parser_test_5)
+print(selected_variables)
+print(normalized_query)

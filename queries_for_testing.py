@@ -146,13 +146,13 @@ select ?document ?mention ?person ?personLabel ?value ?party where {
 """
 
 query_parser_test_5 = """
-select ?a ?b ?c ?d ?e ?f  {
+select ?b ?a ?c ?d ?e ?f where  {
     ?b publishing:hasInstance ?d .
     ?a publishing:containsMention ?b . 
     ?d pub:memberOfPoliticalParty ?c .
     ?d pub:preferredLabel ?e .
     ?c pub:hasValue ?f .
-    ?f pub:preferredLabel "Democratic Party"@en .
+    <http://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd> pub:preferredLabel "Democratic Party"@en .
     filter(?e = "Judy Chu"@en)
 }
 """
