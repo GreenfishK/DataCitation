@@ -128,8 +128,16 @@ class Query:
 
         distinct_triple_variables = list(dict.fromkeys(triple_variables))
         query_variables = nested_lookup('PV', self.query_algebra)[0]
-        select_variables = _intersection(distinct_triple_variables, query_variables)
-        return select_variables
+        variables = _intersection(distinct_triple_variables, query_variables)
+
+        """q_desc = parser.parseQuery(sparql_prefixes + " " + query)
+        q_algebra = algebra.translateQuery(q_desc).algebra
+
+        variables = []
+        get_vars = lambda x, l: [l.append(a) for a in x if isinstance(a, Variable)]
+        algebra.traverse(q_algebra, lambda s: get_vars(s, variables) if isinstance(s, set) else None)
+        variables = list(dict.fromkeys(variables))"""
+        return distinct_triple_variables
 
     def normalize_query_tree(self):
         """
@@ -138,26 +146,21 @@ class Query:
         still needed, the query algebra will be updated.
         :return: normalized query tree object
         """
-        self.normalized_query = self.query
 
         """
         #3
         In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
         and ordered alphabetically.
         """
-        select_block_string = "select "
-        for v in self.variables:
-            select_block_string += v.n3() + " "
-
-        self.normalized_query = re.sub('select *\\*', select_block_string, self.normalized_query)
+        pass
+        # Implicitly solved by query algebra
 
         """
         #1
         A where clause will always be inserted
         """
+        pass
         # Implicitly solved by query algebra
-        replacement_string = select_block_string + " where {"
-        self.normalized_query = re.sub('select.*{', replacement_string, self.normalized_query)
 
         """
         #5
@@ -167,6 +170,7 @@ class Query:
         that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
         """
         pass
+        # Implicitly solved by query algebra
 
         """
         #7
@@ -176,28 +180,28 @@ class Query:
         There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
         are sorted by their bindings where the ones with the most bindings come first.
         """
+
         int_norm_var = 'a'
         variables_mapping = {}
         for i, v in enumerate(self.variables):
             next_norm_var = chr(ord(int_norm_var) + i)
             variables_mapping.update({v: next_norm_var})
-            self.normalized_query = self.normalized_query.replace(v.n3() + " ", "?" + next_norm_var + " ")
 
+        # replace variables with normalized variables (letters from the alphabet)
         algebra.traverse(self.query_algebra,
                          lambda var: variables_mapping.get(var) if isinstance(var, Variable) else None
                          )
 
-        pattern = re.compile('(?<=select)(?:\s*\?\w+)+(?=\s+where\s*{)')
-        selected_variables = re.findall(pattern, self.normalized_query)[0].lstrip()
-        sorted_variables_list = sorted(str.split(selected_variables, " "))
-        sorted_variables_sorted = " ".join(sorted_variables_list)
-        self.normalized_query = self.normalized_query.replace(selected_variables, sorted_variables_sorted)
+        # identify _var sets and sort the variables inside
+        norm_vars = lambda x: [variables_mapping[a] for a in x]
+        algebra.traverse(self.query_algebra,
+                         lambda s: sorted(norm_vars(s)) if isinstance(s, set) else None
+                         )
 
-        """
-        Re-compute the query algebra of the normalized query and update the member variable query_algebra
-        """
-        parse_result = parser.parseQuery(self.sparql_prefixes + " " + self.normalized_query)
-        self.query_algebra = algebra.translateQuery(parse_result).algebra
+        # Sort variables in select statement
+        algebra.traverse(self.query_algebra,
+                         lambda l: sorted(l) if isinstance(l, list) else None
+                         )
         return self.query_algebra
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
