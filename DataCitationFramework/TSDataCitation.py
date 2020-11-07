@@ -18,23 +18,6 @@ def _prefixes_to_sparql(prefixes):
     return sparql_prefixes
 
 
-def _extend_query_with_sort_operation(query, variables: list = [], colored: bool = False):
-    if colored:
-        sort_extension = "\x1b[36m" + "order by " + ' '.join(variables) + "\x1b[0m"
-    else:
-        sort_extension = "order by " + ' '.join(variables)
-
-    sorted_query = """
-{0}
-{1}
-    """
-
-    if query is not None:
-        sorted_query = sorted_query.format(query, sort_extension)
-
-    return sorted_query
-
-
 def _query_triples(query, sparql_prefixes: str = None) -> list:
     """
     Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
@@ -53,15 +36,7 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     else:
         statement = statement.format("", query)
 
-    pattern = re.compile('([<?]\S*|".*"\S*)\s(\S*|".*"\S*)\s*(\S*|".*"\S*)\s*\.') # only explicit triples
-    # TODO: also consider triples like "?a ?b ?c; ?b ?c." and "?a ?b / ?c ?d"
-    unsorted_triples = []
-    for t in re.findall(pattern, query):
-        triple_string = t[0] + " " + t[1] + " " + t[2]
-        unsorted_triples.append(triple_string)
-    sorted_triples = sorted(unsorted_triples, reverse=False)
-
-    """q_desc = parser.parseQuery(statement)
+    q_desc = parser.parseQuery(statement)
     q_algebra = algebra.translateQuery(q_desc).algebra
     triples = nested_lookup('triples', q_algebra)
 
@@ -70,13 +45,51 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
         for triple in triple_list:
             t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
             n3_triples.append(t)
-    """
-    return sorted_triples
+
+    return sorted(n3_triples)
 
 
 def _intersection(lst1, lst2):
     lst3 = [value for value in lst1 if value in lst2]
     return lst3
+
+
+def _query_algebra(query, sparql_prefixes):
+    q_desc = parser.parseQuery(sparql_prefixes + " " + query)
+    return algebra.translateQuery(q_desc).algebra
+
+
+def _query_variables(query_algebra) -> list:
+    """
+    The query must be a valid query including prefixes. They can be already embedded in the query or will
+    be embedded by providing them separately with the 'prefix' parameter.
+    The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
+    variables within a list. However, each of these lists enumerates the same variables only the first list
+    will be selected and returned.
+
+    :param query: The query which will be searched for variables
+    :param prefixes: The prefixes used in the query.
+    :return: a list of variables used in the query
+    """
+
+    query_triples = nested_lookup('triples', query_algebra)
+    triple_variables = []
+    for triple_list in query_triples:
+        for triple in triple_list:
+            if isinstance(triple[0], Variable):
+                triple_variables.append(triple[0])
+            if isinstance(triple[1], Variable):
+                triple_variables.append(triple[1])
+            if isinstance(triple[2], Variable):
+                triple_variables.append(triple[2])
+
+    triple_variables = list(dict.fromkeys(triple_variables))
+
+    # So far this is used to identify bound variables found after the "bind" keyword
+    other_variables = nested_lookup('var', query_algebra)
+
+    variables = triple_variables + other_variables
+    return variables
 
 
 class Query:
@@ -89,63 +102,48 @@ class Query:
         """
 
         self.query = query
-        self.normalized_query = query
-        self.normalized_query_timestamped = query
+        self.query_for_execution = query
         if prefixes is not None:
             self.sparql_prefixes = _prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
-        q_desc = parser.parseQuery(self.sparql_prefixes + " " + query)
-        self.query_algebra = algebra.translateQuery(q_desc).algebra
-        self.variables = self._query_variables(query, self.sparql_prefixes)
-        # self.triples = _query_triples(query, self.sparql_prefixes) # include this?
+        self.query_algebra = _query_algebra(query, self.sparql_prefixes)
+        self.query_checksum = None
+        self.variables = _query_variables(self.query_algebra)
         self.query_pid = None
-        # self.query_result = None # include this?
 
-    def _query_variables(self, query, sparql_prefixes: str = None) -> list:
+    def normalize_query_tree(self, timestamp):
         """
-        The query must be a valid query including prefixes. They can be already embedded in the query or will
-        be embedded by providing them separately with the 'prefix' parameter.
-        The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
-        variables within a list. However, each of these lists enumerates the same variables only the first list
-        will be selected and returned.
-
-        :param query: The query which will be searched for variables
-        :param prefixes: The prefixes used in the query.
-        :return: a list of variables used in the query
-        """
-
-        query_triples = nested_lookup('triples', self.query_algebra)
-        triple_variables = []
-        for triple_list in query_triples:
-            for triple in triple_list:
-                if isinstance(triple[0], Variable):
-                    triple_variables.append(triple[0])
-                if isinstance(triple[1], Variable):
-                    triple_variables.append(triple[1])
-                if isinstance(triple[2], Variable):
-                    triple_variables.append(triple[2])
-
-        distinct_triple_variables = list(dict.fromkeys(triple_variables))
-        query_variables = nested_lookup('PV', self.query_algebra)[0]
-        variables = _intersection(distinct_triple_variables, query_variables)
-
-        """q_desc = parser.parseQuery(sparql_prefixes + " " + query)
-        q_algebra = algebra.translateQuery(q_desc).algebra
-
-        variables = []
-        get_vars = lambda x, l: [l.append(a) for a in x if isinstance(a, Variable)]
-        algebra.traverse(q_algebra, lambda s: get_vars(s, variables) if isinstance(s, set) else None)
-        variables = list(dict.fromkeys(variables))"""
-        return distinct_triple_variables
-
-    def normalize_query_tree(self):
-        """
-        Normalizes the query by computing its algebra first. Most of the ambiguities are implicitly solved by the query
-        algebra as different ways of writing a query usually boil down to one algebra. For case where normalization is
-        still needed, the query algebra will be updated.
+        Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
+        query algebra as different ways of writing a query usually boil down to one algebra. For case where
+        normalization  is still needed, the query algebra is be updated. First, the query is wrapped with a select
+        statement selecting all its variables in unambiguous order and a timestamp variable. The query tree
+        of the extended query is then computed and normalization measures are taken.
         :return: normalized query tree object
         """
+
+        template = """
+# prefixes
+{0} 
+
+Select {1} where {{
+    # original query comes here
+    {{ 
+        {2}
+    }}
+    # version timestamp
+    bind("{3}"^^xsd:dateTime as ?TimeOfCiting) 
+
+}}
+    
+"""
+        variables_query_string = ""
+        for v in self.variables:
+            variables_query_string+= v.n3() + " "
+        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+        timestamped_query = template.format(self.sparql_prefixes, variables_query_string, self.query, timestamp)
+        q_algebra = _query_algebra(timestamped_query, self.sparql_prefixes)
+
 
         """
         #3
@@ -183,26 +181,48 @@ class Query:
 
         int_norm_var = 'a'
         variables_mapping = {}
-        for i, v in enumerate(self.variables):
+        extended_variables = _query_variables(q_algebra)
+
+        for i, v in enumerate(extended_variables):
             next_norm_var = chr(ord(int_norm_var) + i)
             variables_mapping.update({v: next_norm_var})
 
         # replace variables with normalized variables (letters from the alphabet)
-        algebra.traverse(self.query_algebra,
+        algebra.traverse(q_algebra,
                          lambda var: variables_mapping.get(var) if isinstance(var, Variable) else None
                          )
 
         # identify _var sets and sort the variables inside
         norm_vars = lambda x: [variables_mapping[a] for a in x]
-        algebra.traverse(self.query_algebra,
+        algebra.traverse(q_algebra,
                          lambda s: sorted(norm_vars(s)) if isinstance(s, set) else None
                          )
 
         # Sort variables in select statement
-        algebra.traverse(self.query_algebra,
+        algebra.traverse(q_algebra,
                          lambda l: sorted(l) if isinstance(l, list) else None
                          )
-        return self.query_algebra
+        return q_algebra
+
+    def compute_checksum(self, query_or_result, query_algebra):
+        """
+        :param query_algebra: The algebra of the query. Ideally, this is a normalized query algebra with sorted
+        and normalized variables.
+        :param input: can be either a result set or a query object tree. In case of a query object tree
+        the hash value will be computed of the object string.
+        :param query_or_result:
+        :return: the hash value of either the query or query result
+        """
+
+        if query_or_result == "query":
+            query_algebra_string = str(query_algebra)
+            checksum = hashlib.sha256()
+            checksum.update(str.encode(query_algebra_string))
+            self.query_checksum = checksum.hexdigest()
+            return self.query_checksum
+
+        if query_or_result == "result":
+            pass
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
         """
@@ -252,14 +272,13 @@ Select {1} where {{
         # Prefixes, and timestamp injection
         timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
 
-        # columns of result set. Will be as in normalized query
-        variables_injection_string = ""
-        normalized_variables = self._query_variables(self.normalized_query, self.sparql_prefixes)
-        for v in normalized_variables:
-            variables_injection_string += v.n3() + " "
+        # columns of result set. Will be as in original query
+        variables_query_string = ""
+        for v in self.variables:
+            variables_query_string += v.n3() + " "
 
         # Query extensions for versioning injection
-        normalized_triples = _query_triples(self.normalized_query, self.sparql_prefixes)
+        triples = _query_triples(self.query, self.sparql_prefixes)
 
         versioning_query_extensions_template = """
         <<{0}>> citing:valid_from {1}.
@@ -268,43 +287,45 @@ Select {1} where {{
     """
 
         versioning_query_extensions = ""
-        for i, triple in enumerate(normalized_triples):
+        for i, triple in enumerate(triples):
             v = versioning_query_extensions_template
             versioning_query_extensions += v.format(triple, "?valid_from_" + str(i), "?valid_until_" + str(i))
 
         # Formatting and styling select statement
         indent = '        '
-        normalized_query_formatted = self.normalized_query.replace('\n', '\n' + indent)
+        normalized_query_formatted = self.query.replace('\n', '\n' + indent)
 
-        self.normalized_query_timestamped = template.format(self.sparql_prefixes,
-                                                            variables_injection_string,
-                                                            normalized_query_formatted,
-                                                            timestamp,
-                                                            versioning_query_extensions)
-
-        return self.normalized_query_timestamped
+        timestamped_query = template.format(self.sparql_prefixes,
+                                            variables_query_string,
+                                            normalized_query_formatted,
+                                            timestamp,
+                                            versioning_query_extensions)
+        return timestamped_query
 
     # TODO: implement this
     def generate_query_pid(self):
         self.query_pid = 12345
         return self.query_pid
 
-    def compute_checksum(self, query_or_result):
-        """
-        :param input: can be either a result set or a query object tree. In case of a query object tree
-        the hash value will be computed of the object string.
-        :param query_or_result:
-        :return: the hash value of either the query or query result
+    def extend_query_with_sort_operation(self, query, colored: bool = False):
+        variables_query_string = ""
+        for v in self.variables:
+            variables_query_string += v.n3() + " "
+
+        if colored:
+            sort_extension = "\x1b[36m" + "order by " + ' ' + variables_query_string + "\x1b[0m"
+        else:
+            sort_extension = "order by " + ' ' + variables_query_string
+
+        sorted_query = """
+    {0}
+    {1}
         """
 
-        if query_or_result == "query":
-            query_algebra_string = str(self.query_algebra)
-            checksum = hashlib.sha256()
-            checksum.update(str.encode(query_algebra_string))
+        if query is not None:
+            sorted_query = sorted_query.format(query, sort_extension)
 
-            return checksum.hexdigest()
-        if query_or_result == "result":
-            pass
+        return sorted_query
 
 
 def _get_prettyprint_string_sparql_var_result(result):
