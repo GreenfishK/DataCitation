@@ -9,6 +9,7 @@ import pandas as pd
 import re
 from datetime import datetime, timedelta, timezone
 import hashlib
+from pandas.util import hash_pandas_object
 
 
 def _prefixes_to_sparql(prefixes):
@@ -109,6 +110,7 @@ class Query:
             self.sparql_prefixes = ""
         self.query_algebra = _query_algebra(query, self.sparql_prefixes)
         self.query_checksum = None
+        self.result_checksum = None
         self.variables = _query_variables(self.query_algebra)
         self.query_pid = None
 
@@ -204,26 +206,6 @@ Select {1} where {{
                          )
         return q_algebra
 
-    def compute_checksum(self, query_or_result, query_algebra):
-        """
-        :param query_algebra: The algebra of the query. Ideally, this is a normalized query algebra with sorted
-        and normalized variables.
-        :param input: can be either a result set or a query object tree. In case of a query object tree
-        the hash value will be computed of the object string.
-        :param query_or_result:
-        :return: the hash value of either the query or query result
-        """
-
-        if query_or_result == "query":
-            query_algebra_string = str(query_algebra)
-            checksum = hashlib.sha256()
-            checksum.update(str.encode(query_algebra_string))
-            self.query_checksum = checksum.hexdigest()
-            return self.query_checksum
-
-        if query_or_result == "result":
-            pass
-
     def extend_query_with_timestamp(self, timestamp, colored: bool = False):
         """
         :param timestamp:
@@ -302,11 +284,6 @@ Select {1} where {{
                                             versioning_query_extensions)
         return timestamped_query
 
-    # TODO: implement this
-    def generate_query_pid(self):
-        self.query_pid = 12345
-        return self.query_pid
-
     def extend_query_with_sort_operation(self, query, colored: bool = False):
         variables_query_string = ""
         for v in self.variables:
@@ -326,6 +303,34 @@ Select {1} where {{
             sorted_query = sorted_query.format(query, sort_extension)
 
         return sorted_query
+
+    def compute_checksum(self, query_or_result, object):
+        """
+        :param query_algebra: The algebra of the query. Ideally, this is a normalized query algebra with sorted
+        and normalized variables.
+        :param input: can be either a result set or a query object tree. In case of a query object tree
+        the hash value will be computed of the object string.
+        :param query_or_result:
+        :return: the hash value of either the query or query result
+        """
+
+        if query_or_result == "query":
+            query_algebra_string = str(object)
+            checksum = hashlib.sha256()
+            checksum.update(str.encode(query_algebra_string))
+            self.query_checksum = checksum.hexdigest()
+            return self.query_checksum
+
+        if query_or_result == "result":
+            if isinstance(object, pd.DataFrame):
+                self.result_checksum = hash_pandas_object(object)
+                return self.result_checksum
+
+        # TODO: implement this
+
+    def generate_query_pid(self):
+        self.query_pid = 12345
+        return self.query_pid
 
 
 def _get_prettyprint_string_sparql_var_result(result):
@@ -485,8 +490,9 @@ class DataVersioning:
 
         return result
 
-    def get_data(self, select_statement, prefixes: dict = None, is_timestamped: bool = False):
+    def get_data(self, select_statement, prefixes: dict = None, is_timestamped: bool = False) -> pd.DataFrame:
         """
+        :param is_timestamped:
         :param select_statement:
         :param prefixes:
         :return:
