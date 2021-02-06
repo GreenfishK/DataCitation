@@ -4,6 +4,7 @@ import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import pandas as pd
 import hashlib
+import datetime
 from pandas.util import hash_pandas_object
 
 
@@ -235,19 +236,16 @@ Select * where {{
 
         if colored:
             template = """
-# prefixes
-\x1b[36m{0}\x1b[0m
-    
-Select \x1b[31m{1}\x1b[0m where {{
+Select \x1b[31m * \x1b[0m where {{
     # original query comes here
     {{ 
-        \x1b[32m{2}\x1b[0m
+        \x1b[32m{0}\x1b[0m
     }}
-    # version timestamp
-    bind("\x1b[34m{3}\x1b[0m"^^xsd:dateTime as ?TimeOfCiting) 
+    # citation timestamp
+    bind("\x1b[34m{1}\x1b[0m"^^xsd:dateTime as ?TimeOfCiting) 
 
     # data versioning query extension
-    \x1b[35m{4}\x1b[0m
+    \x1b[35m{2}\x1b[0m
 
 }}
     """
@@ -258,7 +256,7 @@ Select * where {{
     {{ 
         {0}
     }}
-    # version timestamp
+    # citation timestamp
     bind("{1}"^^xsd:dateTime as ?TimeOfCiting) 
 
     # data versioning query extension
@@ -338,7 +336,7 @@ Select {0} where {{
 
         # TODO: implement this
 
-    def generate_query_pid(self):
-        self.query_pid = self.citation_timestamp + self.query_checksum
+    def generate_query_pid(self, citation_timestamp: datetime, query_checksum: str):
+        self.query_pid = citation_timestamp + query_checksum
         return self.query_pid
 
