@@ -1,4 +1,4 @@
-import DataCitationFramework.TSDataCitation as dc
+import DataCitationFramework.QueryUtils as dc
 import queries_for_testing as q
 from rdflib import term
 from datetime import datetime, timedelta, timezone

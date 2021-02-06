@@ -8,6 +8,11 @@ from pandas.util import hash_pandas_object
 
 
 def prefixes_to_sparql(prefixes):
+    """
+    Converts a dict of prefixes to a string with SPARQL syntax for prefixes
+    :param prefixes:
+    :return: SPARQL prefixes as string
+    """
     sparql_prefixes = ""
     for key, value in prefixes.items():
         sparql_prefixes += "PREFIX " + key + ":" + "<" + value + "> \n"
@@ -98,6 +103,7 @@ class Query:
 
         self.query = query
         self.query_for_execution = query
+        self.citation_timestamp = None
         if prefixes is not None:
             self.sparql_prefixes = prefixes_to_sparql(prefixes)
         else:
@@ -108,45 +114,62 @@ class Query:
         self.variables = _query_variables(self.query_algebra)
         self.query_pid = None
 
-    def normalize_query_tree(self, timestamp):
+    def detach_prefixes(self, query):
         """
-        Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
-        query algebra as different ways of writing a query usually boil down to one algebra. For case where
-        normalization  is still needed, the query algebra is be updated. First, the query is wrapped with a select
-        statement selecting all its variables in unambiguous order and a timestamp variable. The query tree
-        of the extended query is then computed and normalization measures are taken.
-        :return: normalized query tree object
+        Cuts out prefixes from the passed
+        query and moves them to the top. This is because wrapping
+        around prefixes is not allowed in SPARQL. Prefixes must always be at the top of the statement.
+        If no prefixes are found, the query just gets returned.
+        :param query: A query string with or without prefixes
+        :return:
         """
 
+    def attach_prefixes(self) -> str:
         template = """
 # prefixes
 {0} 
 
-Select {1} where {{
+Select * where {{
     # original query comes here
     {{ 
-        {2}
+        {1}
     }}
-    # version timestamp
-    bind("{3}"^^xsd:dateTime as ?TimeOfCiting) 
-
 }}
-    
 """
-        variables_query_string = ""
-        for v in self.variables:
-            variables_query_string += v.n3() + " "
-        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
-        timestamped_query = template.format(self.sparql_prefixes, variables_query_string, self.query, timestamp)
-        q_algebra = _query_algebra(timestamped_query, self.sparql_prefixes)
+        query_with_prefixes = template.format(self.sparql_prefixes, self.query)
+        return query_with_prefixes
+
+    def normalize_query_tree(self):
+        """
+        Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
+        query algebra as different ways of writing a query usually boil down to one algebra. For case where
+        normalization  is still needed, the query algebra is be updated. First, the query is wrapped with a select
+        statement selecting all its variables in unambiguous order. The query tree of the extended query
+        is then computed and normalization measures are taken.
+        :return: normalized query tree object
+        """
 
         """
         #3
         In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
         and ordered alphabetically.
         """
-        pass
-        # Implicitly solved by query algebra
+
+        template = """
+        Select {1} where {{
+            # original query comes here
+            {{ 
+                {2}
+            }}
+        }}
+        """
+
+        variables_query_string = ""
+        for v in self.variables:
+            variables_query_string += v.n3() + " "
+        self.query = template.format(variables_query_string, self.query)
+        query = self.attach_prefixes()
+        q_algebra = _query_algebra(query, self.sparql_prefixes)
 
         """
         #1
@@ -230,30 +253,22 @@ Select \x1b[31m{1}\x1b[0m where {{
     """
         else:
             template = """
-# prefixes
-{0} 
-
-Select {1} where {{
+Select * where {{
     # original query comes here
     {{ 
-        {2}
+        {0}
     }}
     # version timestamp
-    bind("{3}"^^xsd:dateTime as ?TimeOfCiting) 
+    bind("{1}"^^xsd:dateTime as ?TimeOfCiting) 
 
     # data versioning query extension
-    {4} 
+    {2} 
 
 }}
     """
 
         # Prefixes, and timestamp injection
         timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
-
-        # columns of result set. Will be as in original query
-        variables_query_string = ""
-        for v in self.variables:
-            variables_query_string += v.n3() + " "
 
         # Query extensions for versioning injection
         triples = _query_triples(self.query, self.sparql_prefixes)
@@ -273,9 +288,7 @@ Select {1} where {{
         indent = '        '
         normalized_query_formatted = self.query.replace('\n', '\n' + indent)
 
-        timestamped_query = template.format(self.sparql_prefixes,
-                                            variables_query_string,
-                                            normalized_query_formatted,
+        timestamped_query = template.format(normalized_query_formatted,
                                             timestamp,
                                             versioning_query_extensions)
         return timestamped_query
@@ -291,12 +304,16 @@ Select {1} where {{
             sort_extension = "order by " + ' ' + variables_query_string
 
         sorted_query = """
-    {0}
-    {1}
-        """
+Select {0} where {{
+    # original query comes here
+    {{ 
+        {1}
+    }} 
+}} {2}
+                """
 
         if query is not None:
-            sorted_query = sorted_query.format(query, sort_extension)
+            sorted_query = sorted_query.format(variables_query_string, query, sort_extension)
 
         return sorted_query
 
@@ -322,44 +339,6 @@ Select {1} where {{
         # TODO: implement this
 
     def generate_query_pid(self):
-        self.query_pid = self.query_checksum
+        self.query_pid = self.citation_timestamp + self.query_checksum
         return self.query_pid
 
-    def cite(self, select_statement, result_set_description):
-        citation_text = ""
-        query = Query(select_statement)
-        normalized_query = query.normalize_query_tree()
-
-        # extend query with version timestamp
-
-        # extend query with sort operation
-
-        # compute checksum
-
-        # check query against query store
-
-        # case 1: query exists: get query from query store
-
-        # execute query
-
-        # compute hash value of result set
-
-        # compare hash values
-
-        # generate citation text
-
-        # case 2: query does not exist:
-
-        # generate query PID
-        query_pid = query.generate_query_pid()
-
-        # execute query
-
-        # compute hash value of result set
-
-        # store: query PID, query checksum, query, normalized query, version timestamp, execution timestamp, result
-        # result set check sum, result set description
-
-        return citation_text
-
-        # embed query timestamp (max valid_from of dataset)

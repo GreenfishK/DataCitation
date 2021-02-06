@@ -2,7 +2,7 @@ from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal, Variable
 import pandas as pd
 from datetime import datetime, timedelta, timezone
-from DataCitationFramework.TSDataCitation import Query, prefixes_to_sparql
+from DataCitationFramework.QueryUtils import Query, prefixes_to_sparql
 
 
 def _get_prettyprint_string_sparql_var_result(result):
@@ -141,36 +141,33 @@ class SPARQLAPI:
         self.sparql_post.query()
         print("All rows have been annotated with the current timestamp")
 
-    def get_data(self, select_statement, prefixes: dict = None, is_timestamped: bool = False) -> pd.DataFrame:
+    def get_data(self, select_statement, prefixes: dict = None) -> pd.DataFrame:
         """
-        :param is_timestamped:
+        Executes the SPARQL select statement and returns a result set.
+        :param timestamp: the timestamp that will be wrapped around the query to retrieve a
+        snapshot of the date as of "timestamp".
         :param select_statement:
         :param prefixes:
         :return:
         """
 
-        if is_timestamped:
-            self.sparql_get.setQuery(select_statement)
-            result = self.sparql_get.query()
-            df = _QueryResult_to_dataframe(result)
-        else:
-            vieTZObject = timezone(timedelta(hours=2))
-            current_timestamp = datetime.now(vieTZObject)
-            df = self.get_data_at_timestamp(select_statement, current_timestamp, prefixes)
-        return df
+        query = select_statement
+        if prefixes:
+            template = """
+            # prefixes
+            {0} 
 
-    def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict = None) -> pd.DataFrame:
-        """
+            Select * where {{
+                # original query comes here
+                {{ 
+                    {1}
+                }}
+            }}
+            """
+            prefixes_sparql = prefixes_to_sparql(prefixes)
+            query = template.format(prefixes_sparql, select_statement)
 
-        :param select_statement:
-        :param timestamp: timestamp of the snapshot. The timestamp must be in format: yyyy-MM-ddTHH:mm:ss.SSS+ZZ:ZZ
-        :param prefixes:
-        :return: Dataframe object
-        """
-        query = Query(select_statement, prefixes)
-        timestamped_query = query.extend_query_with_timestamp(timestamp)
-
-        self.sparql_get.setQuery(timestamped_query)
+        self.sparql_get.setQuery(query)
         result = self.sparql_get.query()
         df = _QueryResult_to_dataframe(result)
         return df
