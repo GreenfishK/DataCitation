@@ -1,4 +1,4 @@
-from rdflib.term import  Variable
+from rdflib.term import Variable
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
@@ -63,8 +63,7 @@ def _query_variables(query_algebra) -> list:
     variables within a list. However, each of these lists enumerates the same variables only the first list
     will be selected and returned.
 
-    :param query: The query which will be searched for variables
-    :param prefixes: The prefixes used in the query.
+    :param query_algebra:
     :return: a list of variables used in the query
     """
 
@@ -136,11 +135,10 @@ Select {1} where {{
 """
         variables_query_string = ""
         for v in self.variables:
-            variables_query_string+= v.n3() + " "
+            variables_query_string += v.n3() + " "
         timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
         timestamped_query = template.format(self.sparql_prefixes, variables_query_string, self.query, timestamp)
         q_algebra = _query_algebra(timestamped_query, self.sparql_prefixes)
-
 
         """
         #3
@@ -190,7 +188,9 @@ Select {1} where {{
                          )
 
         # identify _var sets and sort the variables inside
-        norm_vars = lambda x: [variables_mapping[a] for a in x]
+        def norm_vars(x):
+            return [variables_mapping[a] for a in x]
+        # norm_vars = lambda x: [variables_mapping[a] for a in x]
         algebra.traverse(q_algebra,
                          lambda s: sorted(norm_vars(s)) if isinstance(s, set) else None
                          )
@@ -201,12 +201,13 @@ Select {1} where {{
                          )
         return q_algebra
 
-    def extend_query_with_timestamp(self, timestamp, colored: bool = False):
+    def extend_query_with_timestamp(self, timestamp, colored: bool = False) -> str:
         """
         :param timestamp:
         :param colored: If colored is true, the injected strings within the statement template will be colored.
-        Use this parameter only for presentation purpose as the code for color encoding will malform the SPARQL query!
-        :return:
+        Use this parameter only for presentation purpose as the code for color encoding will make the SPARQL
+        query erroneous!
+        :return: A query string extended with the given timestamp
         """
 
         if colored:
@@ -299,26 +300,23 @@ Select {1} where {{
 
         return sorted_query
 
-    def compute_checksum(self, query_or_result, object):
+    def compute_checksum(self, query_or_result, citation_object):
         """
-        :param query_algebra: The algebra of the query. Ideally, this is a normalized query algebra with sorted
-        and normalized variables.
-        :param input: can be either a result set or a query object tree. In case of a query object tree
-        the hash value will be computed of the object string.
         :param query_or_result:
+        :param citation_object: A query string or result set
         :return: the hash value of either the query or query result
         """
 
         if query_or_result == "query":
-            query_algebra_string = str(object)
+            query_algebra_string = str(citation_object)
             checksum = hashlib.sha256()
             checksum.update(str.encode(query_algebra_string))
             self.query_checksum = checksum.hexdigest()
             return self.query_checksum
 
         if query_or_result == "result":
-            if isinstance(object, pd.DataFrame):
-                self.result_checksum = hash_pandas_object(object)
+            if isinstance(citation_object, pd.DataFrame):
+                self.result_checksum = hash_pandas_object(citation_object)
                 return self.result_checksum.mean()
 
         # TODO: implement this
@@ -353,7 +351,7 @@ Select {1} where {{
         # case 2: query does not exist:
 
         # generate query PID
-        query_PID = query.generate_query_PID()
+        query_pid = query.generate_query_pid()
 
         # execute query
 

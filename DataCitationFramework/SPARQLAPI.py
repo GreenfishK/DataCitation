@@ -43,7 +43,6 @@ def _QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     return df
 
 
-
 class SPARQLAPI:
     """
 
@@ -51,21 +50,24 @@ class SPARQLAPI:
 
     def __init__(self, query_endpoint, update_endpoint, prefixes=None, credentials=None):
         """
-
-        :param query_endpoint:
-        :param update_endpoint:
+        :param query_endpoint: URL for executing read/select statements on the RDF store. In GRAPHDB this URL can be
+        looked up under "Setup --> Repositories --> Link icon"
+        :param update_endpoint: URL for executing write statements on the RDF store. Its URL is an extension of
+        query_endpoint: "query_endpoint/statements"
         :param prefixes:
         :param credentials:
         """
+        # self.query_endpoint = query_endpoint
+        # self.update_endpoint = update_endpoint
+        # self.query_object = None
 
-        self.query_endpoint = query_endpoint
-        self.update_endpoint = update_endpoint
-        self.query_object = None
+        # Parameters
         self.prefixes = prefixes
         self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_post = SPARQLWrapper(update_endpoint)
         self.credentials = credentials
 
+        # Settings
         self.sparql_post.setHTTPAuth(DIGEST)
         self.sparql_post.setMethod(POST)
 
@@ -76,6 +78,22 @@ class SPARQLAPI:
         if self.credentials is not None:
             self.sparql_post.setCredentials(credentials)
             self.sparql_get.setCredentials(credentials)
+
+        # Test connection. Execute one read and one write statement
+        print(self.sparql_get)
+        self.sparql_get.setQuery("select * where { ?s ?p ?o .} limit 100")
+        result = self.sparql_get.query()
+        print(result)
+
+        print(self.sparql_post)
+        delete_statement = "PREFIX pub: <http://ontology.ontotext.com/taxonomy/>" \
+                           "PREFIX citing: <http://ontology.ontotext.com/citing/>"\
+                           "delete where " \
+                           "{<http://ontology.ontotext.com/resource/tsk9hdnas934> pub:countryOfCitizenship 'Brazil'}"
+        self.sparql_post.setQuery(delete_statement)
+        self.sparql_post.query()
+
+        print("test successful")
 
     def reset_all_versions(self):
         """
@@ -141,7 +159,7 @@ class SPARQLAPI:
             df = self.get_data_at_timestamp(select_statement, current_timestamp, prefixes)
         return df
 
-    def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict = None):
+    def get_data_at_timestamp(self, select_statement, timestamp, prefixes: dict = None) -> pd.DataFrame:
         """
 
         :param select_statement:
