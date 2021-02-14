@@ -110,8 +110,9 @@ class Query:
         else:
             self.sparql_prefixes = ""
         self.query_algebra = _query_algebra(query, self.sparql_prefixes)
+        self.normalized_query_algebra = None
         self.query_checksum = None
-        self.result_checksum = None
+        self.result_set_checksum = None
         self.variables = _query_variables(self.query_algebra)
         self.query_pid = None
 
@@ -223,6 +224,7 @@ Select * where {{
         algebra.traverse(q_algebra,
                          lambda l: sorted(l) if isinstance(l, list) else None
                          )
+        self.normalized_query_algebra = q_algebra
         return q_algebra
 
     def extend_query_with_timestamp(self, timestamp, colored: bool = False) -> str:
@@ -318,25 +320,34 @@ Select {0} where {{
     def compute_checksum(self, query_or_result, citation_object):
         """
         :param query_or_result:
-        :param citation_object: A query string or result set
+        :param citation_object: A query or result set
         :return: the hash value of either the query or query result
         """
 
         if query_or_result == "query":
-            query_algebra_string = str(citation_object)
+            query_string = str(citation_object)
             checksum = hashlib.sha256()
-            checksum.update(str.encode(query_algebra_string))
+            checksum.update(str.encode(query_string))
             self.query_checksum = checksum.hexdigest()
             return self.query_checksum
 
         if query_or_result == "result":
             if isinstance(citation_object, pd.DataFrame):
-                self.result_checksum = hash_pandas_object(citation_object)
-                return self.result_checksum.mean()
+                self.result_set_checksum = hash_pandas_object(citation_object)
+                return self.result_set_checksum.mean()
 
         # TODO: implement this
 
-    def generate_query_pid(self, citation_timestamp: datetime, query_checksum: str):
-        self.query_pid = citation_timestamp + query_checksum
+    def generate_query_pid(self, timestamp: datetime, query_checksum: str):
+        """
+
+        :param timestamp: Can be either the citation timestamp or query timestamp.
+        The citation timestamp is the datetime as of query citation. The query timestamp
+        is the version of the query which only changes if the result set returned by
+        the query has changed.
+        :param query_checksum:
+        :return:
+        """
+        self.query_pid = query_checksum + timestamp
         return self.query_pid
 
