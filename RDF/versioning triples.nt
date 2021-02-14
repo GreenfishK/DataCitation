@@ -1,0 +1,140 @@
+## count number of rows
+SELECT (COUNT(*) AS ?count)
+WHERE {
+  ?s ?p ?o
+}
+
+
+
+
+
+# reset all version triples
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+# reset versions 
+delete {
+    ?s citing:valid_from ?o  ;  
+       citing:valid_until ?o   
+}
+where
+{
+   ?s ?p ?o .
+}
+
+
+
+
+
+# version all rows with latest version
+# initial versioning
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+insert 
+{
+    <<?s ?p ?o>> citing:valid_from ?currentTimestamp;
+                 citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+            
+}
+where
+{
+   ?s ?p ?o .
+   BIND(xsd:dateTime(NOW()) AS ?currentTimestamp).
+}
+
+
+
+
+
+
+# Update matching triples
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+delete {
+    # changing citizenship of Fernando Alonso. Old citizenship will not be deleted, the new row will just get a new version
+    # <http://ontology.ontotext.com/resource/tsk9hdnas934> a ?s .
+    #  pub:countryOfCitizenship a ?p.
+    <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
+}
+insert {
+    # outdate old triple with date as of now()
+    <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
+    
+    # update new row with value and timestamp as of now()
+    ?subjectToUpdate ?predicateToUpdate ?newValue . # new value
+    # assign new version. if variable is used, multiple ?newVersion are retrieved leading to multiple updates. TODO: fix this
+    <<?subjectToUpdate ?predicateToUpdate ?newValue>> citing:valid_from ?newVersion ;
+                                                            citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+}
+# unfortunatelly, no nested triples statements <<?s ?p ?o>> are allowed in the where clause of a insert/delete statement.
+where {
+    # business logic - rows to update
+    ?person a pub:Person .
+    ?person pub:preferredLabel ?label .
+    ?person pub:countryOfCitizenship ?countryOfCitizenship .
+    filter(?label = "Fernando Alonso"@en)
+    
+    # Inputs to provide
+    bind(?person as ?subjectToUpdate)
+    bind(pub:countryOfCitizenship as ?predicateToUpdate)
+    bind(?countryOfCitizenship as ?objectToUpdate) 
+
+    bind("Brazil" as ?newValue). #new Value
+    #bind(<http://ontology.ontotext.com/resource/Q82652S689AFD8E-761D-4918-B035-F64CAC66B636> as ?newValue). #new Value
+
+    # versioning
+    #?triple citing:version ?version . #why ?triple cannot be a nested triple in a delete/insert statement?
+    <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until .
+    BIND(xsd:dateTime(NOW()) AS ?newVersion). # multiple ?versions are retrieved leading to multiple updates. TODO: fix this
+    
+    filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
+    filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
+}
+
+
+
+
+
+
+# insert a new row
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+insert {
+    <http://ontology.ontotext.com/resource/tsk9hdnas934> pub:occupation "Cook".
+    <<<http://ontology.ontotext.com/resource/tsk9hdnas934> pub:occupation "Cook">>  citing:valid_from ?newVersion.
+    <<<http://ontology.ontotext.com/resource/tsk9hdnas934> pub:occupation "Cook">>  citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+}
+where {
+    BIND(xsd:dateTime(NOW()) AS ?newVersion). 
+}
+
+
+
+
+
+# get data that were valid at a certain timestamp - update
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+
+select ?s ?p ?o ?valid_from ?valid_until where {
+
+    ?person a pub:Person .
+    ?person pub:preferredLabel ?label .
+    #?person pub:countryOfCitizenship ?countryOfCitizenship . #
+    filter(?label = "Fernando Alonso"@en)
+
+    # user input
+    bind(?person as ?s)
+    #bind(pub:countryOfCitizenship as ?p)
+    bind(?countryOfCitizenship as ?o)
+    bind("2020-08-16T21:55:50.986+02:00"^^xsd:dateTime as ?TimeOfCiting)
+
+    <<?s ?p ?o>> citing:valid_from ?valid_from.
+    <<?s ?p ?o>> citing:valid_until ?valid_until.
+    filter(?valid_from <= ?TimeOfCiting) # get data at a certain point in time
+    filter(?TimeOfCiting < ?valid_until)
+
+}
+limit 100 
