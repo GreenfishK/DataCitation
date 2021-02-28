@@ -103,20 +103,21 @@ class Query:
         """
 
         self.query = query
-        self.query_for_execution = query
+        self.query_for_execution = query # just for presentation purpose
         self.citation_timestamp = None
+        # self.execution_timestamp = None
         if prefixes is not None:
             self.sparql_prefixes = prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
-        self.query_algebra = _query_algebra(query, self.sparql_prefixes)
+        self.query_algebra = None # _query_algebra(query, self.sparql_prefixes)
+        self.variables = None # _query_variables(self.query_algebra)
         self.normalized_query_algebra = None
         self.query_checksum = None
         self.result_set_checksum = None
-        self.variables = _query_variables(self.query_algebra)
         self.query_pid = None
 
-    def detach_prefixes(self, query):
+    def detach_prefixes(self, query) -> str:
         """
         Cuts out prefixes from the passed
         query and moves them to the top. This is because wrapping
@@ -126,7 +127,7 @@ class Query:
         :return:
         """
 
-    def attach_prefixes(self) -> str:
+    def attach_prefixes(self, query) -> str:
         template = """
 # prefixes
 {0} 
@@ -138,14 +139,14 @@ Select * where {{
     }}
 }}
 """
-        query_with_prefixes = template.format(self.sparql_prefixes, self.query)
+        query_with_prefixes = template.format(self.sparql_prefixes, query)
         return query_with_prefixes
 
     def normalize_query_tree(self):
         """
         Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
-        query algebra as different ways of writing a query usually boil down to one algebra. For case where
-        normalization  is still needed, the query algebra is be updated. First, the query is wrapped with a select
+        query algebra as different ways of writing a query usually boil down to one algebra. For cases where
+        normalization is still needed, the query algebra is be updated. First, the query is wrapped with a select
         statement selecting all its variables in unambiguous order. The query tree of the extended query
         is then computed and normalization measures are taken.
         :return: normalized query tree object
@@ -158,20 +159,16 @@ Select * where {{
         """
 
         template = """
-        Select {1} where {{
+        Select {0} where {{
             # original query comes here
             {{ 
-                {2}
+                {1}
             }}
         }}
         """
 
-        variables_query_string = ""
-        for v in self.variables:
-            variables_query_string += v.n3() + " "
-        self.query = template.format(variables_query_string, self.query)
-        query = self.attach_prefixes()
-        q_algebra = _query_algebra(query, self.sparql_prefixes)
+        self.query_algebra = _query_algebra(self.query, self.sparql_prefixes)
+        self.variables = _query_variables(self.query_algebra)
 
         """
         #1
@@ -187,8 +184,12 @@ Select * where {{
         The triple order is already unambiguous in the query algebra. The only requirement is
         that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
         """
-        pass
-        # Implicitly solved by query algebra
+        variables_query_string = ""
+        for v in self.variables:
+            variables_query_string += v.n3() + " "
+        query = template.format(variables_query_string, self.query)
+        query_with_prefixes = self.attach_prefixes(query)
+        q_algebra = _query_algebra(query_with_prefixes, self.sparql_prefixes)
 
         """
         #7
@@ -227,7 +228,7 @@ Select * where {{
         self.normalized_query_algebra = q_algebra
         return q_algebra
 
-    def extend_query_with_timestamp(self, timestamp, colored: bool = False) -> str:
+    def extend_query_with_timestamp(self, timestamp: datetime, colored: bool = False) -> str:
         """
         :param timestamp:
         :param colored: If colored is true, the injected strings within the statement template will be colored.
@@ -266,9 +267,9 @@ Select * where {{
 
 }}
     """
-
         # Prefixes, and timestamp injection
-        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + timestamp.strftime("%z")[3:5]
+        self.citation_timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
+                                  + timestamp.strftime("%z")[3:5]
 
         # Query extensions for versioning injection
         triples = _query_triples(self.query, self.sparql_prefixes)
@@ -289,7 +290,7 @@ Select * where {{
         normalized_query_formatted = self.query.replace('\n', '\n' + indent)
 
         timestamped_query = template.format(normalized_query_formatted,
-                                            timestamp,
+                                            self.citation_timestamp,
                                             versioning_query_extensions)
         return timestamped_query
 

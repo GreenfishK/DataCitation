@@ -47,35 +47,32 @@ def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
     :param prefixes:
     :return:
     """
-
-    query = qu.Query(select_statement, prefixes)
-    normalized_query_algebra = query.normalize_query_tree()
-    query.compute_checksum("query", normalized_query_algebra)
-    query.citation_timestamp = datetime.now(timezone(timedelta(hours=2)))
-    query.generate_query_pid(query.citation_timestamp, query.query_checksum)
-    query_pid = query.query_pid
-    timestamped_query = query.extend_query_with_timestamp(query.citation_timestamp)
-    sorted_query = query.extend_query_with_sort_operation(timestamped_query)
-
     sparqlapi = sa.SPARQLAPI('http://192.168.0.241:7200/repositories/DataCitation',
                              'http://192.168.0.241:7200/repositories/DataCitation/statements')
-    query_result = sparqlapi.get_data(sorted_query, prefixes)
-    query.compute_checksum("result", query_result)
-
     query_store = qs.QueryStore("query_store.db")
-    existing_query = query_store.lookup(query.query_checksum)  # --> Query
+    query_to_cite = qu.Query(select_statement, prefixes)
+
+    query_to_cite.normalize_query_tree()
+    query_to_cite.compute_checksum("query", query_to_cite.normalized_query_algebra)
+    existing_query = query_store.lookup(query_to_cite.query_checksum)  # --> Query
+
     if existing_query:
-        if query.result_set_checksum == existing_query.result_set_checksum:
+        timestamped_query = query_to_cite.extend_query_with_timestamp(datetime.now(timezone(timedelta(hours=2))))
+        sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query)
+        query_result = sparqlapi.get_data(sorted_query, prefixes)
+        query_to_cite.compute_checksum("result", query_result)
+        if query_to_cite.result_set_checksum == existing_query.result_set_checksum:
             query_pid = existing_query.query_pid
         else:
-            query_store.insert_new_query_version(query, query.citation_timestamp)
-            query.generate_query_pid(query.citation_timestamp, query.query_checksum)
-            query_pid = query.query_pid
-        citation_snippet = query_store.citation_snippet(query_pid)
-        return citation_snippet
+            citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
+            query_store.store(query_to_cite, citation_snippet, False)
+            query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
+            query_pid = query_to_cite.query_pid
+        citation_snippet = query_store.citation_snippet(query_pid)  # retrieve by checksum?
     else:
-        citation_snippet = generate_citation_snippet(query_pid, result_set_desc, citation_data)
-        query_store.store(query, citation_snippet)
-        return citation_snippet
+        citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
+        query_store.store(query_to_cite, citation_snippet)
+
+    return citation_snippet
 
     # embed query timestamp (max valid_from of dataset)

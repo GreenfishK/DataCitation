@@ -19,17 +19,22 @@ The libraries were installed in a virtual conda environment labeled 'TripleStore
 # Database setup
 Create db and necessary tables by typing following code into the command line:
 
-    sqlite3 query_store.db "Create table citation_data (
-    id_ct_data INT PRIMARY KEY,
-    query_PID CHAR (500),
-    query_checksum CHAR(200),
-    result_set_checksum CHAR(200),
+    sqlite3 query_store.db "Create table query (
+    query_checksum CHAR (200) PRIMARY KEY,
     orig_query CHAR (4000),
-    normal_query CHAR (4000),
-    query_timestamp DATETIME,
-    execution_timestamp DATETIME,
-    citation_snippet CHAR (4000)
+    normal_query CHAR (4000)
     )"
+
+    sqlite3 query_store.db "Create table query_citation (
+    query_PID CHAR (500) PRIMARY KEY,
+    query_checksum CHAR (200),
+    result_set_checksum CHAR (200),
+    result_set_desc CHAR (4000),
+    citation_timestamp DATETIME,
+    citation_snippet CHAR (4000),
+    foreign key(query_checksum) references query(query_checksum)
+    )"
+
 
 citation_data
 /*
@@ -41,7 +46,7 @@ Test database by selecting from it. This can be done by issuing following statem
 
     sqlite3
     .open query_store.db
-    select * from query_store.citation_data;
+    select * from query_store.query;
 
 An empty result set should be returned.
 
