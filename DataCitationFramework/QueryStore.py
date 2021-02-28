@@ -1,6 +1,6 @@
-import sqlite3
 import sqlalchemy as sql
 from DataCitationFramework.QueryUtils import Query
+import pandas as pd
 import datetime
 import json
 
@@ -16,22 +16,30 @@ class QueryStore:
         :param query_checksum:
         :return:
         """
-        select_statement = "select * from query a join query_citation b " \
+        select_statement = "select b.query_pid, a.query_checksum, a.orig_query, a.normal_query, " \
+                           "b.result_set_checksum, b.result_set_desc, b.citation_timestamp, b.citation_snippet " \
+                           "from query a join query_citation b " \
                            "on a.query_checksum = b.query_checksum " \
-                           "where checksum = {0} and citation_timestamp =" \
-                           "(select max(citation_timestamp) from query_citation" \
-                           "where a.query_checksum = query_checksum)".format(query_checksum)
+                           "where a.query_checksum = {0} and citation_timestamp =" \
+                           "(select max(citation_timestamp) from query_citation c " \
+                           "where a.query_checksum = c.query_checksum)".format(query_checksum)
         with self.engine.connect() as connection:
             try:
                 result = connection.execute(select_statement)
+                df = pd.DataFrame(result.fetchall())
+                df.columns = result.keys()
+
+                query = Query(df.orig_query)
+                query.normalized_query_algebra = df.normal_query.loc[0]
+                query.result_set_checksum = df.result_set_checksum.loc[0]
+                query_datetime = df.citation_timestamp.loc[0]
+                citation_timestamp = datetime.datetime.strptime(query_datetime, "%Y-%m-%dT%H:%M:%S.%f%z")
+                query.citation_timestamp = citation_timestamp
+                query.query_pid = df.query_pid.loc[0]
+
+                return query
             except Exception as e:
                 print(e)
-
-        query = Query(result.orig_query)
-        query.citation_timestamp = result.citation_timestamp
-        query.query_pid = result.query_PID
-
-        return query
 
     def store(self, query: Query, citation_snippet: str, yn_new_query=True):
         """
