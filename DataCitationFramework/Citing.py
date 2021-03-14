@@ -6,10 +6,21 @@ from datetime import datetime, timedelta, timezone
 
 
 def generate_citation_snippet(query_pid: str, result_set_desc: str, citation_data: dict) -> str:
-    snippet = "query_pid: {0} \n".format(query_pid)
-    snippet += "Result set description: {0} \n".format(result_set_desc)
-    for key, value in citation_data.items():
-        snippet += "{0}: {1} \n".format(key, value)
+    """
+    :param query_pid:
+    :param result_set_desc:
+    :param citation_data:
+    :return:
+    """
+    # TODO: Which metadata set to use?
+    snippet = "{0}, {1}, {2}, {3}, {4}, {5}, {6}, query_pid: {7} \n".format(citation_data['title'],
+                                                                            result_set_desc,
+                                                                            citation_data['author'],
+                                                                            citation_data['publisher'],
+                                                                            citation_data['edition'],
+                                                                            citation_data['resource type'],
+                                                                            citation_data['location'],
+                                                                            query_pid)
     return snippet
 
 
@@ -52,24 +63,32 @@ def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
     query_store = qs.QueryStore("query_store.db")
     query_to_cite = qu.Query(select_statement, prefixes)
 
+    # Assign citation timestamp to query object
+    citation_datetime = datetime.now(timezone(timedelta(hours=2)))
+    citation_timestamp = citation_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
+                        + citation_datetime.strftime("%z")[3:5]
+    query_to_cite.citation_timestamp = citation_timestamp
+
+    # Normalize query and compute checksum. Check for existing checksum
     query_to_cite.normalize_query_tree()
     query_to_cite.compute_checksum("query", query_to_cite.normalized_query_algebra)
-    existing_query = query_store.lookup(query_to_cite.query_checksum)  # --> Query
+    timestamped_query = query_to_cite.extend_query_with_timestamp()
+    sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query)
+    query_result = sparqlapi.get_data(sorted_query, prefixes)
+    query_to_cite.compute_checksum("result", query_result)
 
+    existing_query = query_store.lookup(query_to_cite.query_checksum)  # --> Query
     if existing_query:
-        timestamped_query = query_to_cite.extend_query_with_timestamp(datetime.now(timezone(timedelta(hours=2))))
-        sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query)
-        query_result = sparqlapi.get_data(sorted_query, prefixes)
-        query_to_cite.compute_checksum("result", query_result)
         if query_to_cite.result_set_checksum == existing_query.result_set_checksum:
             query_pid = existing_query.query_pid
         else:
+            query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
             citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
             query_store.store(query_to_cite, citation_snippet, False)
-            query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
             query_pid = query_to_cite.query_pid
         citation_snippet = query_store.citation_snippet(query_pid)  # retrieve by checksum?
     else:
+        query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
         citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
         query_store.store(query_to_cite, citation_snippet)
 

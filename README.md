@@ -1,8 +1,6 @@
 # Introduction
-In order for the functions of this framework to work a triple store supporting SRAPQL* and RDF* needs to be setup, either locally or remotely. The only two parameters that need to be configured are the GET/read and POST/write endpoints. This is done by instantiating the class SPARQLAPI and passing the two endpoint URIs to the constructor. These URIs, however, vary from solution to solution.
-
-Examples for a locally set up "GraphDB free" database are found in the file "Playground". 
-
+In order for the functions of this framework to work a triple store supporting SRAPQL* and RDF* and a query store need to be setup. The only two parameters that need to be configured are the GET/read and POST/write endpoints. This is done by instantiating the class SPARQLAPI and passing the two endpoint URIs to the constructor. These URIs, however, vary from solution to solution. Examples for a locally set up "GraphDB free" database are found in the file "Playground". 
+The query store is based on the citation data attributes from the literature (Dublin core, dataverse, FORCE11...) but it rather uses a common set of attributes and does not fully replicate any of these sets.
 
 # Libraries needed:
 * rdflib: conda install -c conda-forge rdflib
@@ -19,45 +17,43 @@ The libraries were installed in a virtual conda environment labeled 'TripleStore
 # Database setup
 Create db and necessary tables by typing following code into the command line:
 
-    sqlite3 query_store.db "Create table query (
+    sqlite3 query_store.db 
+
+    Create table query_hub (
     query_checksum CHAR (200) PRIMARY KEY,
     orig_query CHAR (4000),
     normal_query CHAR (4000)
-    )"
+    );
 
-    sqlite3 query_store.db "Create table query_citation (
-    query_PID CHAR (500) PRIMARY KEY,
+    Create table query_citation (
+    query_pid CHAR (500) PRIMARY KEY,
     query_checksum CHAR (200),
     result_set_checksum CHAR (200),
-    result_set_desc CHAR (4000),
     citation_timestamp DATETIME,
     citation_snippet CHAR (4000),
-    foreign key(query_checksum) references query(query_checksum)
-    )"
+    foreign key(query_checksum) references query_hub(query_checksum)
+    );
 
 
-citation_data
-/*
-might be a dict in JSON or XML format
-and contain different citation data sets (e.g. dublin core, dataverse, FORCE11...)
-*/
-
-Test database by selecting from it. This can be done by issuing following statement via CLI:
+Test database by inserting data and executing a query with both tables joined. This can be done by issuing following statement via CLI:
 
     sqlite3
     .open query_store.db
-    select * from query_store.query;
+    insert into query_hub values (123, 'Select * from dual', 'Select a, b, c from dual');
+    insert into query_citation values (1, 123, 333443, 'some description', '2020-09-08T12:11:21.941+02:00', 'Some citation snippet');
+    insert into query_citation values (2, 123, 123132, 'some other description', '2021-01-08T12:11:21.941+02:00', 'Some other citation snippet');
 
-An empty result set should be returned.
+    sqlite3
+    .open query_store.db
+    select b.query_pid, a.query_checksum, a.orig_query, a.normal_query,
+    b.result_set_checksum, b.result_set_desc, b.citation_timestamp, b.citation_snippet
+    from query a join query_citation b
+    on a.query_checksum = b.query_checksum
+    where a.query_checksum = 123 and citation_timestamp =
+    (select max(citation_timestamp) from query_citation c
+    where a.query_checksum = c.query_checksum);
 
-Test database by inserting a record. This can be done by typing following into the command line:
-
-    insert into citation_data values (1,"ABC", "checksumABC", "checksumResultABC", "Select * from dual", "Select * from dual", "2021-02-14 15:12:19", "2021-02-14 15:12:19", "some description", "some JSON object");
-
-The inserted row should be returned. Now let's remove the row again.
-
-    Delete from citation_data;
-
+One record should be returned where the record from the query_citation table will be the one with the most recent citation date.
 Quit the sqlite3 editor with:
 
     .quit

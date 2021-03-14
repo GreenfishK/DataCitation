@@ -110,8 +110,8 @@ class Query:
             self.sparql_prefixes = prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
-        self.query_algebra = None # _query_algebra(query, self.sparql_prefixes)
-        self.variables = None # _query_variables(self.query_algebra)
+        self.query_algebra = None  # _query_algebra(query, self.sparql_prefixes)
+        self.variables = None  # _query_variables(self.query_algebra)
         self.normalized_query_algebra = None
         self.query_checksum = None
         self.result_set_checksum = None
@@ -225,12 +225,13 @@ Select * where {{
         algebra.traverse(q_algebra,
                          lambda l: sorted(l) if isinstance(l, list) else None
                          )
-        self.normalized_query_algebra = q_algebra
-        return q_algebra
+        self.normalized_query_algebra = str(q_algebra)
+        return str(q_algebra)
 
-    def extend_query_with_timestamp(self, timestamp: datetime, colored: bool = False) -> str:
+    def extend_query_with_timestamp(self, timestamp: datetime = None, colored: bool = False) -> str:
         """
-        :param timestamp:
+        :param timestamp: If no timestamp is passed the citation timestamp from self.citation_timestamp
+        will be attached to the query.
         :param colored: If colored is true, the injected strings within the statement template will be colored.
         Use this parameter only for presentation purpose as the code for color encoding will make the SPARQL
         query erroneous!
@@ -267,9 +268,9 @@ Select * where {{
 
 }}
     """
-        # Prefixes, and timestamp injection
-        self.citation_timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                                  + timestamp.strftime("%z")[3:5]
+        if timestamp:
+            self.citation_timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
+                                      + timestamp.strftime("%z")[3:5]
 
         # Query extensions for versioning injection
         triples = _query_triples(self.query, self.sparql_prefixes)
@@ -326,18 +327,18 @@ Select {0} where {{
         """
 
         if query_or_result == "query":
-            query_string = str(citation_object)
+            query_algebra_str = citation_object
             checksum = hashlib.sha256()
-            checksum.update(str.encode(query_string))
+            checksum.update(str.encode(query_algebra_str))
             self.query_checksum = checksum.hexdigest()
             return self.query_checksum
 
         if query_or_result == "result":
             if isinstance(citation_object, pd.DataFrame):
-                self.result_set_checksum = hash_pandas_object(citation_object)
-                return self.result_set_checksum.mean()
-
-        # TODO: implement this
+                # self.result_set_checksum = hash_pandas_object(citation_object)
+                # return self.result_set_checksum.mean()
+                self.result_set_checksum = str(hash_pandas_object(citation_object).mean())
+                return self.result_set_checksum
 
     def generate_query_pid(self, timestamp: datetime, query_checksum: str):
         """
