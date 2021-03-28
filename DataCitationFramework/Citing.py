@@ -3,28 +3,61 @@ import DataCitationFramework.QueryUtils as qu
 import datetime
 import DataCitationFramework.QueryStore as qs
 from datetime import datetime, timedelta, timezone
+import json
 
 
-def generate_citation_snippet(query_pid: str, result_set_desc: str, citation_data: dict) -> str:
+class CitationData:
+
+    def __init__(self, identifier, creator, title, publisher, publication_year, resource_type,
+                 other_citation_data: dict = None):
+        """
+        Initialize the mandatory fields from DataCite's metadata model version 4.3
+        """
+        self.identifier = identifier
+        self.creator = creator
+        self.title = title
+        self.publisher = publisher
+        self.publication_year = publication_year
+        self.resource_type = resource_type
+        self.other_citation_data = other_citation_data
+
+    def to_json(self):
+        citation_data = vars(self)
+        citation_data_json = json.dumps(citation_data, indent=4)
+        print(citation_data_json)
+        return citation_data_json
+
+
+def read_json(json_string) -> CitationData:
+    citation_data_dict = json.loads(json_string)
+
+    citation_data = CitationData(citation_data_dict['identifier'], citation_data_dict['creator'],
+                                 citation_data_dict['title'], citation_data_dict['publisher'],
+                                 citation_data_dict['publication_year'], citation_data_dict['resource_type'],
+                                 citation_data_dict['other_citation_data'])
+
+    return citation_data
+
+
+def generate_citation_snippet(query_pid: str, citation_data: CitationData) -> str:
     """
+    Generates the citation snippet out of DataCite's mandatory attributes within its metadata schema.
     :param query_pid:
-    :param result_set_desc:
     :param citation_data:
     :return:
     """
     # TODO: Which metadata set to use?
-    snippet = "{0}, {1}, {2}, {3}, {4}, {5}, {6}, query_pid: {7} \n".format(citation_data['title'],
-                                                                            result_set_desc,
-                                                                            citation_data['author'],
-                                                                            citation_data['publisher'],
-                                                                            citation_data['edition'],
-                                                                            citation_data['resource type'],
-                                                                            citation_data['location'],
-                                                                            query_pid)
+    snippet = "{0}, {1}, {2}, {3}, {4}, {5}, query_pid: {6} \n".format(citation_data.identifier,
+                                                                       citation_data.creator,
+                                                                       citation_data.title,
+                                                                       citation_data.publisher,
+                                                                       citation_data.publication_year,
+                                                                       citation_data.resource_type,
+                                                                       query_pid)
     return snippet
 
 
-def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
+def cite(select_statement, prefixes, citation_data: CitationData):
     """
     Persistently Identify Specific Data Sets
 
@@ -52,7 +85,6 @@ def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
     R10: Generate citation texts  in  the  format  prevalent  in  the  designated community for lowering the barrier
     for citing the data. Include the PID into the citation text snippet.
 
-    :param result_set_desc:
     :param citation_data:
     :param select_statement:
     :param prefixes:
@@ -66,7 +98,7 @@ def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
     # Assign citation timestamp to query object
     citation_datetime = datetime.now(timezone(timedelta(hours=2)))
     citation_timestamp = citation_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                        + citation_datetime.strftime("%z")[3:5]
+                         + citation_datetime.strftime("%z")[3:5]
     query_to_cite.citation_timestamp = citation_timestamp
 
     # Create query tree and normalize query tree
@@ -93,9 +125,11 @@ def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
             return citation_snippet
     query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
     # Generate citation snippet
-    citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
+    citation_snippet = generate_citation_snippet(query_to_cite.query_pid, citation_data)
     # Store query object
-    query_store.store(query_to_cite, citation_snippet)
+    query_store.store(query_to_cite, citation_data.to_json(), citation_snippet)
     return citation_snippet
 
     # embed query timestamp (max valid_from of dataset)
+
+

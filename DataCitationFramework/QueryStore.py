@@ -3,6 +3,7 @@ from sqlalchemy import exc
 from DataCitationFramework.QueryUtils import Query
 import pandas as pd
 import datetime
+from DataCitationFramework.Citing import CitationData
 
 
 def escape_apostrophe(string: str) -> str:
@@ -32,7 +33,7 @@ class QueryStore:
             except Exception as e:
                 print(e)
 
-    def lookup(self, query_checksum: str) -> Query:
+    def lookup(self, query_checksum: str) -> [Query, CitationData]:
         """
 
         :param query_checksum:
@@ -41,7 +42,7 @@ class QueryStore:
         # TODO: Add result set description to query_citation?
         # TODO: Store citation timestamp? It would be include redundant information
         select_statement = "select b.query_pid, a.query_checksum, a.orig_query, a.normal_query, " \
-                           "b.result_set_checksum, b.citation_timestamp, b.citation_snippet " \
+                           "b.result_set_checksum, b.citation_timestamp, b. citation_data, b.citation_snippet " \
                            "from query_hub a join query_citation b " \
                            "on a.query_checksum = b.query_checksum " \
                            "where a.query_checksum = :query_checksum and citation_timestamp =" \
@@ -60,11 +61,13 @@ class QueryStore:
                 query.citation_timestamp = citation_timestamp
                 query.query_pid = df.query_pid.loc[0]
 
-                return query
+                citation_data = df.citation_data.loc[0]
+
+                return [query, citation_data]
             except Exception as e:
                 print(e)
 
-    def store(self, query: Query, citation_snippet: str, yn_new_query=True):
+    def store(self, query: Query, citation_data: str, citation_snippet: str, yn_new_query=True):
         """
 
         common metadata:
@@ -83,6 +86,8 @@ class QueryStore:
         reference: Theory and Practice of Data Citation, Silvello et al.
 
         :param query:
+        :param citation_data: A set of mandatory attributes from DataCite's Metadata Schema and additional
+        attributes that  might be provided
         :param citation_snippet:
         :param yn_new_query: True, if the query is not found by its checksum in the query table. Otherwise false.
         :return:
@@ -92,9 +97,9 @@ class QueryStore:
                            "values (:query_checksum, :orig_query, :normal_query)"
 
         insert_statement_2 = "insert into query_citation(query_pid, query_checksum, result_set_checksum," \
-                             "citation_snippet, citation_timestamp) " \
-                             "values (:query_pid, :query_checksum, :result_set_checksum," \
-                             " :citation_snippet, :citation_timestamp)"
+                             " citation_data, citation_snippet, citation_timestamp)" \
+                             " values (:query_pid, :query_checksum, :result_set_checksum," \
+                             " :citation_data, :citation_snippet, :citation_timestamp)"
 
         with self.engine.connect() as connection:
             if yn_new_query:
@@ -103,6 +108,8 @@ class QueryStore:
                                        query_checksum=query.query_checksum,
                                        orig_query=query.query,
                                        normal_query=query.normalized_query_algebra)
+                    print("New query with checksum {0} and PID {1} stored".format(query.query_checksum,
+                                                                                  query.query_pid))
                 except exc.IntegrityError as e:
                     print("A query is trying to be inserted that exists already. The checksum of the executed query "
                           "is found within the query_hub table")
@@ -111,13 +118,16 @@ class QueryStore:
                                    query_pid=query.query_pid,
                                    query_checksum=query.query_checksum,
                                    result_set_checksum=query.result_set_checksum,
+                                   citation_data=citation_data,
                                    citation_snippet=citation_snippet,
                                    citation_timestamp=query.citation_timestamp)
+                if not yn_new_query:
+                    print("A new citation has been added to the existing query with checksum {0} ."
+                          "The new entry carries the PID {1}".format(query.query_checksum, query.query_pid))
+
             except exc.IntegrityError as e:
                 print("A query is trying to be inserted that exists already. The query PID of the executed query "
                       "is found within the query_citation table")
-
-            print("Query with checksum {0} and query_pid {1} stored".format(query.query_checksum, query.query_pid))
 
     def citation_snippet(self, query_pid: str):
         """

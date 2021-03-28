@@ -30,6 +30,7 @@ Create db and necessary tables by typing following code into the command line:
     query_checksum CHAR (200),
     result_set_checksum CHAR (200),
     citation_timestamp DATETIME,
+    citation_data CHAR (4000),
     citation_snippet CHAR (4000),
     foreign key(query_checksum) references query_hub(query_checksum)
     );
