@@ -63,8 +63,7 @@ def _query_algebra(query, sparql_prefixes):
 
 def _query_variables(query_algebra) -> list:
     """
-    The query must be a valid query including prefixes. They can be already embedded in the query or will
-    be embedded by providing them separately with the 'prefix' parameter.
+    The query must be a valid query including prefixes.
     The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
     variables within a list. However, each of these lists enumerates the same variables only the first list
     will be selected and returned.
@@ -103,15 +102,14 @@ class Query:
         """
 
         self.query = query
-        self.query_for_execution = query # just for presentation purpose
+        self.query_for_execution = query  # just for presentation purpose
         self.citation_timestamp = None
-        # self.execution_timestamp = None
         if prefixes is not None:
             self.sparql_prefixes = prefixes_to_sparql(prefixes)
         else:
             self.sparql_prefixes = ""
-        self.query_algebra = None  # _query_algebra(query, self.sparql_prefixes)
-        self.variables = None  # _query_variables(self.query_algebra)
+        self.query_algebra = None
+        self.variables = None
         self.normalized_query_algebra = None
         self.query_checksum = None
         self.result_set_checksum = None
@@ -152,12 +150,6 @@ Select * where {{
         :return: normalized query tree object
         """
 
-        """
-        #3
-        In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
-        and ordered alphabetically.
-        """
-
         template = """
         Select {0} where {{
             # original query comes here
@@ -171,6 +163,15 @@ Select * where {{
         self.variables = _query_variables(self.query_algebra)
 
         """
+        #3
+        In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
+        and ordered alphabetically.
+        
+        """
+        pass
+        # Implicitly solved by query algebra
+
+        """
         #1
         A where clause will always be inserted
         """
@@ -180,16 +181,11 @@ Select * where {{
         """
         #5
         Triple statements will be ordered alphabetically by subject, predicate, object.
-
         The triple order is already unambiguous in the query algebra. The only requirement is
         that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
         """
-        variables_query_string = ""
-        for v in self.variables:
-            variables_query_string += v.n3() + " "
-        query = template.format(variables_query_string, self.query)
-        query_with_prefixes = self.attach_prefixes(query)
-        q_algebra = _query_algebra(query_with_prefixes, self.sparql_prefixes)
+        pass
+        # Implicitly solved by query algebra
 
         """
         #7
@@ -199,6 +195,11 @@ Select * where {{
         There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
         are sorted by their bindings where the ones with the most bindings come first.
         """
+        variables_query_string = ""
+        for v in self.variables:
+            variables_query_string += v.n3() + " "
+        query = template.format(variables_query_string, self.query)
+        q_algebra = _query_algebra(query, self.sparql_prefixes)
 
         int_norm_var = 'a'
         variables_mapping = {}

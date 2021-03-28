@@ -69,29 +69,33 @@ def cite(select_statement, prefixes, result_set_desc: str, citation_data: dict):
                         + citation_datetime.strftime("%z")[3:5]
     query_to_cite.citation_timestamp = citation_timestamp
 
-    # Normalize query and compute checksum. Check for existing checksum
+    # Create query tree and normalize query tree
+    # TODO: create query tree outside of normalize query tree
     query_to_cite.normalize_query_tree()
+    # Compute query checksum
     query_to_cite.compute_checksum("query", query_to_cite.normalized_query_algebra)
+    # Lookup query by checksum
+    existing_query = query_store.lookup(query_to_cite.query_checksum)  # --> Query
+
+    # Extend query with timestamp
     timestamped_query = query_to_cite.extend_query_with_timestamp()
+    # Extend query with sort operation
     sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query)
+    # Execute query and retrieve result set
     query_result = sparqlapi.get_data(sorted_query, prefixes)
+    # Compute result set checksum
     query_to_cite.compute_checksum("result", query_result)
 
-    existing_query = query_store.lookup(query_to_cite.query_checksum)  # --> Query
     if existing_query:
         if query_to_cite.result_set_checksum == existing_query.result_set_checksum:
-            query_pid = existing_query.query_pid
-        else:
-            query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
-            citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
-            query_store.store(query_to_cite, citation_snippet, False)
-            query_pid = query_to_cite.query_pid
-        citation_snippet = query_store.citation_snippet(query_pid)  # retrieve by checksum?
-    else:
-        query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
-        citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
-        query_store.store(query_to_cite, citation_snippet)
-
+            # Retrieve citation snippet from query store
+            citation_snippet = query_store.citation_snippet(existing_query.query_pid)
+            return citation_snippet
+    query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
+    # Generate citation snippet
+    citation_snippet = generate_citation_snippet(query_to_cite.query_pid, result_set_desc, citation_data)
+    # Store query object
+    query_store.store(query_to_cite, citation_snippet)
     return citation_snippet
 
     # embed query timestamp (max valid_from of dataset)
