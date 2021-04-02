@@ -10,7 +10,7 @@ from pandas.util import hash_pandas_object
 # TODO: rename module to CitationUtils
 
 
-def suggest_primary_key(dataset: pd.DataFrame) -> list:
+def suggest_primary_key(dataset: pd.DataFrame, suggest_one_key: bool = False) -> list:
     """
     Infers the primary key from a dataset.
     Two datasets with differently permuted columns but otherwise identical
@@ -24,6 +24,9 @@ def suggest_primary_key(dataset: pd.DataFrame) -> list:
     :param dataset:
     :return:
     """
+
+    # TODO: Think abou whether the order of columns should yield a different permutation of key attributes
+    #  withing composite keys, thus, meaning a different sorting or not.
 
     def combination_util(combos: list, arr, n, tuple_size, data, index=0, i=0):
         """
@@ -60,23 +63,25 @@ def suggest_primary_key(dataset: pd.DataFrame) -> list:
 
     sufficient_tuple_size = False
     df_key_finder = dataset.copy()
+    df_key_finder.drop_duplicates(inplace=True)
     cnt_columns = len(df_key_finder.columns)
 
-    #columns_mapping = {}
-    #for idx, column in enumerate(df_key_finder.columns):
-        #columns_mapping[column] = str(idx)
-    #df_key_finder.rename(columns=columns_mapping, inplace=True)
-    df_key_finder.drop_duplicates(inplace=True)
+    """columns_mapping = {}
+    for idx, column in enumerate(df_key_finder.columns):
+        columns_mapping[column] = str(idx)
+    df_key_finder.rename(columns=columns_mapping, inplace=True)"""
+    # columns = sorted(df_key_finder.columns)
+    columns = df_key_finder.columns
 
     distinct_occurences = {}
-    for column in df_key_finder.columns:
+    for column in columns:
         distinct_occurences[column] = len(df_key_finder[column].unique().flat)
 
     attribute_combos_min_tuple_size = {}
     cnt_index_attrs = 1
     while not sufficient_tuple_size:
         attribute_combos = []
-        combination_util(combos=attribute_combos, arr=df_key_finder.columns, n=cnt_columns,
+        combination_util(combos=attribute_combos, arr=columns, n=cnt_columns,
                          tuple_size=cnt_index_attrs, data=[0] * cnt_index_attrs)
         attribute_combos_tuple_size_k = {}
         for combo in attribute_combos:
@@ -98,7 +103,9 @@ def suggest_primary_key(dataset: pd.DataFrame) -> list:
 
     min_val = min(dist_stacked_key_attr_values.values())
     suggested_pks = [k for k, v in dist_stacked_key_attr_values.items() if v == min_val]
-    # print(suggested_pks)
+
+    if suggest_one_key:
+        return [suggested_pks[0]]  # return one tuple in a list
     return suggested_pks
 
 
@@ -205,6 +212,7 @@ class Query:
         self.query_algebra = None
         self.normalized_query_algebra = None
         self.variables = None
+        self.sort_variables = None
         self.query_checksum = None
         self.result_set_checksum = None
         self.query_pid = None
@@ -390,7 +398,7 @@ Select * where {{
                                             versioning_query_extensions)
         return timestamped_query
 
-    def extend_query_with_sort_operation(self, query, colored: bool = False):
+    def extend_query_with_sort_operation(self, query, sort_variables: tuple, colored: bool = False):
         """
         Problem: The sequence of records within a set can have an effect on the result of an experiment,
         if the subsequent processing is sensitive to the order the input data is provided in.
@@ -399,6 +407,7 @@ Select * where {{
 
         [1]: Identification of Reproducible Subsets for Data Citation, Sharing and Re-Use; Rauber et al
 
+        :param sort_variables:
         :param query:
         :param colored:
         :return:
@@ -406,10 +415,13 @@ Select * where {{
 
         # TODO: find unique criterion.
         #  Problem: There is no primary key in triple stores. Can a primary key somehow be implied from a dataset?
+        # TODO: remove query as parameter and use self.query for decorating the query
 
+        self.sort_variables = sort_variables
         variables_query_string = ""
-        for v in self.variables:
-            variables_query_string += v.n3() + " "
+        for v in sort_variables:
+            v_n3 = Variable(v)
+            variables_query_string += v_n3.n3() + " "
 
         if colored:
             sort_extension = "\x1b[36m" + "order by " + ' ' + variables_query_string + "\x1b[0m"

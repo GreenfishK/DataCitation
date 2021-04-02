@@ -25,7 +25,7 @@ print("test 3: ", suggest_primary_key(test_df))
 # Output: Different order of tuple attributes than for test 3. User needs to chose the primary key and define the
 # order
 test_df = pd.read_csv("test_primary_key_suggestor_ds4.csv", delimiter=',')
-print("test 4: ", suggest_primary_key(test_df))
+print("test 4: ", suggest_primary_key(test_df, True))
 
 # Test 5: Test 3 + Column names are permuted + suggested keys have different number of
 # distinct stacked key attributes values

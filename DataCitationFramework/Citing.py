@@ -116,8 +116,13 @@ def cite(select_statement, prefixes, citation_data: CitationData):
 
     # Extend query with timestamp
     timestamped_query = query_to_cite.extend_query_with_timestamp()
+
     # Extend query with sort operation. Use the index suggestor to suggest the index to use for sorting
-    sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query)
+    query_result = sparqlapi.get_data(timestamped_query, prefixes)
+    # returns a tuple. Must return only one (composite) key!
+    sort_variables = qu.suggest_primary_key(query_result, True)[0]  # returns the (composite) key as a tuple
+    sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query, sort_variables)
+
     # Execute query and retrieve result set
     query_result = sparqlapi.get_data(sorted_query, prefixes)
     # Compute result set checksum
