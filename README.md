@@ -11,6 +11,7 @@ The query store is based on the citation data attributes from the literature (Du
 * json
 * sqlalchemy
 * nested-lookup
+* CSV plugin
 
 The libraries were installed in a virtual conda environment labeled 'TripleStoreCitationFramework'
 

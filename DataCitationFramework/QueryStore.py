@@ -40,7 +40,6 @@ class QueryStore:
         :return:
         """
         # TODO: Add result set description to query_citation?
-        # TODO: Store citation timestamp? It would be include redundant information
         select_statement = "select b.query_pid, a.query_checksum, a.orig_query, a.normal_query, " \
                            "b.result_set_checksum, b.citation_timestamp, b. citation_data, b.citation_snippet " \
                            "from query_hub a join query_citation b " \

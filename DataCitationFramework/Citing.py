@@ -62,28 +62,33 @@ def cite(select_statement, prefixes, citation_data: CitationData):
     Persistently Identify Specific Data Sets
 
     R4: Re-write the query to a normalised form so that identical queries
-    can be detected. Compute a checksum of the normalized query to efficiently detect identical queries.
+    can be detected. Compute a checksum of the normalized query to efficiently detect identical queries. [1]
 
-    R5: Ensure that the sorting of the records in the data set is unambiguous and reproducible
+    R5: Ensure that the sorting of the records in the data set is unambiguous and reproducible [1]
 
     R6:Compute  fixity information (checksum) of the query result set to enable verification
-    of the correctness of a result upon re-execution
+    of the correctness of a result upon re-execution [1]
 
     R7: Assign a timestamp to the query based on the last update to the entire database
     (or the last update to the selection of data affected by the query or the query execution time).
-    This allows retrieving the data as it existed at the time a user issued a query.
+    This allows retrieving the data as it existed at the time a user issued a query. [1]
 
     The timestamp of the first citation since the last update to the selection of the data
     affected by the query will be taken.
 
     R8: Assign a new PID to the query if either the query is new or if the result set returned from an earlier
-    identical query is different due to changes in the data. Otherwise, return the existing PID.
+    identical query is different due to changes in the data. Otherwise, return the existing PID. [1]
 
     R9: Store query and metadata (e.g. PID, original and normalized  query, query & result set checksum,
-    timestamp, superset  PID, data  set description, and other) in the query store.
+    timestamp, superset  PID, data  set description, and other) in the query store. [1]
 
     R10: Generate citation texts  in  the  format  prevalent  in  the  designated community for lowering the barrier
-    for citing the data. Include the PID into the citation text snippet.
+    for citing the data. Include the PID into the citation text snippet. [1]
+    Provenance information should be included in a citation snippet in order to cite the correct version,
+    manipulation, and transformation of data [2]
+
+    [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
+    [2]: Theory and Practice of Data Citation, Gianmaria Silvello
 
     :param citation_data:
     :param select_statement:
@@ -111,7 +116,7 @@ def cite(select_statement, prefixes, citation_data: CitationData):
 
     # Extend query with timestamp
     timestamped_query = query_to_cite.extend_query_with_timestamp()
-    # Extend query with sort operation
+    # Extend query with sort operation. Use the index suggestor to suggest the index to use for sorting
     sorted_query = query_to_cite.extend_query_with_sort_operation(timestamped_query)
     # Execute query and retrieve result set
     query_result = sparqlapi.get_data(sorted_query, prefixes)

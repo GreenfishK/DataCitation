@@ -7,6 +7,100 @@ import hashlib
 import datetime
 from pandas.util import hash_pandas_object
 
+# TODO: rename module to CitationUtils
+
+
+def suggest_primary_key(dataset: pd.DataFrame) -> list:
+    """
+    Infers the primary key from a dataset.
+    Two datasets with differently permuted columns but otherwise identical
+    will yield a different order of key attributes if one or more composite keys are suggested.
+    Two datasets with different re-mapped column names that would result into a different order when sorted
+    will not affect the composition of the keys and therefore also not affect the sorting.
+    A reduction of suggested composite keys will be made if there are two or more suggested composite keys and
+    the number of "distinct summed key attribute values" of each of these composite keys differ from each other.
+    In fact, the composite keys with the minimum sum of distinct key attribute values will be returned.
+
+    :param dataset:
+    :return:
+    """
+
+    def combination_util(combos: list, arr, n, tuple_size, data, index=0, i=0):
+        """
+        Returns a dictionary with combinations of size tuple_size.
+
+        :param combos: list to be populated with the output combinations from this algorithm
+        :param arr: Input Array
+        :param n: Size of input array
+        :param tuple_size: size of a combination to be printed
+        :param index: Current index in data[]
+        :param data: temporary list to store current combination
+        :param i: index of current element in arr[]
+        :return:
+        """
+
+        # Current combination is ready, print it
+        if index == tuple_size:
+            combo = []
+            for j in range(tuple_size):
+                combo.append(data[j])
+            combos.append(combo)
+            return
+
+        # When no more elements are there to put in data[]
+        if i >= n:
+            return
+
+        # current is included, put next at next location
+        data[index] = arr[i]
+        combination_util(combos, arr, n, tuple_size, data, index + 1, i + 1)
+
+        # current is excluded, replace it with next (Note that i+1 is passed, but index is not changed)
+        combination_util(combos, arr, n, tuple_size, data, index, i + 1)
+
+    sufficient_tuple_size = False
+    df_key_finder = dataset.copy()
+    cnt_columns = len(df_key_finder.columns)
+
+    #columns_mapping = {}
+    #for idx, column in enumerate(df_key_finder.columns):
+        #columns_mapping[column] = str(idx)
+    #df_key_finder.rename(columns=columns_mapping, inplace=True)
+    df_key_finder.drop_duplicates(inplace=True)
+
+    distinct_occurences = {}
+    for column in df_key_finder.columns:
+        distinct_occurences[column] = len(df_key_finder[column].unique().flat)
+
+    attribute_combos_min_tuple_size = {}
+    cnt_index_attrs = 1
+    while not sufficient_tuple_size:
+        attribute_combos = []
+        combination_util(combos=attribute_combos, arr=df_key_finder.columns, n=cnt_columns,
+                         tuple_size=cnt_index_attrs, data=[0] * cnt_index_attrs)
+        attribute_combos_tuple_size_k = {}
+        for combo in attribute_combos:
+            attribute_combos_tuple_size_k[tuple(combo)] = df_key_finder.set_index(combo).index.is_unique
+
+        if any(attribute_combos_tuple_size_k.values()):
+            sufficient_tuple_size = True
+            attribute_combos_min_tuple_size = attribute_combos_tuple_size_k
+        cnt_index_attrs += 1
+
+    dist_stacked_key_attr_values = {}
+    for composition, is_potential_key in attribute_combos_min_tuple_size.items():
+        if is_potential_key:
+            cnt_dist_stacked_attr_values = 0
+            for attribute in composition:
+                cnt_distinct_attribute_values = distinct_occurences[attribute]
+                cnt_dist_stacked_attr_values += cnt_distinct_attribute_values
+            dist_stacked_key_attr_values[composition] = cnt_dist_stacked_attr_values
+
+    min_val = min(dist_stacked_key_attr_values.values())
+    suggested_pks = [k for k, v in dist_stacked_key_attr_values.items() if v == min_val]
+    # print(suggested_pks)
+    return suggested_pks
+
 
 def prefixes_to_sparql(prefixes):
     """
@@ -109,8 +203,8 @@ class Query:
         else:
             self.sparql_prefixes = ""
         self.query_algebra = None
-        self.variables = None
         self.normalized_query_algebra = None
+        self.variables = None
         self.query_checksum = None
         self.result_set_checksum = None
         self.query_pid = None
@@ -297,6 +391,22 @@ Select * where {{
         return timestamped_query
 
     def extend_query_with_sort_operation(self, query, colored: bool = False):
+        """
+        Problem: The sequence of records within a set can have an effect on the result of an experiment,
+        if the subsequent processing is sensitive to the order the input data is provided in.
+        Solution: Sort the triples based on a "unique criterion, which allows creating a total ordering of the records".
+        E.g. Primary key column + user defined sorting [1]
+
+        [1]: Identification of Reproducible Subsets for Data Citation, Sharing and Re-Use; Rauber et al
+
+        :param query:
+        :param colored:
+        :return:
+        """
+
+        # TODO: find unique criterion.
+        #  Problem: There is no primary key in triple stores. Can a primary key somehow be implied from a dataset?
+
         variables_query_string = ""
         for v in self.variables:
             variables_query_string += v.n3() + " "
@@ -334,6 +444,9 @@ Select {0} where {{
             self.query_checksum = checksum.hexdigest()
             return self.query_checksum
 
+        # TODO: compute order dependent and order independent checksums. Order independent checksums
+        #  are there to let the user know that the result set is "almost" identical to an already existing one
+        #  except for the order.
         if query_or_result == "result":
             if isinstance(citation_object, pd.DataFrame):
                 # self.result_set_checksum = hash_pandas_object(citation_object)
