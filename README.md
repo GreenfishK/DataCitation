@@ -30,6 +30,8 @@ Create db and necessary tables by typing following code into the command line:
     query_pid CHAR (500) PRIMARY KEY,
     query_checksum CHAR (200),
     result_set_checksum CHAR (200),
+    result_set_description CHAR (4000),
+    result_set_sort_order CHAR (4000),
     citation_timestamp DATETIME,
     citation_data CHAR (4000),
     citation_snippet CHAR (4000),

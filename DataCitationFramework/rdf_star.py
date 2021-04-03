@@ -1,8 +1,6 @@
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
-from rdflib.term import Literal, Variable
+from rdflib.term import Literal
 import pandas as pd
-from datetime import datetime, timedelta, timezone
-from DataCitationFramework.QueryUtils import Query, prefixes_to_sparql
 
 
 def _get_prettyprint_string_sparql_var_result(result):
@@ -43,26 +41,43 @@ def _QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     return df
 
 
-class SPARQLAPI:
+def prefixes_to_sparql(prefixes: dict) -> str:
+    """
+    Converts a dict of prefixes to a string with SPARQL syntax for prefixes
+    :param prefixes:
+    :return: SPARQL prefixes as string
+    """
+    if prefixes is None:
+        return ""
+
+    sparql_prefixes = ""
+    for key, value in prefixes.items():
+        sparql_prefixes += "PREFIX " + key + ":" + "<" + value + "> \n"
+    return sparql_prefixes
+
+
+class TripleStoreEngine:
     """
 
     """
 
-    def __init__(self, query_endpoint, update_endpoint, prefixes=None, credentials=None):
+    class Credentials:
+
+        def __init__(self, user_name: str, pw: str):
+            self.user_name = user_name
+            self.pw = pw
+
+    def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None):
         """
         :param query_endpoint: URL for executing read/select statements on the RDF store. In GRAPHDB this URL can be
         looked up under "Setup --> Repositories --> Link icon"
         :param update_endpoint: URL for executing write statements on the RDF store. Its URL is an extension of
         query_endpoint: "query_endpoint/statements"
         :param prefixes:
-        :param credentials:
+        :param credentials: The user name and password for the remote RDF store
         """
-        # self.query_endpoint = query_endpoint
-        # self.update_endpoint = update_endpoint
-        # self.query_object = None
 
         # Parameters
-        self.prefixes = prefixes
         self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_post = SPARQLWrapper(update_endpoint)
         self.credentials = credentials
@@ -76,8 +91,8 @@ class SPARQLAPI:
         self.sparql_get.setReturnFormat(JSON)
 
         if self.credentials is not None:
-            self.sparql_post.setCredentials(credentials)
-            self.sparql_get.setCredentials(credentials)
+            self.sparql_post.setCredentials(credentials.user_name, credentials.pw)
+            self.sparql_get.setCredentials(credentials.user_name, credentials.pw)
 
         # Test connection. Execute one read and one write statement
         print(self.sparql_get)
@@ -86,6 +101,14 @@ class SPARQLAPI:
         print(result)
 
         print(self.sparql_post)
+        insert_statement = "PREFIX pub: <http://ontology.ontotext.com/taxonomy/>" \
+                           "PREFIX citing: <http://ontology.ontotext.com/citing/>"\
+                           "insert " \
+                           "{<http://ontology.ontotext.com/resource/tsk9hdnas934> pub:countryOfCitizenship 'Brazil'} " \
+                           "where {}"
+        self.sparql_post.setQuery(insert_statement)
+        self.sparql_post.query()
+
         delete_statement = "PREFIX pub: <http://ontology.ontotext.com/taxonomy/>" \
                            "PREFIX citing: <http://ontology.ontotext.com/citing/>"\
                            "delete where " \
@@ -181,7 +204,7 @@ class SPARQLAPI:
         :param prefixes: aliases of provided URIs which are resolved to these URIs during the execution.
         :return:
         """
-        query = Query(select_statement, prefixes)
+
         statement = """
             # prefixes
             %s
@@ -214,7 +237,7 @@ class SPARQLAPI:
             }
         """
 
-        statement = statement % (query.sparql_prefixes, query.query, new_value)
+        statement = statement % (prefixes, select_statement, new_value)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
 
@@ -229,10 +252,12 @@ class SPARQLAPI:
         """
 
         statement = """
+        {0}
+        
         insert {{
-            {0} {1} {2}.
-            <<{0} {1} {2}>>  citing:valid_from ?newVersion.
-            <<{0} {1} {2}>>  citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+            {1} {2} {3}.
+            <<{1} {2} {3}>>  citing:valid_from ?newVersion.
+            <<{1} {2} {3}>>  citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
         }}
         where {{
             BIND(xsd:dateTime(NOW()) AS ?newVersion). 
@@ -242,7 +267,6 @@ class SPARQLAPI:
         sparql_prefixes = ""
         if prefixes:
             sparql_prefixes = prefixes_to_sparql(prefixes)
-        statement = sparql_prefixes + statement
 
         if type(triple[0]) == Literal:
             s = "'" + triple[0] + "'"
@@ -257,7 +281,7 @@ class SPARQLAPI:
         else:
             o = triple[2]
 
-        statement = statement.format(s, p, o)
+        statement = statement.format(sparql_prefixes, s, p, o)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
         return result

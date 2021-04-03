@@ -1,9 +1,10 @@
 import sqlalchemy as sql
 from sqlalchemy import exc
-from DataCitationFramework.QueryUtils import Query
+from DataCitationFramework.citation_utils import QueryData, RDFDataSetData, CitationData
+from DataCitationFramework.citation_utils import read_json
+
 import pandas as pd
 import datetime
-from DataCitationFramework.Citing import CitationData
 
 
 def escape_apostrophe(string: str) -> str:
@@ -28,20 +29,20 @@ class QueryStore:
                 # Order is important due to referential integrity
                 connection.execute(delete_query_citation, query_checksum=query_checksum)
                 connection.execute(delete_query, query_checksum=query_checksum)
-                print("Query with checksum {0} removed from query store".format(query_checksum))
+                print("QueryData with checksum {0} removed from query store".format(query_checksum))
 
             except Exception as e:
                 print(e)
 
-    def lookup(self, query_checksum: str) -> [Query, CitationData]:
+    def lookup(self, query_checksum: str) -> [QueryData, RDFDataSetData, CitationData]:
         """
 
         :param query_checksum:
         :return:
         """
-        # TODO: Add result set description to query_citation?
         select_statement = "select b.query_pid, a.query_checksum, a.orig_query, a.normal_query, " \
-                           "b.result_set_checksum, b.citation_timestamp, b. citation_data, b.citation_snippet " \
+                           "b.result_set_checksum, b.result_set_description, b.result_set_sort_order, " \
+                           "b.citation_timestamp, b.citation_data, b.citation_snippet " \
                            "from query_hub a join query_citation b " \
                            "on a.query_checksum = b.query_checksum " \
                            "where a.query_checksum = :query_checksum and citation_timestamp =" \
@@ -52,21 +53,25 @@ class QueryStore:
                 result = connection.execute(select_statement, query_checksum=query_checksum)
                 df = pd.DataFrame(result.fetchall())
                 df.columns = result.keys()
-                query = Query(df.orig_query)
+
+                query = QueryData(df.orig_query)
+                query.citation_timestamp = df.citation_timestamp.loc[0]
                 query.normalized_query_algebra = df.normal_query.loc[0]
-                query.result_set_checksum = df.result_set_checksum.loc[0]
-                query_datetime = df.citation_timestamp.loc[0]
-                citation_timestamp = datetime.datetime.strptime(query_datetime, "%Y-%m-%dT%H:%M:%S.%f%z")
-                query.citation_timestamp = citation_timestamp
+                query.query_checksum = df.query_checksum.loc[0]
                 query.query_pid = df.query_pid.loc[0]
 
-                citation_data = df.citation_data.loc[0]
+                result_set = RDFDataSetData()
+                result_set.description = df.result_set_description.loc[0]
+                result_set.sort_order = df.sort_order.loc[0]
+                result_set.checksum = df.checksum.loc[0]
 
-                return [query, citation_data]
+                citation_data = read_json(df.citation_data.loc[0])
+
+                return [query, result_set, citation_data]
             except Exception as e:
                 print(e)
 
-    def store(self, query: Query, citation_data: str, citation_snippet: str, yn_new_query=True):
+    def store(self, query: QueryData, rs_data: RDFDataSetData, citation_data: CitationData,  yn_new_query=True):
         """
 
         common metadata:
@@ -84,10 +89,10 @@ class QueryStore:
 
         reference: Theory and Practice of Data Citation, Silvello et al.
 
+        :param rs_data:
         :param query:
         :param citation_data: A set of mandatory attributes from DataCite's Metadata Schema and additional
         attributes that  might be provided
-        :param citation_snippet:
         :param yn_new_query: True, if the query is not found by its checksum in the query table. Otherwise false.
         :return:
         """
@@ -116,9 +121,11 @@ class QueryStore:
                 connection.execute(insert_statement_2,
                                    query_pid=query.query_pid,
                                    query_checksum=query.query_checksum,
-                                   result_set_checksum=query.result_set_checksum,
-                                   citation_data=citation_data,
-                                   citation_snippet=citation_snippet,
+                                   result_set_checksum=rs_data.checksum,
+                                   result_set_description=rs_data.description,
+                                   result_set_sort_order=rs_data.sort_order,
+                                   citation_data=citation_data.to_json(),
+                                   citation_snippet=citation_data.citation_snippet,
                                    citation_timestamp=query.citation_timestamp)
                 if not yn_new_query:
                     print("A new citation has been added to the existing query with checksum {0} ."
