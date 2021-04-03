@@ -24,7 +24,6 @@ class CitationData:
     def to_json(self):
         citation_data = vars(self)
         citation_data_json = json.dumps(citation_data, indent=4)
-        print(citation_data_json)
         return citation_data_json
 
 

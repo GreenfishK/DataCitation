@@ -21,7 +21,8 @@ def suggest_primary_key(dataset: pd.DataFrame, suggest_one_key: bool = False) ->
     the number of "distinct summed key attribute values" of each of these composite keys differ from each other.
     In fact, the composite keys with the minimum sum of distinct key attribute values will be returned.
 
-    :param dataset:
+    :param suggest_one_key: If True, the first (composite) key tuple will be returned from the list of potential keys
+    :param dataset: The dataset from which the (composite) indexes shall be inferred
     :return:
     """
 
