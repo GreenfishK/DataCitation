@@ -1,0 +1,11 @@
+delete {{
+        <<?s ?p ?o>>  citing:valid_from ?valid_from.
+        <<?s ?p ?o>>  citing:valid_until ?valid_until.
+        ?s ?p ?o.
+}} where {{
+    bind({0} as ?s)
+    bind({1} as ?p)
+    bind({2} as ?o)
+    <<?s ?p ?o>> citing:valid_from ?valid_from.
+    <<?s ?p ?o>> citing:valid_until ?valid_until.
+}}

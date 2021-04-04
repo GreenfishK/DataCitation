@@ -115,22 +115,12 @@ class TripleStoreEngine:
 
     def reset_all_versions(self):
         """
+        Delete all triples with citing:valid_from and citing:valid_until as predicate.
 
         :return:
         """
 
-        delete_statement = """
-        PREFIX citing: <http://ontology.ontotext.com/citing/>
-        # reset versions 
-        delete {
-            ?s citing:valid_from ?o  ;  
-               citing:valid_until ?o   
-        }
-        where
-        {
-           ?s ?p ?o .
-        }
-        """
+        delete_statement = open(self._template_location + "/reset_all_versions.txt", "r").read()
 
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
@@ -139,21 +129,11 @@ class TripleStoreEngine:
     def version_all_rows(self):
         """
         Version all rows with the current timestamp.
+
         :return:
         """
-        update_statement = """
-        PREFIX citing: <http://ontology.ontotext.com/citing/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        insert 
-        {
-            <<?s ?p ?o>> citing:valid_from ?currentTimestamp;
-                         citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.        
-        }
-        where
-        {
-           ?s ?p ?o .
-           BIND(xsd:dateTime(NOW()) AS ?currentTimestamp).
-        }"""
+
+        update_statement = open(self._template_location + "/version_all_rows.txt", "r").read()
 
         self.sparql_post.setQuery(update_statement)
         self.sparql_post.query()
@@ -162,7 +142,7 @@ class TripleStoreEngine:
     def get_data(self, select_statement, prefixes: dict = None) -> pd.DataFrame:
         """
         Executes the SPARQL select statement and returns a result set.
-        :param timestamp: the timestamp that will be wrapped around the query to retrieve a
+
         snapshot of the date as of "timestamp".
         :param select_statement:
         :param prefixes:
@@ -171,17 +151,7 @@ class TripleStoreEngine:
 
         query = select_statement
         if prefixes:
-            template = """
-            # prefixes
-            {0} 
-
-            Select * where {{
-                # original query comes here
-                {{ 
-                    {1}
-                }}
-            }}
-            """
+            template = open(self._template_location + "/get_data.txt", "r").read()
             prefixes_sparql = prefixes_to_sparql(prefixes)
             query = template.format(prefixes_sparql, select_statement)
 
@@ -200,64 +170,25 @@ class TripleStoreEngine:
         :return:
         """
 
-        statement = """
-            # prefixes
-            %s
+        update_statement = open(self._template_location + "/get_data.txt", "r").read()
 
-            delete {
-                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
-            }
-            insert {
-                # outdate old triple with date as of now()
-                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
-
-                # update new row with value and timestamp as of now()
-                ?subjectToUpdate ?predicateToUpdate ?newValue . # new value
-                # assign new version. if variable is used, multiple ?newVersion are retrieved leading to multiple updates. TODO: fix this
-                <<?subjectToUpdate ?predicateToUpdate ?newValue>> citing:valid_from ?newVersion ;
-                                                                        citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
-            }
-            where {
-                # business logic - rows to update as select statement
-                {%s
-
-
-                }
-                bind('%s' as ?newValue). #new Value
-                # versioning
-                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . 
-                BIND(xsd:dateTime(NOW()) AS ?newVersion). 
-                filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
-                filter(?newValue != ?objectToUpdate) # nothing should be changed if old and new value are the same   
-            }
-        """
-
-        statement = statement % (prefixes, select_statement, new_value)
-        self.sparql_post.setQuery(statement)
+        update_statement = update_statement.format(prefixes, select_statement, new_value)
+        self.sparql_post.setQuery(update_statement)
         result = self.sparql_post.query()
 
-        print("%s rows updated" % result)
+        print("{0} rows updated".format(result))
 
     def insert_triple(self, triple, prefixes: dict):
         """
+        Inserts a new triple into the RDF* store and two additional (nested) triples labeling the newly inserted triple
+        with a valid_from and valid_until date.
 
         :param triple:
         :param prefixes:
         :return:
         """
 
-        statement = """
-        {0}
-        
-        insert {{
-            {1} {2} {3}.
-            <<{1} {2} {3}>>  citing:valid_from ?newVersion.
-            <<{1} {2} {3}>>  citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
-        }}
-        where {{
-            BIND(xsd:dateTime(NOW()) AS ?newVersion). 
-        }}
-        """
+        statement = open(self._template_location + "/insert_triple.txt", "r").read()
 
         sparql_prefixes = ""
         if prefixes:
@@ -287,43 +218,21 @@ class TripleStoreEngine:
         not appear in result sets queried from the most recent graph version or any other version that came after
         their expiration.
         The triples provided must exist in the triple store.
+
         :param select_statement:
         :param prefixes:
         :return:
         """
 
-        statement = """
-            # prefixes
-            %s
-
-            delete {
-                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
-            }
-            insert {
-                # outdate old triples with date as of now()
-                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
-            }
-            where {
-                # business logic - rows to outdate as select statement
-                {%s
-
-
-                }
-
-                # versioning
-                <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . 
-                BIND(xsd:dateTime(NOW()) AS ?newVersion). 
-                filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
-            }
-        """
+        statement = open(self._template_location + "/outdate_triples.txt", "r").read()
         sparql_prefixes = ""
         if prefixes:
             sparql_prefixes = prefixes_to_sparql(prefixes)
-        statement = statement % (sparql_prefixes, select_statement)
+        statement = statement.format(sparql_prefixes, select_statement)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
 
-        print("%s rows outdated" % result)
+        print("{0} rows outdated".format(result))
 
     def _delete_triples(self, triple, prefixes):
         """
@@ -336,21 +245,7 @@ class TripleStoreEngine:
         :return:
         """
 
-        statement = """
-
-       delete {{    
-            <<?s ?p ?o>>  citing:valid_from ?valid_from.
-            <<?s ?p ?o>>  citing:valid_until ?valid_until.
-            ?s ?p ?o.
-        }} where {{
-            bind({0} as ?s)
-            bind({1} as ?p)
-            bind({2} as ?o)
-            <<?s ?p ?o>> citing:valid_from ?valid_from.
-            <<?s ?p ?o>> citing:valid_until ?valid_until.
-        }}
-
-        """
+        statement = open(self._template_location + "/_delete_triples.txt", "r").read()
         sparql_prefixes = prefixes_to_sparql(prefixes)
         statement = sparql_prefixes + statement
 

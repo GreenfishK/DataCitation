@@ -1,0 +1,10 @@
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+# reset versions
+delete {
+    ?s citing:valid_from ?o ;
+       citing:valid_until ?o
+}
+where
+{
+   ?s ?p ?o .
+}
