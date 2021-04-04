@@ -1,10 +1,7 @@
 import sqlalchemy as sql
 from sqlalchemy import exc
 from DataCitationFramework.citation_utils import QueryData, RDFDataSetData, CitationData
-from DataCitationFramework.citation_utils import read_json
-
 import pandas as pd
-import datetime
 
 
 def escape_apostrophe(string: str) -> str:
@@ -19,6 +16,7 @@ class QueryStore:
         :param relative_path_to_db:
         """
         self.engine = sql.create_engine("sqlite:///{0}".format(relative_path_to_db))
+        self.path_to_persistence = "DataCitationFramework/persistence"
 
     def _remove(self, query_checksum):
         delete_query_citation = "Delete from query_citation where query_checksum = :query_checksum "
@@ -34,44 +32,47 @@ class QueryStore:
             except Exception as e:
                 print(e)
 
+    def retrieve(self, query_pid: str):
+        """
+        Retrieves the full query object which shall be displayed on the landing page.
+
+        :param query_pid:
+        :return:
+        """
+        pass
+
     def lookup(self, query_checksum: str) -> [QueryData, RDFDataSetData, CitationData]:
         """
+        Checks whether the query exists in the database. If yes, its PID from the last citation data,
+        query and result set checksums  and citation snippet will be returned. This function only serves the purpose
+        to retrieve the citation snippet if the query to be cited already exists.
+        It is, however, not used to retrieve the data and display them on the landing page.
 
         :param query_checksum:
         :return:
         """
-        select_statement = "select b.query_pid, a.query_checksum, a.orig_query, a.normal_query, " \
-                           "b.result_set_checksum, b.result_set_description, b.result_set_sort_order, " \
-                           "b.citation_timestamp, b.citation_data, b.citation_snippet " \
-                           "from query_hub a join query_citation b " \
-                           "on a.query_checksum = b.query_checksum " \
-                           "where a.query_checksum = :query_checksum and citation_timestamp =" \
-                           "(select max(citation_timestamp) from query_citation c " \
-                           "where a.query_checksum = c.query_checksum)"
+        select_statement = open("{0}/lookup_select.sql".format(self.path_to_persistence), "r").read()
+
         with self.engine.connect() as connection:
             try:
                 result = connection.execute(select_statement, query_checksum=query_checksum)
                 df = pd.DataFrame(result.fetchall())
                 df.columns = result.keys()
 
-                query = QueryData(df.orig_query)
-                query.citation_timestamp = df.citation_timestamp.loc[0]
-                query.normalized_query_algebra = df.normal_query.loc[0]
-                query.query_checksum = df.query_checksum.loc[0]
-                query.query_pid = df.query_pid.loc[0]
+                query_data = QueryData()
+                query_data.checksum = df.query_checksum.loc[0]
+                query_data.pid = df.query_pid.loc[0]
 
-                result_set = RDFDataSetData()
-                result_set.description = df.result_set_description.loc[0]
-                result_set.sort_order = df.sort_order.loc[0]
-                result_set.checksum = df.checksum.loc[0]
+                result_set_data = RDFDataSetData()
+                result_set_data.checksum = df.result_set_checksum.loc[0]
 
-                citation_data = read_json(df.citation_data.loc[0])
+                citation_data = CitationData(citation_snippet=df.citation_snippet.loc[0])
 
-                return [query, result_set, citation_data]
+                return [query_data, result_set_data, citation_data]
             except Exception as e:
                 print(e)
 
-    def store(self, query: QueryData, rs_data: RDFDataSetData, citation_data: CitationData,  yn_new_query=True):
+    def store(self, query_data: QueryData, rs_data: RDFDataSetData, citation_data: CitationData,  yn_new_query=True):
         """
 
         common metadata:
@@ -89,51 +90,53 @@ class QueryStore:
 
         reference: Theory and Practice of Data Citation, Silvello et al.
 
+        :param query_data:
         :param rs_data:
-        :param query:
         :param citation_data: A set of mandatory attributes from DataCite's Metadata Schema and additional
         attributes that  might be provided
         :param yn_new_query: True, if the query is not found by its checksum in the query table. Otherwise false.
         :return:
         """
 
-        insert_statement = "insert into query_hub(query_checksum, orig_query, normal_query) " \
-                           "values (:query_checksum, :orig_query, :normal_query)"
-
-        insert_statement_2 = "insert into query_citation(query_pid, query_checksum, result_set_checksum," \
-                             " citation_data, citation_snippet, citation_timestamp)" \
-                             " values (:query_pid, :query_checksum, :result_set_checksum," \
-                             " :citation_data, :citation_snippet, :citation_timestamp)"
+        insert_statement = open("{0}/store_insert_query_hub.sql".format(self.path_to_persistence), "r").read()
+        insert_statement_2 = open("{0}/store_insert_query_citation.sql".format(self.path_to_persistence), "r").read()
+        update_statement = open("{0}/store_update_query_hub.sql".format(self.path_to_persistence), "r").read()
 
         with self.engine.connect() as connection:
             if yn_new_query:
                 try:
                     connection.execute(insert_statement,
-                                       query_checksum=query.query_checksum,
-                                       orig_query=query.query,
-                                       normal_query=query.normalized_query_algebra)
-                    print("New query with checksum {0} and PID {1} stored".format(query.query_checksum,
-                                                                                  query.query_pid))
+                                       query_checksum=query_data.checksum,
+                                       orig_query=query_data.query,
+                                       query_prefixes=query_data.sparql_prefixes,
+                                       normal_query=query_data.normalized_query_algebra)
+                    print("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
+                                                                                  query_data.pid))
                 except exc.IntegrityError as e:
                     print("A query is trying to be inserted that exists already. The checksum of the executed query "
                           "is found within the query_hub table")
             try:
                 connection.execute(insert_statement_2,
-                                   query_pid=query.query_pid,
-                                   query_checksum=query.query_checksum,
+                                   query_pid=query_data.pid,
+                                   query_checksum=query_data.checksum,
                                    result_set_checksum=rs_data.checksum,
                                    result_set_description=rs_data.description,
-                                   result_set_sort_order=rs_data.sort_order,
+                                   result_set_sort_order=", ".join(rs_data.sort_order),
                                    citation_data=citation_data.to_json(),
                                    citation_snippet=citation_data.citation_snippet,
-                                   citation_timestamp=query.citation_timestamp)
+                                   citation_timestamp=query_data.citation_timestamp)
                 if not yn_new_query:
                     print("A new citation has been added to the existing query with checksum {0} ."
-                          "The new entry carries the PID {1}".format(query.query_checksum, query.query_pid))
+                          "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
             except exc.IntegrityError as e:
                 print("A query is trying to be inserted that exists already. The query PID of the executed query "
                       "is found within the query_citation table")
+
+            try:
+                connection.execute(update_statement, query_checksum=query_data.checksum)
+            except Exception as e:
+                print("Could not update the last citation PID in query_hub.last_citation_pid")
 
     def citation_snippet(self, query_pid: str):
         """
@@ -141,7 +144,11 @@ class QueryStore:
         :param query_pid:
         :return:
         """
-        select_statement = "Select citation_snippet from query_citation where query_pid = :query_pid"
+
+        # TODO: maybe obsolete and remove this entire function? The citation snippet gets already retrieved
+        #  in the lookup function
+
+        select_statement = open("{0}/citation_snippet_select.sql".format(self.path_to_persistence), "r").read()
         with self.engine.connect() as connection:
             try:
                 result = connection.execute(select_statement, query_pid=query_pid)

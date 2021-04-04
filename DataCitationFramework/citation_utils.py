@@ -83,9 +83,13 @@ def _query_variables(query_algebra) -> list:
     return variables
 
 
+def _citation_timestamp_format(citation_timestamp: datetime) -> str:
+    return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
+
+
 class QueryData:
 
-    def __init__(self, query: str, citation_timestamp: datetime = None, prefixes: dict = None):
+    def __init__(self, query: str = None, citation_timestamp: datetime = None, prefixes: dict = None):
         """
         Initializes the QueryData object and presets most of the variables by calling functions from this class.
 
@@ -95,21 +99,28 @@ class QueryData:
         """
 
         # TODO: store query including prefixes. Additionally, keep the prefixes separate in self.sparql_prefixes
-        self.query = query
-        self.sparql_prefixes = prefixes_to_sparql(prefixes)
-        self.variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes))
-
-        if citation_timestamp is not None:
-            self.citation_timestamp = citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                                      + citation_timestamp.strftime("%z")[3:5]
-            self.normalized_query_algebra = self.normalize_query_tree()
-            self.query_checksum = self.compute_checksum()
-            self.query_pid = self.generate_query_pid()
+        if prefixes is not None:
+            self.sparql_prefixes = prefixes_to_sparql(prefixes)
         else:
-            self.citation_timestamp = None
+            self.sparql_prefixes = ""
+
+        if query is not None:
+            self.query = query
+            self.variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes))
+            self.normalized_query_algebra = self.normalize_query_tree()
+            self.checksum = self.compute_checksum()
+
+            if citation_timestamp is not None:
+                self.citation_timestamp = _citation_timestamp_format(citation_timestamp)  # -> str
+                self.pid = self.generate_query_pid()
+            else:
+                self.citation_timestamp = None
+                self.pid = None
+        else:
+            self.query = None
+            self.variables = None
             self.normalized_query_algebra = None
-            self.query_checksum = None
-            self.query_pid = None
+            self.checksum = None
 
     def detach_prefixes(self, query) -> str:
         """
@@ -146,14 +157,25 @@ Select * where {{
         :return: normalized query tree object
         """
 
+        # Assertions and exception handling
         if query is None:
-            query = self.query
+            if self.query is not None:
+                query = self.query
+            else:
+                return "Query could not be normalized because the query string was not set."
+
         if prefixes is None:
-            prefixes = self.sparql_prefixes
+            if self.sparql_prefixes is not None:
+                prefixes = self.sparql_prefixes
+            else:
+                prefixes = ""
         else:
             prefixes = prefixes_to_sparql(prefixes)
 
-        variables = self.variables
+        if self.variables is not None:
+            variables = self.variables
+        else:
+            return "Query could not be normalized because there are no variables in this query."
 
         template = """
         Select {0} where {{
@@ -280,13 +302,23 @@ Select * where {{
 
         }} {4} 
             """
+
+        # Assertions and exception handling
+        if query is None:
+            if self.query is not None:
+                query = self.query
+            else:
+                return "Query could not be normalized because the query string was not set."
+
         if prefixes is None:
-            prefixes = self.sparql_prefixes
+            if self.sparql_prefixes is not None:
+                prefixes = self.sparql_prefixes
+            else:
+                prefixes = ""
         else:
             prefixes = prefixes_to_sparql(prefixes)
 
-        if query is None:
-            query = self.query
+        if self.variables is not None:
             variables = self.variables
         else:
             variables = _query_variables(_query_algebra(query, prefixes))
@@ -316,8 +348,7 @@ Select * where {{
         normalized_query_formatted = query.replace('\n', '\n' + indent)
 
         if citation_timestamp is not None:
-            timestamp = citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                        + citation_timestamp.strftime("%z")[3:5]
+            timestamp = _citation_timestamp_format(citation_timestamp)
         else:
             timestamp = self.citation_timestamp
 
@@ -339,32 +370,45 @@ Select * where {{
                                           versioning_query_extensions, sort_extension)
         return decorated_query
 
-    def compute_checksum(self, string: str = None):
+    def compute_checksum(self, string: str = None) -> str:
         """
         Computes the checksum based on the provided :string or on
         the normalized query algebra (self.normalized_query_algebra) if no :string is provided
         with the sha256 algorithm.
         :string: The string to normalize. If no string is provided the checksum will be computed based on
         the normalized query algebra.
-        :return: the hash value of either query
+        :return: the hash value of either string or normalized query algebra
         """
 
         checksum = hashlib.sha256()
         if string is None:
-            checksum.update(str.encode(self.normalized_query_algebra))
+            if self.normalized_query_algebra is not None:
+                checksum.update(str.encode(self.normalized_query_algebra))
+            else:
+                return "Checksum could not be computed because the normalized query algebra is missing."
         else:
             checksum.update(str.encode(string))
 
         return checksum.hexdigest()
 
-    def generate_query_pid(self):
+    def generate_query_pid(self, query_checksum: str = None, citation_timestamp: datetime = None):
         """
         Generates a query PID by concatenating the provided query checksum and the citation timestamp from the
         QueryData object.
 
         :return:
         """
-        query_pid = self.query_checksum + self.citation_timestamp
+        if query_checksum is None:
+            query_checksum = self.checksum
+        if citation_timestamp is None:
+            citation_timestamp = self.citation_timestamp
+        else:
+            citation_timestamp = _citation_timestamp_format(citation_timestamp)
+
+        if None not in (query_checksum, citation_timestamp):
+            query_pid = query_checksum + citation_timestamp
+        else:
+            query_pid = "No query PID could be generated because of missing parameters."
         return query_pid
 
 
@@ -562,20 +606,25 @@ class RDFDataSetData:
 
 class CitationData:
 
-    def __init__(self, identifier, creator, title, publisher, publication_year, resource_type,
-                 other_citation_data: dict = None):
+    def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
+                 publication_year: str = None, resource_type: str = None,
+                 other_citation_data: dict = None, citation_snippet: str = None):
         """
         Initialize the mandatory fields from DataCite's metadata model version 4.3
         """
         # TODO: change other_citation_data to kwargs*
+        # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
         self.identifier = identifier
         self.creator = creator
         self.title = title
         self.publisher = publisher
         self.publication_year = publication_year
         self.resource_type = resource_type
+
+        # Other user-defined provenance data and other metadata
         self.other_citation_data = other_citation_data
-        self.citation_snippet = None
+
+        self.citation_snippet = citation_snippet
 
     def to_json(self):
         citation_data = vars(self).copy()
@@ -604,11 +653,11 @@ def generate_citation_snippet(query_pid: str, citation_data: CitationData) -> st
     """
     # TODO: Let the order of data within the snippet be defined by the user
     #  also: the user should be able to define which attributes are to be used in the citation snippet
-    snippet = "{0}, {1}, {2}, {3}, {4}, {5}, query_pid: {6} \n".format(citation_data.identifier,
-                                                                       citation_data.creator,
-                                                                       citation_data.title,
-                                                                       citation_data.publisher,
-                                                                       citation_data.publication_year,
-                                                                       citation_data.resource_type,
-                                                                       query_pid)
+    snippet = "{0}, {1}, {2}, {3}, {4}, {5}, pid: {6} \n".format(citation_data.identifier,
+                                                                 citation_data.creator,
+                                                                 citation_data.title,
+                                                                 citation_data.publisher,
+                                                                 citation_data.publication_year,
+                                                                 citation_data.resource_type,
+                                                                 query_pid)
     return snippet

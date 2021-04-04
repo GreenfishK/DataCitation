@@ -47,7 +47,7 @@ def cite(select_statement, prefixes, citation_data: CitationData, result_set_des
     """
     sparqlapi = rdf.TripleStoreEngine('http://192.168.0.241:7200/repositories/DataCitation',
                                       'http://192.168.0.241:7200/repositories/DataCitation/statements')
-    query_store = qs.QueryStore("query_store.db")
+    query_store = qs.QueryStore("persistence/query_store.db")
     query_to_cite = utils.QueryData(select_statement, prefixes)
 
     # Assign citation timestamp to query object
@@ -62,7 +62,7 @@ def cite(select_statement, prefixes, citation_data: CitationData, result_set_des
     # Compute query checksum
     query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
     # Lookup query by checksum
-    existing_query = query_store.lookup(query_to_cite.query_checksum)  # --> QueryData
+    existing_query = query_store.lookup(query_to_cite.checksum)  # --> QueryData
 
     # Extend query with timestamp
     timestamped_query = query_to_cite.extend_query_with_timestamp()
@@ -76,11 +76,11 @@ def cite(select_statement, prefixes, citation_data: CitationData, result_set_des
     if existing_query:
         if result_set_checksum_new == existing_query.result_set_checksum:
             # Retrieve citation snippet from query store
-            citation_snippet = query_store.citation_snippet(existing_query.query_pid)
+            citation_snippet = query_store.citation_snippet(existing_query.pid)
             return citation_snippet
-    query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.query_checksum)
+    query_to_cite.generate_query_pid(query_to_cite.citation_timestamp, query_to_cite.checksum)
     # Generate citation snippet
-    citation_snippet = utils.generate_citation_snippet(query_to_cite.query_pid, citation_data)
+    citation_snippet = utils.generate_citation_snippet(query_to_cite.pid, citation_data)
     citation_data.citation_snippet = citation_snippet
     # Store query object
     query_store.store(query_to_cite, citation_data, rdf_rs_data)
