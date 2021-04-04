@@ -31,6 +31,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/DataCitationFramework/rdf_star.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/Playground/Test_primary_key_suggestor.py">
           <value>
             <Attribute>

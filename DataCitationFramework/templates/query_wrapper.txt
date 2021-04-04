@@ -1,0 +1,12 @@
+Select {0} where {{
+# original query comes here
+{{
+    {1}
+}}
+# citation timestamp
+bind("{2}"^^xsd:dateTime as ?TimeOfCiting)
+
+# data versioning query extension
+{3}
+
+}} {4}

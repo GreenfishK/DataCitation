@@ -18,16 +18,12 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     :return: transformed result set with columns: s, p, o
     """
 
-    statement = """
-    {0} 
-
-    {1}
-    """
+    template = open("DataCitationFramework/templates/prefixes_query.txt", "r").read()
 
     if sparql_prefixes:
-        statement = statement.format(sparql_prefixes, query)
+        statement = template.format(sparql_prefixes, query)
     else:
-        statement = statement.format("", query)
+        statement = template.format("", query)
 
     q_desc = parser.parseQuery(statement)
     q_algebra = algebra.translateQuery(q_desc).algebra
@@ -133,17 +129,7 @@ class QueryData:
         """
 
     def attach_prefixes(self, query) -> str:
-        template = """
-# prefixes
-{0} 
-
-Select * where {{
-    # original query comes here
-    {{ 
-        {1}
-    }}
-}}
-"""
+        template = open("DataCitationFramework/templates/prefixes_query_wrapper.txt", "r").read()
         query_with_prefixes = template.format(self.sparql_prefixes, query)
         return query_with_prefixes
 
@@ -177,14 +163,7 @@ Select * where {{
         else:
             return "Query could not be normalized because there are no variables in this query."
 
-        template = """
-        Select {0} where {{
-            # original query comes here
-            {{ 
-                {1}
-            }}
-        }}
-        """
+        template = open("DataCitationFramework/templates/simple_query_wrapper.txt", "r").read()
 
         """
         #3
@@ -259,7 +238,7 @@ Select * where {{
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
         the query with a code snippet that ensures that a snapshot of the data as of citation
         time gets returned when the query is executed. Optionally, but recommended, the order by clause
-        is attached to the query.
+        is attached to the query to ensure a unique sort of the data.
 
         :param query:
         :param prefixes:
@@ -271,37 +250,20 @@ Select * where {{
         :return: A query string extended with the given timestamp
         """
 
-        # TODO: preserve order of variables in the select clause
         if colored:
-            template = """
-        Select \x1b[31m {0} \x1b[0m where {{
-            # original query comes here
-            {{ 
-                \x1b[32m{1}\x1b[0m
-            }}
-            # citation timestamp
-            bind("\x1b[34m{2}\x1b[0m"^^xsd:dateTime as ?TimeOfCiting) 
-
-            # data versioning query extension
-            \x1b[35m{3}\x1b[0m
-
-        }} {4} 
-            """
+            red = ("\x1b[31m", "\x1b[0m")
+            green = ("\x1b[32m", "\x1b[0m")
+            blue = ("\x1b[34m", "\x1b[0m")
+            magenta = ("\x1b[35m", "\x1b[0m")
+            cyan = ("\x1b[36m", "\x1b[0m")
         else:
-            template = """
-        Select {0} where {{
-            # original query comes here
-            {{ 
-                {1}
-            }}
-            # citation timestamp
-            bind("{2}"^^xsd:dateTime as ?TimeOfCiting) 
+            red = ("", "")
+            green = ("", "")
+            blue = ("", "")
+            magenta = ("", "")
+            cyan = ("", "")
 
-            # data versioning query extension
-            {3} 
-
-        }} {4} 
-            """
+        template = open("DataCitationFramework/templates/query_wrapper.txt", "r").read()
 
         # Assertions and exception handling
         if query is None:
@@ -331,21 +293,18 @@ Select * where {{
         # QueryData extensions for versioning injection
         triples = _query_triples(query, prefixes)
 
-        versioning_query_extensions_template = """
-                <<{0}>> citing:valid_from {1}.
-                <<{0}>> citing:valid_until {2}.
-                filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2})
-            """
+        versioning_query_extensions_template = \
+            open("DataCitationFramework/templates/versioning_query_extensions.txt", "r").read()
 
         versioning_query_extensions = ""
         for i, triple in enumerate(triples):
             v = versioning_query_extensions_template
-            versioning_query_extensions += v.format(triple, "?triple_{0}_valid_from".format(str(i)),
+            versioning_query_extensions += v.format(triple,
+                                                    "?triple_{0}_valid_from".format(str(i)),
                                                     "?triple_{0}_valid_until".format(str(i)))
 
         # Formatting and styling select statement
-        indent = '        '
-        normalized_query_formatted = query.replace('\n', '\n' + indent)
+        normalized_query_formatted = query.replace('\n', '\n \t')
 
         if citation_timestamp is not None:
             timestamp = _citation_timestamp_format(citation_timestamp)
@@ -358,16 +317,15 @@ Select * where {{
             for v in sort_variables:
                 v_n3 = Variable(v)
                 sort_variables_string += v_n3.n3() + " "
-
-            if colored:
-                sort_extension = "\x1b[36m" + "order by " + ' ' + sort_variables_string + "\x1b[0m"
-            else:
-                sort_extension = "order by " + ' ' + sort_variables_string
+            sort_extension = "order by " + ' ' + sort_variables_string
         else:
             sort_extension = ""
 
-        decorated_query = template.format("*", normalized_query_formatted, timestamp,
-                                          versioning_query_extensions, sort_extension)
+        decorated_query = template.format("{0}{1}{2}".format(red[0], "*", red[1]),
+                                          "{0}{1}{2}".format(green[0], normalized_query_formatted, green[1]),
+                                          "{0}{1}{2}".format(blue[0], timestamp, blue[1]),
+                                          "{0}{1}{2}".format(magenta[0], versioning_query_extensions, magenta[1]),
+                                          "{0}{1}{2}".format(cyan[0], sort_extension, cyan[1]))
         return decorated_query
 
     def compute_checksum(self, string: str = None) -> str:
@@ -437,6 +395,10 @@ class RDFDataSetData:
 
         :return:
         """
+
+        # TODO: Use a natural language processor for RDF data to generate a description
+        #  for the dataset which will be suggested.
+
         if description is None:
             # generate description from self.dataset
             inferred_description = ""
@@ -612,7 +574,9 @@ class CitationData:
         """
         Initialize the mandatory fields from DataCite's metadata model version 4.3
         """
-        # TODO: change other_citation_data to kwargs*
+        # TODO: Data operator defines which metadata to store. The user is able to change the description
+        #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
+
         # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
         self.identifier = identifier
         self.creator = creator

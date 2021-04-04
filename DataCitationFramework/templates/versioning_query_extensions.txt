@@ -1,0 +1,4 @@
+<<{0}>> citing:valid_from {1}.
+<<{0}>> citing:valid_until {2}.
+filter({1} <= ?TimeOfCiting && ?TimeOfCiting < {2})
+

@@ -1,20 +1,11 @@
+from urllib.error import URLError
+
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
 
 
-def _get_prettyprint_string_sparql_var_result(result):
-    value = result["value"]
-    lang = result.get("xml:lang", None)
-    datatype = result.get("datatype", None)
-    if lang is not None:
-        value += "@"+lang
-    if datatype is not None:
-        value += " ["+datatype+"]"
-    return value
-
-
-def _QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
+def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
     """
 
     :param result:
@@ -22,6 +13,16 @@ def _QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     """
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
+
+    def format_value(res_value):
+        value = res_value["value"]
+        lang = res_value.get("xml:lang", None)
+        datatype = res_value.get("datatype", None)
+        if lang is not None:
+            value += "@" + lang
+        if datatype is not None:
+            value += " [" + datatype + "]"
+        return value
 
     results = result.convert()
 
@@ -34,7 +35,7 @@ def _QueryResult_to_dataframe(result: Wrapper.QueryResult) -> pd.DataFrame:
     for r in results["results"]["bindings"]:
         row = []
         for var in results["head"]["vars"]:
-            result_value = _get_prettyprint_string_sparql_var_result(r[var])
+            result_value = format_value(r[var])
             row.append(result_value)
         values.append(row)
     df = df.append(pd.DataFrame(values, columns=df.columns))
@@ -52,7 +53,7 @@ def prefixes_to_sparql(prefixes: dict) -> str:
 
     sparql_prefixes = ""
     for key, value in prefixes.items():
-        sparql_prefixes += "PREFIX " + key + ":" + "<" + value + "> \n"
+        sparql_prefixes += "PREFIX {0}: <{1}> \n".format(key, value)
     return sparql_prefixes
 
 
@@ -73,7 +74,6 @@ class TripleStoreEngine:
         looked up under "Setup --> Repositories --> Link icon"
         :param update_endpoint: URL for executing write statements on the RDF store. Its URL is an extension of
         query_endpoint: "query_endpoint/statements"
-        :param prefixes:
         :param credentials: The user name and password for the remote RDF store
         """
 
@@ -83,6 +83,7 @@ class TripleStoreEngine:
         self.credentials = credentials
 
         # Settings
+        self._template_location = "DataCitationFramework/templates/rdf_star_store"
         self.sparql_post.setHTTPAuth(DIGEST)
         self.sparql_post.setMethod(POST)
 
@@ -95,28 +96,22 @@ class TripleStoreEngine:
             self.sparql_get.setCredentials(credentials.user_name, credentials.pw)
 
         # Test connection. Execute one read and one write statement
-        print(self.sparql_get)
-        self.sparql_get.setQuery("select * where { ?s ?p ?o .} limit 100")
-        result = self.sparql_get.query()
-        print(result)
+        try:
+            self.sparql_get.setQuery(open(self._template_location + "/test_connection_select.txt", "r").read())
+            result = self.sparql_get.query()
+            print(result)
 
-        print(self.sparql_post)
-        insert_statement = "PREFIX pub: <http://ontology.ontotext.com/taxonomy/>" \
-                           "PREFIX citing: <http://ontology.ontotext.com/citing/>"\
-                           "insert " \
-                           "{<http://ontology.ontotext.com/resource/tsk9hdnas934> pub:countryOfCitizenship 'Brazil'} " \
-                           "where {}"
-        self.sparql_post.setQuery(insert_statement)
-        self.sparql_post.query()
+            insert_statement = open(self._template_location + "/test_connection_insert.txt", "r").read()
+            self.sparql_post.setQuery(insert_statement)
+            self.sparql_post.query()
 
-        delete_statement = "PREFIX pub: <http://ontology.ontotext.com/taxonomy/>" \
-                           "PREFIX citing: <http://ontology.ontotext.com/citing/>"\
-                           "delete where " \
-                           "{<http://ontology.ontotext.com/resource/tsk9hdnas934> pub:countryOfCitizenship 'Brazil'}"
-        self.sparql_post.setQuery(delete_statement)
-        self.sparql_post.query()
-
-        print("test successful")
+            delete_statement = open(self._template_location + "/test_connection_delete.txt", "r").read()
+            self.sparql_post.setQuery(delete_statement)
+            self.sparql_post.query()
+            print("Connection established")
+        except URLError as e:
+            print("No connection to the RDF* store could be established. check whether your RDF* store is running.")
+            raise
 
     def reset_all_versions(self):
         """
@@ -192,7 +187,7 @@ class TripleStoreEngine:
 
         self.sparql_get.setQuery(query)
         result = self.sparql_get.query()
-        df = _QueryResult_to_dataframe(result)
+        df = _to_df(result)
         return df
 
     def update(self, select_statement, new_value, prefixes: dict):
