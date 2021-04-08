@@ -58,7 +58,7 @@ class Citation:
         """
 
         sparqlapi = self.sparqlapi
-        query_store = QueryStore("persistence/query_store.db")
+        query_store = QueryStore()
         query_to_cite = QueryData(select_statement, prefixes)
 
         # Assign citation timestamp to query object
