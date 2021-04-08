@@ -42,8 +42,8 @@ requirements:
 
 
 about:
-  home: https://github.com/GreenfishK/DataCitation
-  description: "A package for versioning and citing RDF data."
-  license: GNU General Public License (GPL)
-  summary: 'A package for versioning and citing RDF data using RDF* syntax and a sqlite3 database for storing the query and citation (meta) data'
+  home: {{ data['url'] }}
+  description: {{ data['long_description'] }}
+  license: {{ data['license'] }}
+  summary: {{ data['description'] }}
 

@@ -1,9 +1,8 @@
 import datetime
 from datetime import datetime, timedelta, timezone
-from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, _intersection, \
-    generate_citation_snippet
-from src.rdf_data_citation.query_store import QueryStore
-from src.rdf_data_citation.rdf_star import TripleStoreEngine
+from citation_utils import CitationData, RDFDataSetData, QueryData, _intersection, generate_citation_snippet
+from query_store import QueryStore
+from rdf_star import TripleStoreEngine
 from rdflib.term import Variable
 
 

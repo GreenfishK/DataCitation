@@ -22,5 +22,6 @@ setup(
         where='src',
         include=['rdf_data_citation'],
     ),
-    package_dir={"": "src"}
+    package_dir={"": "src"},
+    package_data={'rdf_data_citation': ['persistence/*.sql', 'persistence/*.db', 'templates/*.txt']}
 )

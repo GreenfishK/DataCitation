@@ -1,3 +1,4 @@
+from rdf_star import prefixes_to_sparql
 from rdflib.term import Variable
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
@@ -6,7 +7,6 @@ import pandas as pd
 import hashlib
 import datetime
 from pandas.util import hash_pandas_object
-from src.rdf_data_citation.rdf_star import prefixes_to_sparql
 import json
 import numpy as np
 import os

@@ -1,22 +1,29 @@
+from citation_utils import QueryData, RDFDataSetData, CitationData
 import sqlalchemy as sql
 from sqlalchemy import exc
-from src.rdf_data_citation import QueryData, RDFDataSetData, CitationData
 import pandas as pd
+import os
 
 
 def escape_apostrophe(string: str) -> str:
     return string.replace("'", "''")
 
 
+def _template_path(template_rel_path: str):
+    return os.path.join(os.path.dirname(__file__), template_rel_path)
+
+
 class QueryStore:
 
-    def __init__(self, relative_path_to_db):
+    def __init__(self):
         """
-        Tables: citation_hub
-        :param relative_path_to_db:
+
+        Tables: query_hub, query_citation
         """
-        self.engine = sql.create_engine("sqlite:///{0}".format(relative_path_to_db))
-        self.path_to_persistence = "API/persistence"
+
+        self.path_to_persistence = _template_path("persistence")
+        db_path = self.path_to_persistence + "/query_store.db"
+        self.engine = sql.create_engine("sqlite:///{0}".format(db_path))
 
     def _remove(self, query_checksum):
         delete_query_citation = "Delete from query_citation where query_checksum = :query_checksum "
