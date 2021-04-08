@@ -1,5 +1,5 @@
+import os
 from urllib.error import URLError
-
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
@@ -57,6 +57,10 @@ def prefixes_to_sparql(prefixes: dict) -> str:
     return sparql_prefixes
 
 
+def _template_path(template_rel_path: str):
+    return os.path.join(os.path.dirname(__file__), template_rel_path)
+
+
 class TripleStoreEngine:
     """
 
@@ -83,7 +87,7 @@ class TripleStoreEngine:
         self.credentials = credentials
 
         # Settings
-        self._template_location = "DataCitationFramework/templates/rdf_star_store"
+        self._template_location = _template_path("templates/rdf_star_store")
         self.sparql_post.setHTTPAuth(DIGEST)
         self.sparql_post.setMethod(POST)
 

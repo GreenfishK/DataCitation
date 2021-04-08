@@ -6,9 +6,10 @@ import pandas as pd
 import hashlib
 import datetime
 from pandas.util import hash_pandas_object
-from DataCitationFramework.rdf_star import prefixes_to_sparql
+from src.rdf_data_citation.rdf_star import prefixes_to_sparql
 import json
 import numpy as np
+import os
 
 
 def _query_triples(query, sparql_prefixes: str = None) -> list:
@@ -18,7 +19,7 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     :return: transformed result set with columns: s, p, o
     """
 
-    template = open("DataCitationFramework/templates/prefixes_query.txt", "r").read()
+    template = open(_template_path("templates/prefixes_query.txt"), "r").read()
 
     if sparql_prefixes:
         statement = template.format(sparql_prefixes, query)
@@ -83,6 +84,10 @@ def _citation_timestamp_format(citation_timestamp: datetime) -> str:
     return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
 
 
+def _template_path(template_rel_path: str):
+    return os.path.join(os.path.dirname(__file__), template_rel_path)
+
+
 class QueryData:
 
     def __init__(self, query: str = None, citation_timestamp: datetime = None, prefixes: dict = None):
@@ -129,7 +134,7 @@ class QueryData:
         """
 
     def attach_prefixes(self, query) -> str:
-        template = open("DataCitationFramework/templates/prefixes_query_wrapper.txt", "r").read()
+        template = open("API/templates/prefixes_query_wrapper.txt", "r").read()
         query_with_prefixes = template.format(self.sparql_prefixes, query)
         return query_with_prefixes
 
@@ -163,8 +168,7 @@ class QueryData:
         else:
             return "Query could not be normalized because there are no variables in this query."
 
-        template = open("DataCitationFramework/templates/simple_query_wrapper.txt", "r").read()
-
+        template = open(_template_path("templates/simple_query_wrapper.txt"), "r").read()
         """
         #3
         In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
@@ -263,7 +267,7 @@ class QueryData:
             magenta = ("", "")
             cyan = ("", "")
 
-        template = open("DataCitationFramework/templates/query_wrapper.txt", "r").read()
+        template = open(_template_path("templates/query_wrapper.txt"), "r").read()
 
         # Assertions and exception handling
         if query is None:
@@ -294,7 +298,7 @@ class QueryData:
         triples = _query_triples(query, prefixes)
 
         versioning_query_extensions_template = \
-            open("DataCitationFramework/templates/versioning_query_extensions.txt", "r").read()
+            open(_template_path("templates/versioning_query_extensions.txt"), "r").read()
 
         versioning_query_extensions = ""
         for i, triple in enumerate(triples):

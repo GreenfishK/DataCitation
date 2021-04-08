@@ -1,6 +1,6 @@
 import sqlalchemy as sql
 from sqlalchemy import exc
-from DataCitationFramework.citation_utils import QueryData, RDFDataSetData, CitationData
+from src.rdf_data_citation import QueryData, RDFDataSetData, CitationData
 import pandas as pd
 
 
@@ -16,7 +16,7 @@ class QueryStore:
         :param relative_path_to_db:
         """
         self.engine = sql.create_engine("sqlite:///{0}".format(relative_path_to_db))
-        self.path_to_persistence = "DataCitationFramework/persistence"
+        self.path_to_persistence = "API/persistence"
 
     def _remove(self, query_checksum):
         delete_query_citation = "Delete from query_citation where query_checksum = :query_checksum "

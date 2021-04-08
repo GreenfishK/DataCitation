@@ -2,19 +2,6 @@
 In order for the functions of this framework to work a triple store supporting SRAPQL* and RDF* and a query store need to be setup. The only two parameters that need to be configured are the GET/read and POST/write endpoints. This is done by instantiating the class SPARQLAPI and passing the two endpoint URIs to the constructor. These URIs, however, vary from solution to solution. Examples for a locally set up "GraphDB free" database are found in the file "Playground". 
 The query store is based on the citation data attributes from the literature (Dublin core, dataverse, FORCE11...) but it rather uses a common set of attributes and does not fully replicate any of these sets.
 
-# Libraries needed:
-* rdflib: conda install -c conda-forge rdflib
-* bsddb3: conda install -c conda-forge bsddb3
-* prettytable: conda install -c conda-forge prettytable
-* SPARQLWrapper: conda install -c conda-forge sparqlwrapper
-* sqlite3
-* json
-* sqlalchemy
-* nested-lookup
-* CSV plugin
-
-The libraries were installed in a virtual conda environment labeled 'TripleStoreCitationFramework'
-
 # Database setup
 Create db and necessary tables by typing following code into the command line:
 
