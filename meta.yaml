@@ -20,24 +20,7 @@ requirements:
   host: 
     - python 3.8
     - setuptools >=46.1.3
-    #- conda
-    #- conda-build
-    #- anaconda-client
-    #- wheel >=0.34.2
-    #- pip
-    #- six
   run:
-    #- python >=3.8
-    #- rdflib >=5.0.0
-    #- sparqlwrapper >=1.8.5
-    #- sqlalchemy >=1.3.19
-    #- sqlite
-    #- numpy >=1.18
-    #- numpy-base >=1.18
-    #- pandas >=1.1.2
-    #- nested-lookup >=0.2.22
-    #- jsonschema >=3.2.0
-    #- urllib3
     {% for req in data['install_requires'] %}
     - {{ req.lower() }}
     {% endfor %}

@@ -1,0 +1,225 @@
+body {
+  font-family: Arial;
+  padding: 20px;
+  background: #f1f1f1;
+
+}
+
+/* Header/Blog Title */
+.navbar {
+  overflow: hidden;
+  color: white;
+  background: #008CBA;
+  position: fixed; /* Set the navbar to fixed position */
+  top: 0; /* Position the navbar at the top of the page */
+  width: 100%; /* Full width */
+
+}
+
+
+/* Links inside the navbar */
+.navbar a {
+  float: left;
+  display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+/* Change background on mouse-over */
+.navbar a:hover {
+  background: #ddd;
+  color: black;
+}
+
+
+/* Create two unequal columns that floats next to each other */
+/* Left column */
+.leftcolumn {
+  float: left;
+  width: 74%;
+  padding-right: 1%;
+
+}
+
+/* Right column */
+.rightcolumn {
+  float: left;
+  width: 25%;
+}
+
+
+/* Add a card effect for articles */
+.card {
+  background-color: white;
+  padding: 20px;
+  margin-top: 20px;
+  overflow: hidden;
+
+}
+
+/* Fake image */
+.fakeimg {
+  background-color: #aaa;
+  width: 96%;
+  padding: 20px;
+}
+
+#query_editor {
+  background-color: white;
+  width: 96%;
+  height: 200px;
+  padding-left: 2%;
+  padding-right: 2%;
+}
+
+#result_set {
+  background-color: #aaa;
+  width: 96%;
+  height: 400px;
+  padding-left: 2%;
+  padding-right: 2%;
+
+}
+
+#execute {
+    margin-top: 5px;
+    background-color: #008CBA; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+
+}
+
+#metadata {
+    height: 100px;
+    width: 100%
+  	display: grid;
+    border: 1px solid black;
+}
+
+.metadata_key {
+    text-align: right;
+    padding-right: 10px;
+
+}
+
+/* Clear floats after the columns */
+.content:after {
+  content: "";
+  display: table;
+  clear: both;
+  margin-top: 30px;
+}
+
+
+/* Footer */
+
+@import "compass/css3";
+
+@import url(https://fonts.googleapis.com/css?family=Raleway);
+
+/* Colors */
+
+$dk-blue: #1E83AE;
+$blue: #3D5B94;
+$light-blue: #3DACDD;
+$green: #6dcd9a;
+$social-size: 1.2em;
+$social-width: 20%;
+
+* {
+  margin: 0;
+  padding: 0;
+  @include box-sizing(border-box);
+}
+
+html, body {
+  font-family: Raleway, sans-serif;
+  background-color: #fff;
+}
+
+footer {
+  width: 100%;
+  display: inline-block;
+  margin: 2em 0;
+  height: 70px;
+  background-color: #999;
+  .copyright {
+    width: 50%;
+    float: left;
+    @media (max-width: 600px) {
+      width: 100%;
+    }
+    p {
+      padding-left: 10%;
+      color: white;
+      font-size: 0.7em;
+      line-height: 70px;
+      text-transform: capitalize;
+      letter-spacing: 1px;
+      @media (max-width: 600px) {
+        text-align: center;
+        padding: 0;
+      }
+    }
+  }
+  .social {
+      width: 50%;
+      float: right;
+    @media (max-width: 600px) {
+      width: 100%;
+    }
+     a {
+      float: left;
+      line-height: 70px;
+      text-decoration: none;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      @include transition(all, 0.3s);
+       &:hover {
+         background-color: #222;
+         @include transition(all, .3s);
+       }
+    }
+  }
+}
+
+.linked {
+  background-color: $dk-blue;
+  font-size: $social-size;
+  width: $social-width;
+}
+
+.face {
+  background-color: $blue;
+  font-size: $social-size;
+  width: $social-width;
+}
+
+.tweet {
+  background-color: $light-blue;
+  font-size: $social-size;
+  width: $social-width;
+}
+
+.support {
+  background-color: $green;
+  font-size: 0.8em;
+  width: 40%;
+}
+
+/* Responsive layout - when the screen is less than 800px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 800px) {
+  .leftcolumn, .rightcolumn {
+    width: 100%;
+    padding: 0;
+  }
+}
+

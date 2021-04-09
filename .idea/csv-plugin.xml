@@ -87,6 +87,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/examples/landing_page/flaskr/landing_page.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/sample_dataset.csv">
           <value>
             <Attribute>
