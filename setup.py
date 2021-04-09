@@ -25,8 +25,8 @@ setup(
     ),
     package_dir={"": "src"},
     package_data={'rdf_data_citation': ['persistence/*.sql', 'persistence/*.db', 'templates/*.txt']},
-    install_requires=['python>=3.8', 'rdflib>=5.0.0', 'sparqlwrapper>=1.8.5', 'sqlalchemy>=1.3.19',
-                      'sqlite', 'numpy>=1.18', 'numpy-base>=1.18', 'pandas>=1.1.2', 'nested-lookup>=0.2.22',
+    install_requires=['python >=3.8', 'rdflib >=5.0.0', 'sparqlwrapper >=1.8.5', 'sqlalchemy >=1.3.19',
+                      'sqlite', 'numpy >=1.18', 'numpy-base >=1.18', 'pandas >=1.1.2', 'nested-lookup >=0.2.22',
                       'jsonschema >=3.2.0', 'urllib3']
 
 )
