@@ -14,7 +14,6 @@ def create_app(test_config=None):
     """
 
     app = Flask(__name__, instance_relative_config=True)
-
     app.register_blueprint(citation_page.bp)
     app.register_blueprint(landing_page.bp)
     return app

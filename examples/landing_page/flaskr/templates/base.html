@@ -2,10 +2,10 @@
 <html>
     <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css"> -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     </head>
+
     <body>
         <div class="navbar" id="myNavbar">
             <!--<h2>{% block header %}{% endblock %}</h2> -->
@@ -17,17 +17,23 @@
 
         {% endblock %}
 
-        <footer>
-          <div class="copyright">
-            <p>&copy 2013 - Organisation</p>
-          </div>
-          <div class="social">
-            <a href="#" class="support">Contact Us</a>
-            <a href="#" class="face">f</a>
-            <a href="#" class="tweet">t</a>
-            <a href="#" class="linked">in</a>
-          </div>
+        <footer class="footer-distributed">
+            <div class="footer-right">
+                <a href="#"><i class="fa fa-facebook"></i></a>
+                <a href="#"><i class="fa fa-twitter"></i></a>
+                <a href="#"><i class="fa fa-linkedin"></i></a>
+                <a href="#"><i class="fa fa-github"></i></a>
+            </div>
+            <div class="footer-left">
+                <p class="footer-links">
+                    <a class="link-1" href="#">Home</a>
+                    <a href="#">Citations</a>
+                    <a href="#">About</a>
+                    <a href="#">Faq</a>
+                    <a href="#">Contact</a>
+                </p>
+                <p>Example Datacenter &copy; 2021</p>
+            </div>
         </footer>
-
     </body>
 </html>
