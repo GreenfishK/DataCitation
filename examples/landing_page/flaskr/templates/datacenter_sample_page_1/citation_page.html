@@ -3,6 +3,8 @@
 {% block head %}
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type=text/javascript src="{{url_for('static', filename='execute_query.js')}}"></script>
+    <script type=text/javascript src="{{url_for('static', filename='cite_query.js')}}"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -13,7 +15,7 @@
             <h2>Query editor</h2>
             <h5>Executed on: </h5>
             <textarea id="query_editor">Add query here... </textarea>
-            <button id=execute type="button" class='btn btn-default'>Execute</button>
+            <button id="execute" type="button" class='btn btn-default'>Execute</button>
 
           </div>
           <div class="card">
@@ -22,7 +24,7 @@
             <div id="result_set">
                 {{ dataframe|safe }}
             </div>
-            <button id=cite type="button" class='btn btn-default'>Cite</button>
+            <button id="cite" type="button" class='btn btn-default'>Cite</button>
           </div>
         </div>
         <div class="rightcolumn">
@@ -72,6 +74,10 @@
           <div class="card">
             <h3>Follow Me</h3>
             <p><a href="https://github.com/GreenfishK/DataCitation">https://github.com/GreenfishK/DataCitation</a></p>
+          </div>
+          <div class="card">
+            <h3>Citation Snippet</h3>
+            <p id="citation_snippet"> {{ citation_snippet }} </p>
           </div>
         </div>
     </div>

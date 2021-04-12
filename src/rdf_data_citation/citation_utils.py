@@ -1,4 +1,4 @@
-from rdf_data_citation.rdf_star import prefixes_to_sparql
+from src.rdf_data_citation.rdf_star import prefixes_to_sparql
 
 from rdflib.term import Variable
 import rdflib.plugins.sparql.parser as parser

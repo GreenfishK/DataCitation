@@ -1,8 +1,9 @@
-from rdf_data_citation.query_store import QueryStore
-from rdf_data_citation.rdf_star import TripleStoreEngine
+from src.rdf_data_citation.query_store import QueryStore
+from src.rdf_data_citation.rdf_star import TripleStoreEngine
+from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, _intersection, generate_citation_snippet
+
 import datetime
 from datetime import datetime, timedelta, timezone
-from citation_utils import CitationData, RDFDataSetData, QueryData, _intersection, generate_citation_snippet
 from rdflib.term import Variable
 
 
@@ -17,7 +18,7 @@ class Citation:
         """
         self.sparqlapi = TripleStoreEngine(get_endpoint, post_endpoint)
 
-    def cite(self, select_statement: str, prefixes: dict, citation_data: CitationData, result_set_description: str):
+    def cite(self, select_statement: str, citation_data: CitationData, result_set_description: str):
         """
         Persistently Identify Specific Data Sets
 
@@ -59,9 +60,10 @@ class Citation:
 
         sparqlapi = self.sparqlapi
         query_store = QueryStore()
-        query_to_cite = QueryData(select_statement, prefixes)
+        query_to_cite = QueryData(select_statement)
 
         # Assign citation timestamp to query object
+        # TODO: get timezone from system
         citation_datetime = datetime.now(timezone(timedelta(hours=2)))
         citation_timestamp = citation_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
                              + citation_datetime.strftime("%z")[3:5]
@@ -79,7 +81,7 @@ class Citation:
         timestamped_query = query_to_cite.decorate_query()
 
         # Extend query with sort operation. Use the index suggestor to suggest the index to use for sorting
-        query_result = sparqlapi.get_data(timestamped_query, prefixes)
+        query_result = sparqlapi.get_data(timestamped_query)
         query_tree_variables = []
         for v in query_to_cite.variables:
             if isinstance(v, Variable):
