@@ -143,22 +143,16 @@ class TripleStoreEngine:
         self.sparql_post.query()
         print("All rows have been annotated with the current timestamp")
 
-    def get_data(self, select_statement, prefixes: dict = None) -> pd.DataFrame:
+    def get_data(self, select_statement) -> pd.DataFrame:
         """
         Executes the SPARQL select statement and returns a result set.
 
         snapshot of the date as of "timestamp".
         :param select_statement:
-        :param prefixes:
         :return:
         """
 
         query = select_statement
-        if prefixes:
-            template = open(self._template_location + "/get_data.txt", "r").read()
-            prefixes_sparql = prefixes_to_sparql(prefixes)
-            query = template.format(prefixes_sparql, select_statement)
-
         self.sparql_get.setQuery(query)
         result = self.sparql_get.query()
         df = _to_df(result)

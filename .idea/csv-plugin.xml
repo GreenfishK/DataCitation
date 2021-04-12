@@ -101,6 +101,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/src/rdf_data_citation/citation_utils.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

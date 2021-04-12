@@ -1,0 +1,18 @@
+#Prefixes
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+
+select ?document ?mention ?person ?personLabel ?value ?party where {
+?document publishing:containsMention ?mention .
+?mention publishing:hasInstance ?person .
+?person pub:preferredLabel ?personLabel .
+?person pub:memberOfPoliticalParty ?party .
+?party pub:hasValue ?value .
+?value pub:preferredLabel "Democratic Party"@en .
+filter(?personLabel = "Judy Chu"@en)
+}
+
+
+

@@ -1,12 +1,14 @@
-Select {0} where {{
+# Prefixes
+{0}
+Select {1} where {{
 # original query comes here
 {{
-    {1}
+    {2}
 }}
 # citation timestamp
-bind("{2}"^^xsd:dateTime as ?TimeOfCiting)
+bind("{3}"^^xsd:dateTime as ?TimeOfCiting)
 
 # data versioning query extension
-{3}
+{4}
 
-}} {4}
+}} {5}

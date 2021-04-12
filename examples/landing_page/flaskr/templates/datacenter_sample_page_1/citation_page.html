@@ -1,26 +1,20 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type=text/javascript src="{{url_for('static', filename='execute_query.js')}}"></script>
+{% endblock %}
+
 {% block content %}
+
     <div class="content">
         <div class="leftcolumn">
           <div class="card">
             <h2>Query editor</h2>
             <h5>Executed on: </h5>
-            <textarea id="query_editor">PREFIX citing:<http://ontology.ontotext.com/citing/>
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX publishing: <http://ontology.ontotext.com/publi
+            <textarea id="query_editor">Add query here... </textarea>
+            <button id=execute type="button" class='btn btn-default'>Execute</button>
 
-select ?document ?mention ?person ?personLabel ?value ?party where {
-?document publishing:containsMention ?mention .
-?mention publishing:hasInstance ?person .
-?person pub:preferredLabel ?personLabel .
-?person pub:memberOfPoliticalParty ?party .
-?party pub:hasValue ?value .
-?value pub:preferredLabel "Democratic Party"@en .
-filter(?personLabel = "Judy Chu"@en)
-            </textarea>
-            <button id="execute" type="button">Execute query</button>
           </div>
           <div class="card">
             <h2>Result set</h2>

@@ -1,4 +1,4 @@
-from citation_utils import QueryData, RDFDataSetData, CitationData
+from rdf_data_citation.citation_utils import QueryData, RDFDataSetData, CitationData
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd

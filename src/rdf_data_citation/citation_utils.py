@@ -1,4 +1,5 @@
-from rdf_star import prefixes_to_sparql
+from rdf_data_citation.rdf_star import prefixes_to_sparql
+
 from rdflib.term import Variable
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
@@ -10,6 +11,7 @@ from pandas.util import hash_pandas_object
 import json
 import numpy as np
 import os
+import re
 
 
 def _query_triples(query, sparql_prefixes: str = None) -> list:
@@ -45,7 +47,12 @@ def _intersection(lst1, lst2):
 
 
 def _query_algebra(query: str, sparql_prefixes: str):
-    q_desc = parser.parseQuery(sparql_prefixes + " " + query)
+    if sparql_prefixes:
+        q_desc = parser.parseQuery(sparql_prefixes + " " + query)
+    else:
+        print(query)
+        q_desc = parser.parseQuery(query)
+
     return algebra.translateQuery(q_desc).algebra
 
 
@@ -88,9 +95,16 @@ def _template_path(template_rel_path: str):
     return os.path.join(os.path.dirname(__file__), template_rel_path)
 
 
+def attach_prefixes(query, prefixes: dict) -> str:
+    template = open(_template_path("templates/prefixes_query_wrapper.txt"), "r").read()
+    sparql_prefixes = prefixes_to_sparql(prefixes)
+    query_with_prefixes = template.format(sparql_prefixes, query)
+    return query_with_prefixes
+
+
 class QueryData:
 
-    def __init__(self, query: str = None, citation_timestamp: datetime = None, prefixes: dict = None):
+    def __init__(self, query: str = None, citation_timestamp: datetime = None):
         """
         Initializes the QueryData object and presets most of the variables by calling functions from this class.
 
@@ -99,14 +113,8 @@ class QueryData:
         :param prefixes: prefixes used in the SPARQL query.
         """
 
-        # TODO: store query including prefixes. Additionally, keep the prefixes separate in self.sparql_prefixes
-        if prefixes is not None:
-            self.sparql_prefixes = prefixes_to_sparql(prefixes)
-        else:
-            self.sparql_prefixes = ""
-
         if query is not None:
-            self.query = query
+            self.sparql_prefixes, self.query = self.split_prefixes_query(query)
             self.variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes))
             self.normalized_query_algebra = self.normalize_query_tree()
             self.checksum = self.compute_checksum()
@@ -123,22 +131,29 @@ class QueryData:
             self.normalized_query_algebra = None
             self.checksum = None
 
-    def detach_prefixes(self, query) -> str:
+    def split_prefixes_query(self, query: str = None) -> list:
         """
-        Cuts out prefixes from the passed
-        query and moves them to the top. This is because wrapping
-        around prefixes is not allowed in SPARQL. Prefixes must always be at the top of the statement.
-        If no prefixes are found, the query just gets returned.
+        Separates the prefixes from the actual query and stores either information in self.query and
+        self.sparql_prefixes respectively.
+
         :param query: A query string with or without prefixes
-        :return:
+        :return: A list with the prefixes as the first element and the actual query string as the second element.
         """
+        pattern = "PREFIX\\s*[a-zA-Z0-9]*:\\s*<.*>\\s*"
 
-    def attach_prefixes(self, query) -> str:
-        template = open("API/templates/prefixes_query_wrapper.txt", "r").read()
-        query_with_prefixes = template.format(self.sparql_prefixes, query)
-        return query_with_prefixes
+        if not query:
+            query = self.query
+        prefixes_list = re.findall(pattern, query, re.MULTILINE)
+        prefixes = ''.join(prefixes_list)
+        query_without_prefixes = re.sub(pattern, "", query, re.MULTILINE)
 
-    def normalize_query_tree(self, query: str = None, prefixes: dict = None):
+        if not query:
+            self.sparql_prefixes = prefixes
+            self.query = query_without_prefixes
+
+        return [prefixes, query_without_prefixes]
+
+    def normalize_query_tree(self, query: str = None):
         """
         Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
         query algebra as different ways of writing a query usually boil down to one algebra. For cases where
@@ -151,17 +166,12 @@ class QueryData:
         # Assertions and exception handling
         if query is None:
             if self.query is not None:
+                prefixes = self.sparql_prefixes
                 query = self.query
             else:
                 return "Query could not be normalized because the query string was not set."
-
-        if prefixes is None:
-            if self.sparql_prefixes is not None:
-                prefixes = self.sparql_prefixes
-            else:
-                prefixes = ""
         else:
-            prefixes = prefixes_to_sparql(prefixes)
+            prefixes, query = self.split_prefixes_query(query)
 
         if self.variables is not None:
             variables = self.variables
@@ -236,7 +246,7 @@ class QueryData:
 
         return str(q_algebra)
 
-    def decorate_query(self, query: str = None, prefixes: dict = None, citation_timestamp: datetime = None,
+    def decorate_query(self, query: str = None, citation_timestamp: datetime = None,
                        sort_variables: tuple = None, colored: bool = False):
         """
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
@@ -272,17 +282,12 @@ class QueryData:
         # Assertions and exception handling
         if query is None:
             if self.query is not None:
+                prefixes = self.sparql_prefixes
                 query = self.query
             else:
                 return "Query could not be normalized because the query string was not set."
-
-        if prefixes is None:
-            if self.sparql_prefixes is not None:
-                prefixes = self.sparql_prefixes
-            else:
-                prefixes = ""
         else:
-            prefixes = prefixes_to_sparql(prefixes)
+            prefixes, query = self.split_prefixes_query(query)
 
         if self.variables is not None:
             variables = self.variables
@@ -304,8 +309,8 @@ class QueryData:
         for i, triple in enumerate(triples):
             v = versioning_query_extensions_template
             versioning_query_extensions += v.format(triple,
-                                                    "?triple_{0}_valid_from".format(str(i)),
-                                                    "?triple_{0}_valid_until".format(str(i)))
+                                                    "?triple_statement_{0}_valid_from".format(str(i)),
+                                                    "?triple_statement_{0}_valid_until".format(str(i)))
 
         # Formatting and styling select statement
         normalized_query_formatted = query.replace('\n', '\n \t')
@@ -325,7 +330,8 @@ class QueryData:
         else:
             sort_extension = ""
 
-        decorated_query = template.format("{0}{1}{2}".format(red[0], "*", red[1]),
+        decorated_query = template.format(prefixes,
+                                          "{0}{1}{2}".format(red[0], "*", red[1]),
                                           "{0}{1}{2}".format(green[0], normalized_query_formatted, green[1]),
                                           "{0}{1}{2}".format(blue[0], timestamp, blue[1]),
                                           "{0}{1}{2}".format(magenta[0], versioning_query_extensions, magenta[1]),
