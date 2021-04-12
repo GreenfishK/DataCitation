@@ -21,17 +21,11 @@ def execute_query():
         rdf_engine = rdfs.TripleStoreEngine('http://192.168.0.241:7200/repositories/DataCitation',  # GET
                                             'http://192.168.0.241:7200/repositories/DataCitation/statements')  # POST
 
-        vieTZObject = timezone(timedelta(hours=2))
-        timestamp1 = datetime.now(tz=vieTZObject)
         query_text = request.form['query_text']
-
-        query = cu.QueryData(query_text, citation_timestamp=timestamp1)
-        timestamped_query_1 = query.decorate_query()
-        result_set = rdf_engine.get_data(timestamped_query_1)  # dataframe
-        print(result_set)
-
-    return render_template('datacenter_sample_page_1/citation_page.html')
-
+        result_set = rdf_engine.get_data(query_text)  # dataframe
+        print(result_set.to_html(header='true'))
+        return render_template('datacenter_sample_page_1/citation_page.html',
+                               dataframe=result_set.to_html(header='true'))
     # background process happening without any refreshing
 
 

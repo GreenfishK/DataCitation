@@ -7,9 +7,14 @@ $(function execute_query() {
             data : {
                 query_text : text_area_value // Hardcoded for now
             },
-            success : function(data){
-                console.log("success");
+            dataType : 'html',
+            // most important line! releases the document so it can be rendered
+            success: function(response) {
+                //document.write(response);
+                var res = $('.dataframe', response)
+                $("#result_set").html(res);
             }
+
         });
     });
 });
