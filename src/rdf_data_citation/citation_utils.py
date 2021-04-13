@@ -1,3 +1,5 @@
+from rdflib.plugins.sparql.parserutils import CompValue
+
 from src.rdf_data_citation.rdf_star import prefixes_to_sparql
 
 from rdflib.term import Variable
@@ -121,6 +123,7 @@ class QueryData:
 
             if citation_timestamp is not None:
                 self.citation_timestamp = _citation_timestamp_format(citation_timestamp)  # -> str
+                self.timestamped_query = self.timestamp_query()
                 self.pid = self.generate_query_pid()
             else:
                 self.citation_timestamp = None
@@ -173,12 +176,8 @@ class QueryData:
         else:
             prefixes, query = self.split_prefixes_query(query)
 
-        if self.variables is not None:
-            variables = self.variables
-        else:
-            return "Query could not be normalized because there are no variables in this query."
+        q_algebra = _query_algebra(query, prefixes)
 
-        template = open(_template_path("templates/simple_query_wrapper.txt"), "r").read()
         """
         #3
         In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
@@ -212,12 +211,8 @@ class QueryData:
         There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
         are sorted by their bindings where the ones with the most bindings come first.
         """
-        variables_query_string = ""
-        for v in variables:
-            variables_query_string += v.n3() + " "
-        query = template.format(variables_query_string, query)
-        q_algebra = _query_algebra(query, prefixes)
 
+        # Replace variables with letters
         int_norm_var = 'a'
         variables_mapping = {}
         extended_variables = _query_variables(q_algebra)
@@ -226,28 +221,38 @@ class QueryData:
             next_norm_var = chr(ord(int_norm_var) + i)
             variables_mapping.update({v: next_norm_var})
 
-        # replace variables with normalized variables (letters from the alphabet)
-        algebra.traverse(q_algebra,
-                         lambda var: variables_mapping.get(var) if isinstance(var, Variable) else None
-                         )
+        # Replace rdflib.term.Variable('var') with var
+        def norm_vars_1(var):
+            if isinstance(var, Variable):
+                return variables_mapping.get(var)
+            else:
+                return None
+
+        algebra.traverse(q_algebra, norm_vars_1)
 
         # identify _var sets and sort the variables inside
-        def norm_vars(x):
-            return [variables_mapping[a] for a in x]
-        # norm_vars = lambda x: [variables_mapping[a] for a in x]
-        algebra.traverse(q_algebra,
-                         lambda s: sorted(norm_vars(s)) if isinstance(s, set) else None
-                         )
+        def norm_vars_2(x):
+            if isinstance(x, set):
+                normalized_variables = [variables_mapping[a] for a in x]
+                return sorted(normalized_variables)
+            else:
+                return None
 
-        # Sort variables in select statement
-        algebra.traverse(q_algebra,
-                         lambda l: sorted(l) if isinstance(l, list) else None
-                         )
+        algebra.traverse(q_algebra, norm_vars_2)
+
+        # Sort variables (in select statement)
+        def sort_list_of_string(list_node):
+            if isinstance(list_node, list) and all(isinstance(list_item, str) for list_item in list_node):
+                return sorted(list_node)
+            else:
+                return None
+
+        algebra.traverse(q_algebra, visitPre=sort_list_of_string)
 
         return str(q_algebra)
 
-    def decorate_query(self, query: str = None, citation_timestamp: datetime = None,
-                       sort_variables: tuple = None, colored: bool = False):
+    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None,
+                        sort_variables: tuple = None, colored: bool = False):
         """
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
         the query with a code snippet that ensures that a snapshot of the data as of citation
@@ -380,24 +385,26 @@ class QueryData:
         return query_pid
 
 
+class NoUniqueSortIndexError(Exception):
+    pass
+
+
 class RDFDataSetData:
 
-    def __init__(self, dataset: pd.DataFrame = None, description: str = None, sort_order: tuple = None):
+    def __init__(self, dataset: pd.DataFrame = None, description: str = None,
+                 unique_sort_index: tuple = None):
         """
 
         :param description:
         :param sort_order:
         """
-        self.dataset = None
-        self.description = None
-        self.sort_order = None
-        self.checksum = None
-
+        self.dataset = dataset
+        self.description = description
+        self.sort_order = unique_sort_index
         if dataset is not None:
-            self.dataset = dataset
-            self.description = self.describe(description)
-            self.sort_order = self.create_sort_index(sort_order, True)[0]
             self.checksum = self.compute_checksum()
+        else:
+            self.checksum = None
 
     def describe(self, description: str):
         """
@@ -451,7 +458,7 @@ class RDFDataSetData:
         checksum = checksum.hexdigest()
         return checksum
 
-    def create_sort_index(self, sort_order: tuple = None, suggest_one_key: bool = False) -> list:
+    def create_sort_index(self, suggest_one_key: bool = False) -> list:
         """
         Infers the primary key from a dataset.
         Two datasets with differently permuted columns but otherwise identical
@@ -468,11 +475,8 @@ class RDFDataSetData:
         :return:
         """
 
-        if sort_order is not None:
-            return list(sort_order)
-
-        # TODO: Think abou whether the order of columns should yield a different permutation of key attributes
-        #  withing composite keys, thus, meaning a different sorting or not.
+        # TODO: Think about whether the order of columns should yield a different permutation of key attributes
+        #  within composite keys, thus, meaning a different sorting or not.
 
         def combination_util(combos: list, arr, n, tuple_size, data, index=0, i=0):
             """
@@ -512,6 +516,8 @@ class RDFDataSetData:
         df_key_finder.drop_duplicates(inplace=True)
         cnt_columns = len(df_key_finder.columns)
 
+        # If order of columns should matter include this code. Then, different names will yield a different result set
+        # sort
         """columns_mapping = {}
         for idx, column in enumerate(df_key_finder.columns):
             columns_mapping[column] = str(idx)
@@ -529,13 +535,13 @@ class RDFDataSetData:
             attribute_combos = []
             combination_util(combos=attribute_combos, arr=columns, n=cnt_columns,
                              tuple_size=cnt_index_attrs, data=[0] * cnt_index_attrs)
-            attribute_combos_tuple_size_k = {}
+            attribute_combos_unique_flags = {}
             for combo in attribute_combos:
-                attribute_combos_tuple_size_k[tuple(combo)] = df_key_finder.set_index(combo).index.is_unique
+                attribute_combos_unique_flags[tuple(combo)] = df_key_finder.set_index(combo).index.is_unique
 
-            if any(attribute_combos_tuple_size_k.values()):
+            if any(attribute_combos_unique_flags.values()):
                 sufficient_tuple_size = True
-                attribute_combos_min_tuple_size = attribute_combos_tuple_size_k
+                attribute_combos_min_tuple_size = attribute_combos_unique_flags
             cnt_index_attrs += 1
 
         dist_stacked_key_attr_values = {}
@@ -570,7 +576,13 @@ class RDFDataSetData:
         if sort_order is None:
             sort_index = self.create_sort_index(suggest_one_key=True)[0]
         else:
-            sort_index = sort_order
+            is_unique = self.dataset.set_index(sort_order).index.is_unique
+            if is_unique:
+                sort_index = sort_order
+            else:
+                print("A non-unique user defined sort index was given. If you provide a sort index it must be unique")
+                raise NoUniqueSortIndexError
+
         self.sort_order = sort_index
         sorted_df = self.dataset.set_index(list(sort_index)).sort_index()
         return sorted_df
@@ -608,6 +620,12 @@ class CitationData:
 
 
 def read_json(json_string) -> CitationData:
+    """
+    Reads the citation metadata provided as a json strings and creates the CitationData object.
+    :param json_string:
+    :return: the citation metadata, but without the citation snippet
+    """
+
     citation_data_dict = json.loads(json_string)
 
     citation_data = CitationData(citation_data_dict['identifier'], citation_data_dict['creator'],

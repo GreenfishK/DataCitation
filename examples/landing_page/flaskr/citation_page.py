@@ -57,7 +57,6 @@ def cite_query():
 
     html_response = render_template('datacenter_sample_page_1/citation_page.html',
                                     citation_snippet=citation_snippet)
-    print(html_response)
     return html_response
 
 

@@ -1,4 +1,5 @@
 from src.rdf_data_citation.citation_utils import QueryData, RDFDataSetData, CitationData
+from src.rdf_data_citation.citation_utils import read_json
 
 import sqlalchemy as sql
 from sqlalchemy import exc
@@ -60,21 +61,31 @@ class QueryStore:
         :return:
         """
         select_statement = open("{0}/lookup_select.sql".format(self.path_to_persistence), "r").read()
-
         with self.engine.connect() as connection:
             try:
                 result = connection.execute(select_statement, query_checksum=query_checksum)
                 df = pd.DataFrame(result.fetchall())
+
+                if df.empty:
+                    return [None, None, None]
+
                 df.columns = result.keys()
 
                 query_data = QueryData()
                 query_data.checksum = df.query_checksum.loc[0]
                 query_data.pid = df.query_pid.loc[0]
+                query_data.normalized_query_algebra = df.normal_query.loc[0]
+                query_data.sparql_prefixes = df.query_prefixes.loc[0]
+                query_data.citation_timestamp = df.citation_timestamp.loc[0]
 
                 result_set_data = RDFDataSetData()
+                result_set_data.dataset = df
                 result_set_data.checksum = df.result_set_checksum.loc[0]
+                result_set_data.description = df.result_set_description.loc[0]
+                result_set_data.sort_order = df.result_set_sort_order.loc[0]
 
-                citation_data = CitationData(citation_snippet=df.citation_snippet.loc[0])
+                citation_data = read_json(df.citation_data.loc[0])
+                citation_data.citation_snippet = df.citation_snippet.loc[0]
 
                 return [query_data, result_set_data, citation_data]
             except Exception as e:
@@ -122,7 +133,7 @@ class QueryStore:
                                                                                   query_data.pid))
                 except exc.IntegrityError as e:
                     print("A query is trying to be inserted that exists already. The checksum of the executed query "
-                          "is found within the query_hub table")
+                          "is found within the query_hub table: {0}".format(query_data.checksum))
             try:
                 connection.execute(insert_statement_2,
                                    query_pid=query_data.pid,
@@ -138,8 +149,8 @@ class QueryStore:
                           "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
             except exc.IntegrityError as e:
-                print("A query is trying to be inserted that exists already. The query PID of the executed query "
-                      "is found within the query_citation table")
+                print("A query is trying to be inserted that already exists. The query PID {0} of the executed query "
+                      "is found within the query_citation table".format(query_data.pid))
 
             try:
                 connection.execute(update_statement, query_checksum=query_data.checksum)

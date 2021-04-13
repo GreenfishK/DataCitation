@@ -18,7 +18,8 @@ class Citation:
         """
         self.sparqlapi = TripleStoreEngine(get_endpoint, post_endpoint)
 
-    def cite(self, select_statement: str, citation_data: CitationData, result_set_description: str):
+    def cite(self, select_statement: str, citation_data: CitationData, result_set_description: str,
+             unique_user_sort_index: tuple = None):
         """
         Persistently Identify Specific Data Sets
 
@@ -51,10 +52,10 @@ class Citation:
         [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
         [2]: Theory and Practice of Data Citation, Gianmaria Silvello
 
+        :param unique_user_sort_index: A unique index defined by the user.
         :param result_set_description:
         :param citation_data:
         :param select_statement:
-        :param prefixes:
         :return:
         """
 
@@ -69,46 +70,57 @@ class Citation:
                              + citation_datetime.strftime("%z")[3:5]
         query_to_cite.citation_timestamp = citation_timestamp
 
-        # Create query tree and normalize query tree
-        # TODO: create query tree outside of normalize query tree
-        query_to_cite.normalize_query_tree()
         # Compute query checksum
         query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
+
+        # Generate query PID
+        query_to_cite.pid = query_to_cite.generate_query_pid()
+
+        # Create query tree and normalize query tree
+        query_to_cite.normalize_query_tree()
+
         # Lookup query by checksum
-        existing_query = query_store.lookup(query_to_cite.checksum)  # --> QueryData
+        # TODO: empty dataset should also be valid
+        existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
+            = query_store.lookup(query_to_cite.checksum)
 
         # Extend query with timestamp
-        timestamped_query = query_to_cite.decorate_query()
+        timestamped_query = query_to_cite.timestamp_query()
 
-        # Extend query with sort operation. Use the index suggestor to suggest the index to use for sorting
-        query_result = sparqlapi.get_data(timestamped_query)
+        # Execute query
+        result_set = sparqlapi.get_data(timestamped_query)
+
+        # Sort result set
+        # # Prepare dataset
         query_tree_variables = []
         for v in query_to_cite.variables:
             if isinstance(v, Variable):
                 query_tree_variables.append(v.n3()[1:])
 
-        dataset_variables = _intersection(query_result.columns, query_tree_variables)
-        rdf_ds = RDFDataSetData(query_result[dataset_variables])
-        rdf_ds.description = result_set_description
-        sorted_ds = rdf_ds.sort()
-        rdf_ds.dataset = sorted_ds
+        dataset_variables = _intersection(result_set.columns, query_tree_variables)
+        rdf_ds = RDFDataSetData(dataset=result_set[dataset_variables], description=result_set_description)
+
+        # # sort() will create an unique sort index if no unique user sort index is provided.
+        rdf_ds.dataset = rdf_ds.sort(sort_order=unique_user_sort_index)
+
+        # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()
 
-        # Check whether query already exists
-        existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
-            = query_store.lookup(query_to_cite.checksum)
-
-        if existing_query:
+        if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
             if rdf_ds.checksum == existing_query_rdf_ds_data.checksum:
+                # Retrieve citation snippet
                 citation_snippet = existing_query_citation_data.citation_snippet
+                print("Query exists already and the result set has not changed since the last execution")
                 return citation_snippet
             else:
-                pass
-        # Generate citation snippet
-        citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_data)
-        citation_data.citation_snippet = citation_snippet
-        # Store query object
-        query_store.store(query_to_cite, rdf_ds, citation_data)
-        return citation_snippet
+                query_store.store(query_to_cite, rdf_ds, citation_data, yn_new_query=False)
+        else:
+            # Generate citation snippet
+            citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_data)
+            citation_data.citation_snippet = citation_snippet
 
-        # embed query timestamp (max valid_from of dataset)
+            # Store query object
+            query_store.store(query_to_cite, rdf_ds, citation_data)
+            return citation_snippet
+
+        # TODO: embed query timestamp (max valid_from of dataset). No idea what it means
