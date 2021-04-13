@@ -13,14 +13,12 @@
         <div class="leftcolumn">
           <div class="card">
             <h2>Query editor</h2>
-            <h5>Executed on: </h5>
             <textarea id="query_editor">Add query here... </textarea>
             <button id="execute" type="button" class='btn btn-default'>Execute</button>
-
           </div>
+
           <div class="card">
             <h2>Result set</h2>
-            <h5>Number of rows: </h5>
             <div id="result_set">
                 {{ dataframe|safe }}
             </div>
@@ -66,17 +64,36 @@
             </div>
           </div>
           <div class="card">
-            <h3>Popular citations</h3>
-            <div class="fakeimg">https://doi.org/pid/of/query1</div><br>
-            <div class="fakeimg">https://doi.org/pid/of/query2</div><br>
-            <div class="fakeimg">https://doi.org/pid/of/query3</div>
+            <h2>Execution details</h2>
+            <div>
+              <table class="key-value-table ux-light-table">
+                <tbody>
+                    <tr>
+                        <th class="execution_key">Execution timestamp:</th>
+                        <td id="execution_timestamp">{{ execution_timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Number of rows:</th>
+                        <td id="number_of_rows"> {{ number_of_rows }}</td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Query already cited?:</th>
+                        <td id="yn_query_exists"> {{ yn_query_exists }}</td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Result set changed since last citation?:</th>
+                        <td id="yn_result_set_changed"> {{ yn_result_set_changed }} </td>
+                    </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
           <div class="card">
-            <h3>Follow Me</h3>
+            <h2>Follow Me</h2>
             <p><a href="https://github.com/GreenfishK/DataCitation">https://github.com/GreenfishK/DataCitation</a></p>
           </div>
           <div class="card">
-            <h3>Citation Snippet</h3>
+            <h2>Citation Snippet</h2>
             <p id="citation_snippet"> {{ citation_snippet }} </p>
           </div>
         </div>

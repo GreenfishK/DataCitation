@@ -102,8 +102,7 @@ class TripleStoreEngine:
         # Test connection. Execute one read and one write statement
         try:
             self.sparql_get.setQuery(open(self._template_location + "/test_connection_select.txt", "r").read())
-            result = self.sparql_get.query()
-            print(result)
+            self.sparql_get.query()
 
             insert_statement = open(self._template_location + "/test_connection_insert.txt", "r").read()
             self.sparql_post.setQuery(insert_statement)
@@ -112,7 +111,9 @@ class TripleStoreEngine:
             delete_statement = open(self._template_location + "/test_connection_delete.txt", "r").read()
             self.sparql_post.setQuery(delete_statement)
             self.sparql_post.query()
-            print("Connection established")
+
+            print("Connection to RDF query and update endpoints "
+                  "{0} and {1} established".format(query_endpoint, update_endpoint))
         except URLError as e:
             print("No connection to the RDF* store could be established. check whether your RDF* store is running.")
             raise

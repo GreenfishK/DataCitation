@@ -4,6 +4,7 @@ from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, Q
 
 import datetime
 from datetime import datetime, timedelta, timezone
+import tzlocal
 from rdflib.term import Variable
 
 
@@ -18,7 +19,14 @@ class Citation:
         """
         self.sparqlapi = TripleStoreEngine(get_endpoint, post_endpoint)
 
-    def cite(self, select_statement: str, citation_data: CitationData, result_set_description: str,
+        self.yn_query_exists = False
+        self.yn_result_set_changed = False
+        self.execution_timestamp = None
+        self.query_data = QueryData()
+        self.result_set_data = RDFDataSetData()
+        self.citation_metadata = CitationData()
+
+    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str,
              unique_user_sort_index: tuple = None):
         """
         Persistently Identify Specific Data Sets
@@ -54,7 +62,7 @@ class Citation:
 
         :param unique_user_sort_index: A unique index defined by the user.
         :param result_set_description:
-        :param citation_data:
+        :param citation_metadata:
         :param select_statement:
         :return:
         """
@@ -64,11 +72,13 @@ class Citation:
         query_to_cite = QueryData(select_statement)
 
         # Assign citation timestamp to query object
-        # TODO: get timezone from system
-        citation_datetime = datetime.now(timezone(timedelta(hours=2)))
-        citation_timestamp = citation_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                             + citation_datetime.strftime("%z")[3:5]
-        query_to_cite.citation_timestamp = citation_timestamp
+        current_datetime = datetime.now()
+        timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
+        execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
+        execution_timestamp = execution_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
+                             + execution_datetime.strftime("%z")[3:5]
+        query_to_cite.citation_timestamp = execution_timestamp
+        self.execution_timestamp = execution_timestamp
 
         # Compute query checksum
         query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
@@ -107,20 +117,31 @@ class Citation:
         rdf_ds.checksum = rdf_ds.compute_checksum()
 
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
+            self.yn_query_exists = True
             if rdf_ds.checksum == existing_query_rdf_ds_data.checksum:
-                # Retrieve citation snippet
-                citation_snippet = existing_query_citation_data.citation_snippet
-                print("Query exists already and the result set has not changed since the last execution")
-                return citation_snippet
+                self.query_data = existing_query_data
+                self.result_set_data = existing_query_rdf_ds_data
+                self.citation_metadata = existing_query_citation_data
+                print("Query already exists and the result set has not changed since the last execution. "
+                      "The existing citation snippet will be returned.")
             else:
-                query_store.store(query_to_cite, rdf_ds, citation_data, yn_new_query=False)
+                self.yn_result_set_changed = True
+                self.query_data = query_to_cite
+                self.result_set_data = rdf_ds
+                self.citation_metadata = citation_metadata
+                query_store.store(query_to_cite, rdf_ds, citation_metadata, yn_new_query=False)
+            return self
         else:
             # Generate citation snippet
-            citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_data)
-            citation_data.citation_snippet = citation_snippet
+            citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_metadata)
+            citation_metadata.citation_snippet = citation_snippet
 
             # Store query object
-            query_store.store(query_to_cite, rdf_ds, citation_data)
-            return citation_snippet
+            self.query_data = query_to_cite
+            self.result_set_data = rdf_ds
+            self.citation_metadata = citation_metadata
+            query_store.store(query_to_cite, rdf_ds, citation_metadata)
+
+            return self
 
         # TODO: embed query timestamp (max valid_from of dataset). No idea what it means

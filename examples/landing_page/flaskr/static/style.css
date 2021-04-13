@@ -182,7 +182,11 @@ body {
 .metadata_key {
     text-align: right;
     padding-right: 10px;
+}
 
+.execution_key {
+    text-align: right;
+    padding-right: 10px;
 }
 
 /* Clear floats after the columns */

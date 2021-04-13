@@ -4,7 +4,7 @@ from src.rdf_data_citation.citation import Citation
 from src.rdf_data_citation.citation_utils import CitationData
 
 # Example citation data and result set description
-citation_data = CitationData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
+citation_metadata = CitationData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                              title="Judy Chu occurences", publisher="Filip Kovacevic",
                              publication_year="2021", resource_type="Dataset/RDF data",
                              other_citation_data={"Contributor": "Tomasz Miksa"})
@@ -36,8 +36,10 @@ def execute_query():
 
     query_text = request.form['query_text']
     result_set = rdf_engine.get_data(query_text)  # dataframe
+    number_of_rows = len(result_set.index)
     html_response = render_template('datacenter_sample_page_1/citation_page.html',
-                                    dataframe=result_set.to_html(header='true'))
+                                    dataframe=result_set.to_html(header='true'),
+                                    number_of_rows=number_of_rows)
     return html_response
 
 
@@ -52,11 +54,15 @@ def cite_query():
                         'http://192.168.0.241:7200/repositories/DataCitation/statements')
 
     query_text = request.form['query_text']
-    citation_snippet = citation.cite(query_text, citation_data=citation_data,
-                                     result_set_description=result_set_description)
+    citation_data = citation.cite(query_text, citation_metadata=citation_metadata,
+                                  result_set_description=result_set_description)
+    citation_snippet = citation_data.citation_metadata.citation_snippet
 
     html_response = render_template('datacenter_sample_page_1/citation_page.html',
-                                    citation_snippet=citation_snippet)
+                                    citation_snippet=citation_snippet,
+                                    execution_timestamp=citation_data.execution_timestamp,
+                                    yn_query_exists=citation_data.yn_query_exists,
+                                    yn_result_set_changed=citation_data.yn_result_set_changed)
     return html_response
 
 

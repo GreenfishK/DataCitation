@@ -10,9 +10,10 @@ $(function execute_query() {
             dataType : 'html',
             // most important line! releases the document so it can be rendered
             success: function(response) {
-                //document.write(response);
                 var res = $('.dataframe', response)
-                $("#result_set").html(res);
+                $("#result_set").html(res); // write to html template
+                var number_of_rows = $('#number_of_rows', response)
+                $("#number_of_rows").html(number_of_rows); // write to html template
             }
 
         });

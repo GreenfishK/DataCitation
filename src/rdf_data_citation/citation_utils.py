@@ -284,7 +284,6 @@ class QueryData:
 
         template = open(_template_path("templates/query_wrapper.txt"), "r").read()
 
-        # Assertions and exception handling
         if query is None:
             if self.query is not None:
                 prefixes = self.sparql_prefixes
@@ -293,6 +292,10 @@ class QueryData:
                 return "Query could not be normalized because the query string was not set."
         else:
             prefixes, query = self.split_prefixes_query(query)
+
+        timestamp_prefixes = "PREFIX citing: <http://ontology.ontotext.com/citing/>\n" \
+                             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
+        prefixes += timestamp_prefixes
 
         if self.variables is not None:
             variables = self.variables
@@ -556,10 +559,13 @@ class RDFDataSetData:
         min_val = min(dist_stacked_key_attr_values.values())
         suggested_pks = [k for k, v in dist_stacked_key_attr_values.items() if v == min_val]
 
+        print("Possible unique sort (multi-)indexes: {0}".format(suggested_pks))
+
         if suggest_one_key:
             return [suggested_pks[0]]  # return one tuple in a list
         # TODO: Request input from user if the sort index to be used is ambiguous, thus, if there are more than one
         #  possible indexes.
+
         return suggested_pks
 
     def sort(self, sort_order: tuple = None):
@@ -584,6 +590,7 @@ class RDFDataSetData:
                 raise NoUniqueSortIndexError
 
         self.sort_order = sort_index
+        print("Sort index used: {0}".format(sort_index))
         sorted_df = self.dataset.set_index(list(sort_index)).sort_index()
         return sorted_df
 
@@ -592,7 +599,7 @@ class CitationData:
 
     def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
                  publication_year: str = None, resource_type: str = None,
-                 other_citation_data: dict = None, citation_snippet: str = None):
+                 other_citation_data: dict = None):
         """
         Initialize the mandatory fields from DataCite's metadata model version 4.3
         """
@@ -610,7 +617,7 @@ class CitationData:
         # Other user-defined provenance data and other metadata
         self.other_citation_data = other_citation_data
 
-        self.citation_snippet = citation_snippet
+        self.citation_snippet = None
 
     def to_json(self):
         citation_data = vars(self).copy()
