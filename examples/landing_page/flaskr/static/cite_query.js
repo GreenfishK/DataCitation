@@ -18,6 +18,14 @@
                 $("#yn_query_exists").html(yn_query_exists);
                 var yn_result_set_changed = $('#yn_result_set_changed', response)
                 $("#yn_result_set_changed").html(yn_result_set_changed);
+                var yn_unique_sort_index = $('#yn_unique_sort_index', response)
+                $("#yn_unique_sort_index").html(yn_unique_sort_index);
+
+                $('.flashes', response).dialog({
+                    dialogClass: 'flashes'
+                })
+
+
             }
 
         });

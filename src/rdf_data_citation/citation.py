@@ -1,11 +1,15 @@
 from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, _intersection, generate_citation_snippet
-
+from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
 import datetime
 from datetime import datetime, timedelta, timezone
 import tzlocal
 from rdflib.term import Variable
+
+
+class SortVariablesNotInSelectError(Exception):
+    pass
 
 
 class Citation:
@@ -21,13 +25,14 @@ class Citation:
 
         self.yn_query_exists = False
         self.yn_result_set_changed = False
+        self.yn_unique_sort_index = False
         self.execution_timestamp = None
         self.query_data = QueryData()
         self.result_set_data = RDFDataSetData()
         self.citation_metadata = CitationData()
 
     def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str,
-             unique_user_sort_index: tuple = None):
+             unique_sort_index: tuple):
         """
         Persistently Identify Specific Data Sets
 
@@ -60,7 +65,7 @@ class Citation:
         [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
         [2]: Theory and Practice of Data Citation, Gianmaria Silvello
 
-        :param unique_user_sort_index: A unique index defined by the user.
+        :param unique_sort_index:
         :param result_set_description:
         :param citation_metadata:
         :param select_statement:
@@ -100,18 +105,26 @@ class Citation:
         # Execute query
         result_set = sparqlapi.get_data(timestamped_query)
 
+        # Validate order by clause
+        order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]
+        try:
+            yn_unique_sort_index = result_set.set_index(order_by_variables).index.is_unique
+        except KeyError as e:
+            raise SortVariablesNotInSelectError("There are variables in the order by clause that are not listed "
+                                                "in the select clause. While this is syntactically correct "
+                                                "a unique sort index should only contain variables from the "
+                                                "select clause, thus, from the dataset.")
+
+        if not yn_unique_sort_index:
+            raise NoUniqueSortIndexError('The "order by"-clause in your query does not yield a uniquely sorted '
+                                         'dataset. Please provide a primary key or another unique sort index')
+        else:
+            self.yn_unique_sort_index = True
+
         # Sort result set
-        # # Prepare dataset
-        query_tree_variables = []
-        for v in query_to_cite.variables:
-            if isinstance(v, Variable):
-                query_tree_variables.append(v.n3()[1:])
-
-        dataset_variables = _intersection(result_set.columns, query_tree_variables)
-        rdf_ds = RDFDataSetData(dataset=result_set[dataset_variables], description=result_set_description)
-
+        rdf_ds = RDFDataSetData(dataset=result_set, description=result_set_description)
         # # sort() will create an unique sort index if no unique user sort index is provided.
-        rdf_ds.dataset = rdf_ds.sort(sort_order=unique_user_sort_index)
+        rdf_ds.dataset = rdf_ds.sort(unique_sort_index)
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()

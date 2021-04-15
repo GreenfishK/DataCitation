@@ -15,6 +15,10 @@ def _template_path(template_rel_path: str):
     return os.path.join(os.path.dirname(__file__), template_rel_path)
 
 
+class QueryExistsError(Exception):
+    pass
+
+
 class QueryStore:
 
     def __init__(self):
@@ -132,9 +136,11 @@ class QueryStore:
                     print("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
                                                                                   query_data.pid))
                 except exc.IntegrityError as e:
-                    print("A query is trying to be inserted that exists already. The checksum of the executed query "
-                          "is found within the query_hub table: {0}".format(query_data.checksum))
+                    raise QueryExistsError("A query is trying to be inserted that exists already. "
+                                           "The checksum of the executed query "
+                                           "is found within the query_hub table: {0}".format(query_data.checksum))
             try:
+                print(rs_data.sort_order)
                 connection.execute(insert_statement_2,
                                    query_pid=query_data.pid,
                                    query_checksum=query_data.checksum,
@@ -149,8 +155,9 @@ class QueryStore:
                           "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
             except exc.IntegrityError as e:
-                print("A query is trying to be inserted that already exists. The query PID {0} of the executed query "
-                      "is found within the query_citation table".format(query_data.pid))
+                raise QueryExistsError("A query is trying to be inserted that already exists. The query PID {0} "
+                                       "of the executed query is found within the "
+                                       "query_citation table".format(query_data.pid))
 
             try:
                 connection.execute(update_statement, query_checksum=query_data.checksum)

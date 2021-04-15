@@ -1,13 +1,13 @@
-from flask import (Blueprint, flash, g, redirect, render_template, request, session, url_for)
+from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
-from src.rdf_data_citation.citation_utils import CitationData
+from src.rdf_data_citation.citation_utils import CitationData, NoUniqueSortIndexError
 
 # Example citation data and result set description
 citation_metadata = CitationData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
-                             title="Judy Chu occurences", publisher="Filip Kovacevic",
-                             publication_year="2021", resource_type="Dataset/RDF data",
-                             other_citation_data={"Contributor": "Tomasz Miksa"})
+                                 title="Judy Chu occurences", publisher="Filip Kovacevic",
+                                 publication_year="2021", resource_type="Dataset/RDF data",
+                                 other_citation_data={"Contributor": "Tomasz Miksa"})
 
 result_set_description = "Result set description: All documents where Judy Chu was mentioned with every mention listed"
 
@@ -54,15 +54,34 @@ def cite_query():
                         'http://192.168.0.241:7200/repositories/DataCitation/statements')
 
     query_text = request.form['query_text']
-    citation_data = citation.cite(query_text, citation_metadata=citation_metadata,
-                                  result_set_description=result_set_description)
-    citation_snippet = citation_data.citation_metadata.citation_snippet
 
-    html_response = render_template('datacenter_sample_page_1/citation_page.html',
-                                    citation_snippet=citation_snippet,
-                                    execution_timestamp=citation_data.execution_timestamp,
-                                    yn_query_exists=citation_data.yn_query_exists,
-                                    yn_result_set_changed=citation_data.yn_result_set_changed)
-    return html_response
+    try:
+        citation_data = citation.cite(query_text, citation_metadata=citation_metadata,
+                                      result_set_description=result_set_description,
+                                      unique_sort_index=('mention', 'document'))
+        citation_snippet = citation_data.citation_metadata.citation_snippet
+
+        html_response = render_template('datacenter_sample_page_1/citation_page.html',
+                                        citation_snippet=citation_snippet,
+                                        execution_timestamp=citation_data.execution_timestamp,
+                                        yn_query_exists=citation_data.yn_query_exists,
+                                        yn_result_set_changed=citation_data.yn_result_set_changed,
+                                        yn_unique_sort_index=citation_data.yn_unique_sort_index)
+        return html_response
+
+    except NoUniqueSortIndexError as e:
+        message = Markup("{0}".format(e))
+        flash(message)
+        html_response = render_template('datacenter_sample_page_1/citation_page.html',
+                                        citation_snippet='?',
+                                        execution_timestamp='?',
+                                        yn_query_exists='?',
+                                        yn_result_set_changed='?',
+                                        yn_unique_sort_index='False')
+        print(html_response)
+        return html_response
+
+
+
 
 

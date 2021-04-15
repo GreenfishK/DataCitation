@@ -303,6 +303,12 @@ body {
 
 .footer-distributed p.footer-links a:hover{text-decoration:underline;}
 
+/*pop up */
+
+.flashes .ui-dialog-titlebar {
+  background:red;
+  color: white;
+}
 
 /* Media Queries */
 /* Responsive layout - when the screen is less than 800px wide, make the two columns stack
@@ -321,6 +327,12 @@ on top of each other instead of next to each other */
   }
   .footer-distributed .footer-left p.footer-links {
     line-height: 1.8;
+  }
+  .box{
+    width: 70%;
+  }
+  .popup{
+    width: 70%;
   }
 
 }

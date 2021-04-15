@@ -52,13 +52,12 @@ def _query_algebra(query: str, sparql_prefixes: str):
     if sparql_prefixes:
         q_desc = parser.parseQuery(sparql_prefixes + " " + query)
     else:
-        print(query)
         q_desc = parser.parseQuery(query)
+    query_tree = algebra.translateQuery(q_desc).algebra
+    return query_tree
 
-    return algebra.translateQuery(q_desc).algebra
 
-
-def _query_variables(query_algebra) -> list:
+def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
     """
     The query must be a valid query including prefixes.
     The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
@@ -66,26 +65,52 @@ def _query_variables(query_algebra) -> list:
     will be selected and returned.
 
     :param query_algebra:
+    :param variable_set_type: can be 'all', 'select' or 'order_by'
     :return: a list of variables used in the query
     """
 
-    query_triples = nested_lookup('triples', query_algebra)
-    triple_variables = []
-    for triple_list in query_triples:
-        for triple in triple_list:
-            if isinstance(triple[0], Variable):
-                triple_variables.append(triple[0])
-            if isinstance(triple[1], Variable):
-                triple_variables.append(triple[1])
-            if isinstance(triple[2], Variable):
-                triple_variables.append(triple[2])
+    variables = []
+    other_variables = []
+    if variable_set_type == 'all':
+        query_triples = nested_lookup('triples', query_algebra)
+        for triple_list in query_triples:
+            for triple in triple_list:
+                if isinstance(triple[0], Variable):
+                    variables.append(triple[0])
+                if isinstance(triple[1], Variable):
+                    variables.append(triple[1])
+                if isinstance(triple[2], Variable):
+                    variables.append(triple[2])
+        # So far this is used to identify bound variables found after the "bind" keyword
+        variables = list(dict.fromkeys(variables))
+        other_variables = nested_lookup('var', query_algebra)
+        variables = variables + other_variables
 
-    triple_variables = list(dict.fromkeys(triple_variables))
+    elif variable_set_type == 'select':
+        def retrieve_select_variables(node):
+            if isinstance(node, CompValue) and node.name == 'SelectQuery':
+                variables.extend(node.get('PV'))
+                return node.get('PV')
+            else:
+                del node
+        algebra.traverse(query_algebra, retrieve_select_variables)
 
-    # So far this is used to identify bound variables found after the "bind" keyword
-    other_variables = nested_lookup('var', query_algebra)
+    elif variable_set_type == 'order_by':
+        def retrieve_order_by_variables(node):
+            if isinstance(node, CompValue) and node.name == 'OrderBy':
+                order_by_conditions = node.get('expr')
+                order_by_variables = []
+                for order_condition in order_by_conditions:
+                    variable = order_condition['expr']
+                    order_by_variables.append(variable)
+                    variables.append(variable)
+                return order_by_variables
+            else:
+                del node
 
-    variables = triple_variables + other_variables
+        # Traverses the query tree and extracts the variables into a list 'variables' that is defined above.
+        algebra.traverse(query_algebra, retrieve_order_by_variables)
+
     return variables
 
 
@@ -118,6 +143,8 @@ class QueryData:
         if query is not None:
             self.sparql_prefixes, self.query = self.split_prefixes_query(query)
             self.variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes))
+            self.select_variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes), 'select')
+            self.order_by_variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes), 'order_by')
             self.normalized_query_algebra = self.normalize_query_tree()
             self.checksum = self.compute_checksum()
 
@@ -297,15 +324,12 @@ class QueryData:
                              "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
         prefixes += timestamp_prefixes
 
+        # Variables from the original query's select clause
         if self.variables is not None:
-            variables = self.variables
+            select_variables = self.select_variables
         else:
-            variables = _query_variables(_query_algebra(query, prefixes))
-
-        # Variables from the original query
-        variables_string = ""
-        for v in variables:
-            variables_string += v.n3() + " "
+            select_variables = _query_variables(_query_algebra(query, prefixes), variable_set_type='select')
+        variables_string = " ".join(v.n3() for v in select_variables)
 
         # QueryData extensions for versioning injection
         triples = _query_triples(query, prefixes)
@@ -339,7 +363,7 @@ class QueryData:
             sort_extension = ""
 
         decorated_query = template.format(prefixes,
-                                          "{0}{1}{2}".format(red[0], "*", red[1]),
+                                          "{0}{1}{2}".format(red[0], variables_string, red[1]),
                                           "{0}{1}{2}".format(green[0], normalized_query_formatted, green[1]),
                                           "{0}{1}{2}".format(blue[0], timestamp, blue[1]),
                                           "{0}{1}{2}".format(magenta[0], versioning_query_extensions, magenta[1]),
@@ -389,6 +413,14 @@ class QueryData:
 
 
 class NoUniqueSortIndexError(Exception):
+    pass
+
+
+class MultipleSortIndexesError(Exception):
+    pass
+
+
+class NoDataSetError(Exception):
     pass
 
 
@@ -461,7 +493,7 @@ class RDFDataSetData:
         checksum = checksum.hexdigest()
         return checksum
 
-    def create_sort_index(self, suggest_one_key: bool = False) -> list:
+    def create_sort_index(self) -> list:
         """
         Infers the primary key from a dataset.
         Two datasets with differently permuted columns but otherwise identical
@@ -477,6 +509,8 @@ class RDFDataSetData:
         :param dataset: The dataset from which the (composite) indexes shall be inferred
         :return:
         """
+        if self.dataset is None:
+            raise NoDataSetError("No dataset was provided. This function needs self.dataset as an input")
 
         # TODO: Think about whether the order of columns should yield a different permutation of key attributes
         #  within composite keys, thus, meaning a different sorting or not.
@@ -518,14 +552,6 @@ class RDFDataSetData:
         df_key_finder = self.dataset.copy()
         df_key_finder.drop_duplicates(inplace=True)
         cnt_columns = len(df_key_finder.columns)
-
-        # If order of columns should matter include this code. Then, different names will yield a different result set
-        # sort
-        """columns_mapping = {}
-        for idx, column in enumerate(df_key_finder.columns):
-            columns_mapping[column] = str(idx)
-        df_key_finder.rename(columns=columns_mapping, inplace=True)"""
-        # columns = sorted(df_key_finder.columns)
         columns = df_key_finder.columns
 
         distinct_occurences = {}
@@ -556,19 +582,12 @@ class RDFDataSetData:
                     cnt_dist_stacked_attr_values += cnt_distinct_attribute_values
                 dist_stacked_key_attr_values[composition] = cnt_dist_stacked_attr_values
 
-        min_val = min(dist_stacked_key_attr_values.values())
-        suggested_pks = [k for k, v in dist_stacked_key_attr_values.items() if v == min_val]
+        max_val = max(dist_stacked_key_attr_values.values())
+        sort_indexes = [k for k, v in dist_stacked_key_attr_values.items() if v == max_val]
 
-        print("Possible unique sort (multi-)indexes: {0}".format(suggested_pks))
+        return sort_indexes
 
-        if suggest_one_key:
-            return [suggested_pks[0]]  # return one tuple in a list
-        # TODO: Request input from user if the sort index to be used is ambiguous, thus, if there are more than one
-        #  possible indexes.
-
-        return suggested_pks
-
-    def sort(self, sort_order: tuple = None):
+    def sort(self, sort_index: tuple = None):
         """
         Sorts by the index that is derived from create_sort_index. As this method can return more than one possible
         unique indexes, the first one will be taken.
@@ -579,19 +598,23 @@ class RDFDataSetData:
         :return:
         """
 
-        if sort_order is None:
-            sort_index = self.create_sort_index(suggest_one_key=True)[0]
+        if sort_index is None:
+            sort_index_used = self.create_sort_index()
+            if len(sort_index_used) != 1:
+                raise MultipleSortIndexesError(
+                    "Only one unique index must be provided. Otherwise, "
+                    "it is undecidable which one to take for sorting.")
+            sort_index_used = list(sort_index_used[0])
         else:
-            is_unique = self.dataset.set_index(sort_order).index.is_unique
-            if is_unique:
-                sort_index = sort_order
-            else:
-                print("A non-unique user defined sort index was given. If you provide a sort index it must be unique")
-                raise NoUniqueSortIndexError
+            # The tuple is passed in a list, therefore it must be taken out first
+            sort_index_used = list(sort_index)
+            is_unique = self.dataset.set_index(sort_index_used).index.is_unique
+            if not is_unique:
+                raise NoUniqueSortIndexError("A non-unique sort index was given.")
 
-        self.sort_order = sort_index
-        print("Sort index used: {0}".format(sort_index))
-        sorted_df = self.dataset.set_index(list(sort_index)).sort_index()
+        self.sort_order = sort_index_used
+        sorted_df = self.dataset.set_index(sort_index_used).sort_index()
+
         return sorted_df
 
 
