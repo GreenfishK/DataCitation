@@ -141,10 +141,11 @@ class TripleStoreEngine:
         """
         During initialization a few queries are executed against the RDF* store to test connection but also whether
         the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and
-        additional triples may get added by the RDF* engine. These triples are pure meta data triples and reflect
-        classes and properties (like rdf:type and rdfs:subPropertyOf) of RDF itself. This happens a new prefix, namely,
-        citing: <https://github.com/GreenfishK/DataCitation/citing/>' is used for some of the test statements. This
-        prefix gets embedded into the RDF class hierarchy by the RDF store, thus, new triples get inserted.
+        additional triples may be added by the RDF* store. These triples are pure meta data triples and reflect
+        classes and properties (like rdf:type and rdfs:subPropertyOf) of RDF itself. This happens due to a new prefix,
+        namely, citing: <https://github.com/GreenfishK/DataCitation/citing/>' which is used in the write statements.
+        Upon execution, this prefix gets embedded into the RDF class hierarchy by the RDF store, thus, new triples
+        are written to the store.
 
         :param query_endpoint: URL for executing read/select statements on the RDF store. In GRAPHDB this URL can be
         looked up under "Setup --> Repositories --> Link icon"
@@ -196,7 +197,6 @@ class TripleStoreEngine:
             template = open(self._template_location +
                             "/test_connection/test_connection_nested_select.txt", "r").read()
             select_statement = template.format(test_prefixes)
-            print(select_statement)
             self.sparql_get.setQuery(select_statement)
             self.sparql_get.query()
 
