@@ -1,8 +1,10 @@
 import os
 from urllib.error import URLError
+import re
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
+from datetime import timezone, tzinfo, timedelta, datetime
 
 
 def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
@@ -57,8 +59,71 @@ def prefixes_to_sparql(prefixes: dict) -> str:
     return sparql_prefixes
 
 
+def citation_prefixes(prefixes: dict or str) -> str:
+    """
+    Extends the given prefixes by citing: <http://ontology.ontotext.com/citing/>
+    and xsd: <http://www.w3.org/2001/XMLSchema#>. While citing is reserved and cannot be overwritten by a user prefix
+    xsd will be overwritten if a prefix 'xsd' exists in 'prefixes'.
+    :param prefixes:
+    :return:
+    """
+    error_message = 'The prefix "citing" is reserved. Please choose another one.'
+    prefix_citing = 'PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>'
+    prefix_xsd = 'PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>'
+
+    if isinstance(prefixes, dict):
+        sparql_prefixes = prefixes_to_sparql(prefixes)
+        if "citing" in prefixes:
+            raise ReservedPrefixError(error_message)
+        if "xsd" in prefixes:
+            citation_prefixes = prefix_citing + "\n"
+        else:
+            citation_prefixes = prefix_citing + "\n" + prefix_xsd + "\n"
+        return sparql_prefixes + "\n" + citation_prefixes
+
+    if isinstance(prefixes, str):
+        sparql_prefixes = prefixes
+        if prefixes.find("citing:") > -1:
+            raise ReservedPrefixError(error_message)
+        if prefixes.find("xsd:") > -1:
+            citation_prefixes = prefix_citing + "\n"
+        else:
+            citation_prefixes = prefix_citing + "\n" + prefix_xsd + "\n"
+        return sparql_prefixes + "\n" + citation_prefixes
+
+
+def split_prefixes_query(query: str = None) -> list:
+    """
+    Separates the prefixes from the actual query and stores either information in self.query and
+    self.sparql_prefixes respectively.
+
+    :param query: A query string with or without prefixes
+    :return: A list with the prefixes as the first element and the actual query string as the second element.
+    """
+    pattern = "PREFIX\\s*[a-zA-Z0-9]*:\\s*<.*>\\s*"
+
+    prefixes_list = re.findall(pattern, query, re.MULTILINE)
+    prefixes = ''.join(prefixes_list)
+    query_without_prefixes = re.sub(pattern, "", query, re.MULTILINE)
+
+    return [prefixes, query_without_prefixes]
+
+
 def _template_path(template_rel_path: str):
     return os.path.join(os.path.dirname(__file__), template_rel_path)
+
+
+def _citation_timestamp_format(citation_timestamp: datetime) -> str:
+    """
+
+    :param citation_timestamp: must be provided including the timezone
+    :return:
+    """
+    return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
+
+
+class ReservedPrefixError(Exception):
+    pass
 
 
 class TripleStoreEngine:
@@ -74,6 +139,13 @@ class TripleStoreEngine:
 
     def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None):
         """
+        During initialization a few queries are executed against the RDF* store to test connection but also whether
+        the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and
+        additional triples may get added by the RDF* engine. These triples are pure meta data triples and reflect
+        classes and properties (like rdf:type and rdfs:subPropertyOf) of RDF itself. This happens a new prefix, namely,
+        citing: <https://github.com/GreenfishK/DataCitation/citing/>' is used for some of the test statements. This
+        prefix gets embedded into the RDF class hierarchy by the RDF store, thus, new triples get inserted.
+
         :param query_endpoint: URL for executing read/select statements on the RDF store. In GRAPHDB this URL can be
         looked up under "Setup --> Repositories --> Link icon"
         :param update_endpoint: URL for executing write statements on the RDF store. Its URL is an extension of
@@ -101,22 +173,51 @@ class TripleStoreEngine:
 
         # Test connection. Execute one read and one write statement
         try:
-            self.sparql_get.setQuery(open(self._template_location + "/test_connection_select.txt", "r").read())
+            self.sparql_get.setQuery(open(self._template_location +
+                                          "/test_connection/test_connection_select.txt", "r").read())
             self.sparql_get.query()
 
-            insert_statement = open(self._template_location + "/test_connection_insert.txt", "r").read()
+            insert_statement = open(self._template_location +
+                                    "/test_connection/test_connection_insert.txt", "r").read()
             self.sparql_post.setQuery(insert_statement)
             self.sparql_post.query()
 
-            delete_statement = open(self._template_location + "/test_connection_delete.txt", "r").read()
+            delete_statement = open(self._template_location +
+                                    "/test_connection/test_connection_delete.txt", "r").read()
             self.sparql_post.setQuery(delete_statement)
             self.sparql_post.query()
 
-            print("Connection to RDF query and update endpoints "
-                  "{0} and {1} established".format(query_endpoint, update_endpoint))
         except URLError as e:
-            print("No connection to the RDF* store could be established. check whether your RDF* store is running.")
+            print("No connection to the RDF* store could be established. Check whether your RDF* store is running.")
             raise
+
+        try:
+            test_prefixes = citation_prefixes("")
+            template = open(self._template_location +
+                            "/test_connection/test_connection_nested_select.txt", "r").read()
+            select_statement = template.format(test_prefixes)
+            print(select_statement)
+            self.sparql_get.setQuery(select_statement)
+            self.sparql_get.query()
+
+            template = open(self._template_location +
+                            "/test_connection/test_connection_nested_insert.txt", "r").read()
+            insert_statement = template.format(test_prefixes)
+            self.sparql_post.setQuery(insert_statement)
+            self.sparql_post.query()
+
+            template = open(self._template_location +
+                            "/test_connection/test_connection_nested_delete.txt", "r").read()
+            delete_statement = template.format(test_prefixes)
+            self.sparql_post.setQuery(delete_statement)
+            self.sparql_post.query()
+
+        except Exception as e:
+            print("Your RDF store might not support the 'star' extension. Make sure that it is a RDF* store.")
+            raise
+
+        print("Connection to RDF query and update endpoints "
+              "{0} and {1} established".format(query_endpoint, update_endpoint))
 
     def reset_all_versions(self):
         """
@@ -125,21 +226,24 @@ class TripleStoreEngine:
         :return:
         """
 
-        delete_statement = open(self._template_location + "/reset_all_versions.txt", "r").read()
-
+        template = open(self._template_location + "/reset_all_versions.txt", "r").read()
+        delete_statement = template.format(citation_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
         print("All annotations have been removed.")
 
-    def version_all_rows(self):
+    def version_all_rows(self, initial_timestamp: datetime):
         """
         Version all rows with the current timestamp.
+        :param initial_timestamp: must also include the timezone
 
         :return:
         """
 
-        update_statement = open(self._template_location + "/version_all_rows.txt", "r").read()
-
+        version_timestamp = _citation_timestamp_format(initial_timestamp)
+        template = open(self._template_location + "/version_all_rows.txt", "r").read()
+        final_prefixes = citation_prefixes("")
+        update_statement = template.format(final_prefixes, version_timestamp)
         self.sparql_post.setQuery(update_statement)
         self.sparql_post.query()
         print("All rows have been annotated with the current timestamp")
@@ -159,19 +263,48 @@ class TripleStoreEngine:
         df = _to_df(result)
         return df
 
-    def update(self, select_statement, new_value, prefixes: dict):
+    def update(self, select_statement, new_value):
         """
-        All objects from the select statement's returned triples will be updated with the new value.
+        Updates all objects with new_value. The query must bind the subject, predicate and object variables to
+        ?subjectToUpdate, ?predicateToUpdate and ?objectToUpdate respectively.
+
+        The select_statement has to be provided in the following form:
+
+            select  ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
+            <triple statements>
+
+            # Inputs to provide
+            bind(?subject as ?subjectToUpdate)
+            bind(?predicate as ?predicateToUpdate)
+            bind(?object as ?objectToUpdate)
+            }
+
+        Example:
+
+            select  ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
+            ?mention publishing:hasInstance ?person .
+            ?document publishing:containsMention ?mention .
+            ?person pub:memberOfPoliticalParty ?party .
+            ?person pub:preferredLabel ?personLabel .
+            ?party pub:hasValue ?value .
+            ?value pub:preferredLabel ?party_label
+            filter(?personLabel = "Judy Chu"@en)
+
+            # Inputs to provide
+            bind(?person as ?subjectToUpdate)
+            bind(pub:memberOfPoliticalParty as ?predicateToUpdate)
+            bind(?party as ?objectToUpdate)
+            }
 
         :param select_statement: set of triples to update.
         :param new_value: The new value which replaces the objects of the select statement's returned triples
-        :param prefixes: aliases of provided URIs which are resolved to these URIs during the execution.
         :return:
         """
 
-        update_statement = open(self._template_location + "/get_data.txt", "r").read()
-
-        update_statement = update_statement.format(prefixes, select_statement, new_value)
+        query_prefixes, query = split_prefixes_query(select_statement)
+        final_prefixes = citation_prefixes(query_prefixes)
+        template = open(self._template_location + "/update_data.txt", "r").read()
+        update_statement = template.format(final_prefixes, query, new_value)
         self.sparql_post.setQuery(update_statement)
         result = self.sparql_post.query()
 
@@ -191,7 +324,7 @@ class TripleStoreEngine:
 
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = citation_prefixes(prefixes)
 
         if type(triple[0]) == Literal:
             s = "'" + triple[0] + "'"
@@ -226,7 +359,7 @@ class TripleStoreEngine:
         statement = open(self._template_location + "/outdate_triples.txt", "r").read()
         sparql_prefixes = ""
         if prefixes:
-            sparql_prefixes = prefixes_to_sparql(prefixes)
+            sparql_prefixes = citation_prefixes(prefixes)
         statement = statement.format(sparql_prefixes, select_statement)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
@@ -245,7 +378,7 @@ class TripleStoreEngine:
         """
 
         statement = open(self._template_location + "/_delete_triples.txt", "r").read()
-        sparql_prefixes = prefixes_to_sparql(prefixes)
+        sparql_prefixes = citation_prefixes(prefixes)
         statement = sparql_prefixes + statement
 
         if type(triple[0]) == Literal:

@@ -1,7 +1,5 @@
+from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes
 from rdflib.plugins.sparql.parserutils import CompValue
-
-from src.rdf_data_citation.rdf_star import prefixes_to_sparql
-
 from rdflib.term import Variable
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
@@ -287,7 +285,6 @@ class QueryData:
         is attached to the query to ensure a unique sort of the data.
 
         :param query:
-        :param prefixes:
         :param citation_timestamp:
         :param sort_variables:
         :param colored: f colored is true, the injected strings within the statement template will be colored.
@@ -320,19 +317,17 @@ class QueryData:
         else:
             prefixes, query = self.split_prefixes_query(query)
 
-        timestamp_prefixes = "PREFIX citing: <http://ontology.ontotext.com/citing/>\n" \
-                             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
-        prefixes += timestamp_prefixes
+        final_prefixes = citation_prefixes(prefixes)
 
         # Variables from the original query's select clause
         if self.variables is not None:
             select_variables = self.select_variables
         else:
-            select_variables = _query_variables(_query_algebra(query, prefixes), variable_set_type='select')
+            select_variables = _query_variables(_query_algebra(query, final_prefixes), variable_set_type='select')
         variables_string = " ".join(v.n3() for v in select_variables)
 
         # QueryData extensions for versioning injection
-        triples = _query_triples(query, prefixes)
+        triples = _query_triples(query, final_prefixes)
 
         versioning_query_extensions_template = \
             open(_template_path("templates/versioning_query_extensions.txt"), "r").read()
@@ -362,7 +357,7 @@ class QueryData:
         else:
             sort_extension = ""
 
-        decorated_query = template.format(prefixes,
+        decorated_query = template.format(final_prefixes,
                                           "{0}{1}{2}".format(red[0], variables_string, red[1]),
                                           "{0}{1}{2}".format(green[0], normalized_query_formatted, green[1]),
                                           "{0}{1}{2}".format(blue[0], timestamp, blue[1]),

@@ -18,7 +18,7 @@ where {{
     {{
         {1}
     }}
-    bind('{2}' as ?newValue). #new Value
+    bind({2} as ?newValue). #new Value
     # versioning
     <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until .
     BIND(xsd:dateTime(NOW()) AS ?newVersion).
