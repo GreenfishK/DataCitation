@@ -1,35 +1,7 @@
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
+from tests.test_base import Test, get_test_config
 import pandas as pd
-
-
-def get_test_config() -> dict:
-    test_configs_file = open("../test.config", "r").readlines()
-    test_configs = {}
-    for line in test_configs_file:
-        key_value = line.strip().split('::')
-        test_configs[key_value[0]] = key_value[1]
-    return test_configs
-
-
-class Test:
-
-    def __init__(self, test_number: int, tc_desc: str, expected_result: str, actual_result: str = None):
-        self.test_number = test_number
-        self.tc_desc = tc_desc
-        self.actual_result = actual_result
-        self.expected_result = expected_result
-        self.yn_passed = False
-
-    def test(self):
-        """
-
-        :return:
-        """
-        assert self.actual_result
-
-        if self.expected_result == self.actual_result:
-            self.yn_passed = True
 
 
 class TestExecution:
@@ -107,7 +79,6 @@ class TestExecution:
                           "be three times the initial number of triples.",
                   expected_result=self.cnt_initial_triples * 3)
 
-        self.rdf_engine.version_all_rows(self.initial_timestamp)
         test_query = """
                 select ?s ?p ?o {
                     ?s ?p ?o .
@@ -115,7 +86,6 @@ class TestExecution:
                 """
         df = self.rdf_engine.get_data(test_query)  # dataframe
         cnt_triples_after_versioning = len(df.index)
-        self.rdf_engine.reset_all_versions()
         t2.actual_result = cnt_triples_after_versioning
         t2.test()
         self.tests.append(t2)
@@ -152,18 +122,16 @@ class TestExecution:
 
         :return:
         """
+        print("Executing tests ...")
 
         self.before_all_tests()
         test_functions = [func for func in dir(t) if callable(getattr(t, func)) and func.startswith('test_')]
         for func in test_functions:
-            print("hier")
             self.before_single_test()
             test_function = getattr(self, func)
             test_function()
             self.after_single_test()
         self.after_all_tests()
-
-        print("Executing tests ...")
 
     def after_single_test(self):
         self.rdf_engine.reset_all_versions()
