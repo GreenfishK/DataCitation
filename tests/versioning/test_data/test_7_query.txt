@@ -1,0 +1,8 @@
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select ?valid_until where { 
+	<<<http://ontology.ontotext.com/resource/tsk4wye1ftog> pub:memberOfPoliticalParty <http://ontology.ontotext.com/resource/Q201795S476DFED9-C64A-4E56-B4C3-CFB368801FBF>>> citing:valid_until ?valid_until.
+} 

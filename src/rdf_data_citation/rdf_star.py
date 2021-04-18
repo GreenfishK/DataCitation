@@ -269,6 +269,7 @@ class TripleStoreEngine:
         ?subjectToUpdate, ?predicateToUpdate and ?objectToUpdate respectively.
 
         The select_statement has to be provided in the following form:
+            PREFIXES
 
             select  ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
             <triple statements>
@@ -280,6 +281,8 @@ class TripleStoreEngine:
             }
 
         Example:
+            PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+            PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 
             select  ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
             ?mention publishing:hasInstance ?person .

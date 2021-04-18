@@ -9,7 +9,7 @@ def get_test_config() -> dict:
 
 class Test:
 
-    def __init__(self, test_number: int, tc_desc: str, expected_result: str, actual_result: str = None):
+    def __init__(self, tc_desc: str, expected_result: str, actual_result: str = None, test_number: int = None):
         self.test_number = test_number
         self.tc_desc = tc_desc
         self.actual_result = actual_result

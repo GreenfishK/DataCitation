@@ -1,0 +1,14 @@
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+
+select ?subjectToUpdate ?predicateToUpdate ?objectToUpdate {
+   ?person pub:memberOfPoliticalParty ?party .
+   ?person pub:preferredLabel ?personLabel .
+   ?party pub:hasValue ?value .
+   ?value pub:preferredLabel ?party_label .
+   filter(?personLabel = "Barack Obama"@en)
+
+   bind(?person as ?subjectToUpdate)
+   bind(pub:memberOfPoliticalParty as ?predicateToUpdate)
+   bind(?party as ?objectToUpdate)
+}
