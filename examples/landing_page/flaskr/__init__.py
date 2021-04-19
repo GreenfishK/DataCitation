@@ -8,7 +8,7 @@ import citation_page
 
 def create_app(test_config=None):
     """
-    citation page is on http://127.0.0.1:5000/sample_datacenter_page/citation_page
+    citation page is on http://127.0.0.1:5000/datacenter_sample_page_1/citation_page
     :param test_config:
     :return:
     """

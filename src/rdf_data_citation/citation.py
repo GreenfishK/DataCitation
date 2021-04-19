@@ -124,7 +124,7 @@ class Citation:
         # Sort result set
         rdf_ds = RDFDataSetData(dataset=result_set, description=result_set_description)
         # # sort() will create an unique sort index if no unique user sort index is provided.
-        rdf_ds.dataset = rdf_ds.sort(unique_sort_index)
+        rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()

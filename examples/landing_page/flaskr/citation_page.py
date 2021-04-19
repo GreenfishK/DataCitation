@@ -1,7 +1,14 @@
-from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
 from src.rdf_data_citation.citation_utils import CitationData, NoUniqueSortIndexError
+import os
+from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
+import configparser
+
+
+"""Load configuration from .ini file."""
+config = configparser.ConfigParser()
+config.read('../../../config.ini')
 
 # Example citation data and result set description
 citation_metadata = CitationData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
@@ -30,9 +37,15 @@ def execute_query():
     refreshing the page (AJAX request)
     :return:
     """
+    print("Execute Query")
+
     # set up endpoints
-    rdf_engine = rdfs.TripleStoreEngine('http://192.168.0.241:7200/repositories/DataCitation',  # GET
-                                        'http://192.168.0.241:7200/repositories/DataCitation/statements')  # POST
+    rdf_engine = rdfs.TripleStoreEngine(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
+
+    # If the triples are not versioned yet execute this:
+    # vieTZObject = timezone(timedelta(hours=2))
+    # initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
+    # rdf_engine.version_all_rows(initial_timestamp)
 
     query_text = request.form['query_text']
     result_set = rdf_engine.get_data(query_text)  # dataframe
@@ -49,9 +62,9 @@ def cite_query():
     Cites the query and returns the citation snippet
     :return:
     """
+    print("Cite query")
 
-    citation = Citation('http://192.168.0.241:7200/repositories/DataCitation',  # GET
-                        'http://192.168.0.241:7200/repositories/DataCitation/statements')
+    citation = Citation(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
 
     query_text = request.form['query_text']
 
@@ -78,7 +91,7 @@ def cite_query():
                                         yn_query_exists='?',
                                         yn_result_set_changed='?',
                                         yn_unique_sort_index='False')
-        print(html_response)
+
         return html_response
 
 

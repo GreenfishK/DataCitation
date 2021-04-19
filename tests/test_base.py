@@ -1,12 +1,3 @@
-def get_test_config() -> dict:
-    test_configs_file = open("../test.config", "r").readlines()
-    test_configs = {}
-    for line in test_configs_file:
-        key_value = line.strip().split('::')
-        test_configs[key_value[0]] = key_value[1]
-    return test_configs
-
-
 class Test:
 
     def __init__(self, tc_desc: str, expected_result: str, actual_result: str = None, test_number: int = None):

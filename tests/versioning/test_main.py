@@ -1,13 +1,16 @@
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
-from tests.test_base import Test, get_test_config
+from tests.test_base import Test
 import pandas as pd
+import configparser
 
 
 class TestExecution:
 
     def __init__(self):
-        self.test_configs = get_test_config()
+        """Load configuration from .ini file."""
+        self.test_config = configparser.ConfigParser()
+        self.test_config.read('../../config.ini')
 
         # Custom members for test execution
         self.rdf_engine = None
@@ -46,10 +49,11 @@ class TestExecution:
 
         vieTZObject = timezone(timedelta(hours=2))
         self.initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
-        if isinstance(self.test_configs, dict):
-            self.rdf_engine = TripleStoreEngine(self.test_configs['get_endpoint'], self.test_configs['post_endpoint'])
+        self.rdf_engine = TripleStoreEngine(self.test_config.get('RDFSTORE', 'get'),
+                                            self.test_config.get('RDFSTORE', 'post'))
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
         self.cnt_initial_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
+        self.rdf_engine.reset_all_versions()
 
     def before_single_test(self):
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
