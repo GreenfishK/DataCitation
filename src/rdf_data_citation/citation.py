@@ -94,11 +94,6 @@ class Citation:
         # Create query tree and normalize query tree
         query_to_cite.normalize_query_tree()
 
-        # Lookup query by checksum
-        # TODO: empty dataset should also be valid
-        existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
-            = query_store.lookup(query_to_cite.checksum)
-
         # Extend query with timestamp
         timestamped_query = query_to_cite.timestamp_query()
 
@@ -108,7 +103,9 @@ class Citation:
         # Validate order by clause
         order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]
         try:
+            print(order_by_variables)
             yn_unique_sort_index = result_set.set_index(order_by_variables).index.is_unique
+            print(yn_unique_sort_index)
         except KeyError as e:
             raise SortVariablesNotInSelectError("There are variables in the order by clause that are not listed "
                                                 "in the select clause. While this is syntactically correct "
@@ -128,6 +125,11 @@ class Citation:
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()
+
+        # Lookup query by checksum
+        # TODO: empty dataset should also be valid
+        existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
+            = query_store.lookup(query_to_cite.checksum)
 
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
             self.yn_query_exists = True

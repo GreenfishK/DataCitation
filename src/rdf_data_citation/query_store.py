@@ -91,6 +91,9 @@ class QueryStore:
                 citation_data = read_json(df.citation_data.loc[0])
                 citation_data.citation_snippet = df.citation_snippet.loc[0]
 
+                print("New query checksum: {0}; Existing query checksum: {1}".format(
+                    query_checksum, df.query_checksum.loc[0]))
+
                 return [query_data, result_set_data, citation_data]
             except Exception as e:
                 print(e)
