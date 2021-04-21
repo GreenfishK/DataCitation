@@ -1,9 +1,8 @@
-import datetime
-
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
 from src.rdf_data_citation.citation_utils import CitationData, NoUniqueSortIndexError, QueryData
 import os
+import datetime
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
 
@@ -34,7 +33,7 @@ def show_citation_page():
 
 @bp.route('/execute_query', methods=['POST'])
 def execute_query():
-    """
+    """conda
     /execute_query does not exist as a resource but shall only serve the purpose to get the data without
     refreshing the page (AJAX request)
     :return:
@@ -46,7 +45,7 @@ def execute_query():
 
     # If the triples are not versioned yet execute this:
     # vieTZObject = timezone(timedelta(hours=2))
-    # initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
+    # initialcond_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
     # rdf_engine.version_all_rows(initial_timestamp)
 
     # Query data with the latest validation data on triple level

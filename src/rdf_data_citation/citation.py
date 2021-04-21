@@ -92,6 +92,7 @@ class Citation:
         query_to_cite.pid = query_to_cite.generate_query_pid()
 
         # Create query tree and normalize query tree
+        # TODO: Check if this is needed because it is already computed durinig init of QueryData
         query_to_cite.normalize_query_tree()
 
         # Extend query with timestamp
@@ -103,9 +104,7 @@ class Citation:
         # Validate order by clause
         order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]
         try:
-            print(order_by_variables)
             yn_unique_sort_index = result_set.set_index(order_by_variables).index.is_unique
-            print(yn_unique_sort_index)
         except KeyError as e:
             raise SortVariablesNotInSelectError("There are variables in the order by clause that are not listed "
                                                 "in the select clause. While this is syntactically correct "
