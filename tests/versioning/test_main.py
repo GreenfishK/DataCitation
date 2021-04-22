@@ -1,3 +1,5 @@
+import numpy as np
+
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
 from tests.test_base import Test
@@ -156,10 +158,10 @@ class TestExecution:
         # Update
         triples_to_update = open("test_data/sinlge_triple_update.txt", "r").read()
         new_value = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_single__outdate.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         print(result_set_after_update)
         test.actual_result = str(len(result_set_after_update.index))
@@ -184,10 +186,10 @@ class TestExecution:
                     expected_result="1_{0}".format(new_value[1:-1]))
         # Update
         triples_to_update = open("test_data/sinlge_triple_update.txt", "r").read()
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_single__add_new_triple.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         new_value = result_set_after_update['party'].iloc[0]
         test.actual_result = str(len(result_set_after_update.index)) + "_" + new_value
@@ -213,10 +215,10 @@ class TestExecution:
                     expected_result="1")
         # Update
         triples_to_update = open("test_data/sinlge_triple_update.txt", "r").read()
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_single__timestamp_new_triple_valid_from.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         test.actual_result = str(len(result_set_after_update.index))
 
@@ -241,10 +243,10 @@ class TestExecution:
                     expected_result="1_9999-12-31T00:00:00.000+02:00 [http://www.w3.org/2001/XMLSchema#dateTime]")
         # Update
         triples_to_update = open("test_data/sinlge_triple_update.txt", "r").read()
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_single__timestamp_new_triple_valid_until.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         test.actual_result = str(len(result_set_after_update.index)) + "_" \
                              + result_set_after_update['valid_until'].iloc[0]
@@ -301,10 +303,10 @@ class TestExecution:
         # Update
         triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
         new_value = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_multi__outdate.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         print(result_set_after_update)
         test.actual_result = str(len(result_set_after_update.index))
@@ -335,10 +337,10 @@ class TestExecution:
                     expected_result="3_{0}".format(new_value[1:-1]))
         # Update
         triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_multi__add_new_triple.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         new_value = result_set_after_update['party'].iloc[0]
         test.actual_result = str(len(result_set_after_update.index)) + "_" + new_value
@@ -368,10 +370,10 @@ class TestExecution:
                     expected_result="3")
         # Update
         triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_multi__timestamp_new_triple_valid_from.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         test.actual_result = str(len(result_set_after_update.index))
 
@@ -400,10 +402,10 @@ class TestExecution:
                     expected_result="3_9999-12-31T00:00:00.000+02:00 [http://www.w3.org/2001/XMLSchema#dateTime]")
         # Update
         triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
+        self.rdf_engine.update(triples_to_update, new_value)
 
         # Read
         test_query = open("test_data/test_update_multi__timestamp_new_triple_valid_until.txt", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
         result_set_after_update = self.rdf_engine.get_data(test_query)
         test.actual_result = str(len(result_set_after_update.index)) + "_" \
                              + result_set_after_update['valid_until'].iloc[0]
@@ -482,6 +484,53 @@ class TestExecution:
         cnt_triples_after_second_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test.actual_result = str(cnt_triples_after_second_update - cnt_triples_after_first_update)
+
+        # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
+                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
+                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
+        hasValue = "pub:hasValue"
+        party_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
+        party_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
+        for member in members:
+            self.rdf_engine._delete_triples((member, hasValue, party_1), prefixes)
+            self.rdf_engine._delete_triples((member, hasValue, party_2), prefixes)
+
+        return test
+
+    def test_update_multi__timeline_consistency(self):
+        test = Test(test_number=15,
+                    tc_desc='If a set of triples is updated multiple times each consecutive update must come'
+                            'with a newer citing:valid_until timestamp. The most recent one must have the value'
+                            '"9999-12-31T00:00:00.000+02:00".',
+                    expected_result="valid_from_positive_deltas: 2")
+        # Read
+        triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
+
+        # Update 1
+        new_value_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
+        self.rdf_engine.update(triples_to_update, new_value_1)
+
+        # Update 2
+        new_value_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
+        self.rdf_engine.update(triples_to_update, new_value_2)
+
+        # Read
+        test_query = open("test_data/test_update_multi__timeline_consistency.txt", "r").read()
+        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = result_set_after_update.pivot(index=['valid_from', 'valid_until'], columns='member',
+                                                                values='party')
+        result_set_after_update.reset_index(inplace=True)
+        valid_from_series = result_set_after_update['valid_from'].str.split(" ").str[0]
+        valid_from_series = valid_from_series.apply(lambda x: datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%f%z'))
+        valid_from_series_diff = valid_from_series.diff()
+        valid_from_series_diff_seconds = valid_from_series_diff.apply(lambda x: x.total_seconds())
+        valid_from_series_consistency = valid_from_series_diff_seconds.apply(lambda x: 1 if x > 0 else 0)
+
+        test.actual_result = "valid_from_positive_deltas: {0}".format(str(valid_from_series_consistency.sum()))
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
