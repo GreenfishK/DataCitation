@@ -4,10 +4,10 @@ PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 select * {
-    ?person pub:memberOfPoliticalParty ?party .
+    ?person pub:memberOfPoliticalParty ?member .
     ?person pub:preferredLabel ?personLabel .
-    ?party pub:hasValue ?value .
-    ?value pub:preferredLabel ?party_label .
+    ?member pub:hasValue ?party .
+    ?party pub:preferredLabel ?party_label .
     filter(?personLabel = "Barack Obama"@en)
-    filter(?party = <http://ontology.ontotext.com/resource/Q201795S476DFED9-C64A-4E56-B4C3-CFB368801FBF> )
+    filter(?party = <http://ontology.ontotext.com/resource/tsk8e8v43mrk>)
 }

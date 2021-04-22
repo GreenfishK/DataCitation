@@ -1,0 +1,13 @@
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select * {
+    ?person pub:memberOfPoliticalParty ?member .
+    ?person pub:preferredLabel ?personLabel .
+    ?member pub:hasValue ?party .
+    ?party pub:preferredLabel ?party_label .
+    filter(?personLabel = "Barack Obama"@en || ?personLabel = "Judy Chu"@en || ?personLabel = "Jeh Johnson"@en )
+    filter(?party = <http://ontology.ontotext.com/resource/tsk8e8v43mrk>)
+}

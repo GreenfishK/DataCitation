@@ -265,8 +265,11 @@ class TripleStoreEngine:
 
     def update(self, select_statement, new_value):
         """
-        Updates all objects with new_value. The query must bind the subject, predicate and object variables to
-        ?subjectToUpdate, ?predicateToUpdate and ?objectToUpdate respectively.
+        Updates all objects that are provided within the select_statement with new_value.
+        The caller must bind the subject, predicate and object of the triples to update to ?subjectToUpdate,
+        ?predicateToUpdate and ?objectToUpdate respectively. The result of this query must include only existing
+        triples. Only the most recent triples (those with
+        citing_valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
 
         The select_statement has to be provided in the following form:
             PREFIXES
@@ -284,17 +287,17 @@ class TripleStoreEngine:
             PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
             PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 
-            select  ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
+            select distinct ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
             ?mention publishing:hasInstance ?person .
             ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty ?party .
+            ?person pub:memberOfPoliticalParty ?member .
             ?person pub:preferredLabel ?personLabel .
-            ?party pub:hasValue ?value .
-            ?value pub:preferredLabel ?party_label
+            ?member pub:hasValue ?party .
+            ?party pub:preferredLabel ?party_label
             filter(?personLabel = "Judy Chu"@en)
 
             # Inputs to provide
-            bind(?person as ?subjectToUpdate)
+            bind(?member as ?subjectToUpdate)
             bind(pub:memberOfPoliticalParty as ?predicateToUpdate)
             bind(?party as ?objectToUpdate)
             }

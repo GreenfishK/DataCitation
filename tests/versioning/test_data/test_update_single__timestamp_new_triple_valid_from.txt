@@ -4,6 +4,10 @@ PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 select ?newVersion where {
-	<<<http://ontology.ontotext.com/resource/tsk4wye1ftog> pub:memberOfPoliticalParty <http://ontology.ontotext.com/resource/Q201795S476DFED9-C64A-4E56-B4C3-CFB368801FBF>>> citing:valid_from ?newVersion.
+	<<<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>
+	pub:hasValue
+	<http://ontology.ontotext.com/resource/tsk8e8v43mrk>>>
+	citing:valid_from ?newVersion.
+
     filter(?newVersion < "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
 }

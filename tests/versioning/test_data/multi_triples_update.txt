@@ -6,7 +6,7 @@ select ?subjectToUpdate ?predicateToUpdate ?objectToUpdate {
    ?person pub:preferredLabel ?personLabel .
    ?member pub:hasValue ?party .
    ?party pub:preferredLabel ?party_label .
-   filter(?personLabel = "Barack Obama"@en)
+   filter(?personLabel = "Barack Obama"@en || ?personLabel = "Judy Chu"@en || ?personLabel = "Jeh Johnson"@en)
 
    bind(?member as ?subjectToUpdate)
    bind(pub:hasValue as ?predicateToUpdate)

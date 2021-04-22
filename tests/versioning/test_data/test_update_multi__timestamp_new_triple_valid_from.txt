@@ -1,0 +1,15 @@
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select ?newVersion where {
+	<<?member
+	pub:hasValue
+	<http://ontology.ontotext.com/resource/tsk8e8v43mrk>>>
+	citing:valid_from ?newVersion.
+    filter(?member = <http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>
+      || ?member = <http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>
+      || ?member = <http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>)
+    filter(?newVersion < "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
+}
