@@ -1,8 +1,8 @@
 import src.rdf_data_citation.rdf_star as rdfs
-from src.rdf_data_citation.citation import Citation
+from src.rdf_data_citation.citation import Citation, MissingSortVariables
 from src.rdf_data_citation.citation_utils import CitationData, NoUniqueSortIndexError, QueryData
 import os
-import datetime
+from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
 
@@ -43,15 +43,18 @@ def execute_query():
     # set up endpoints
     rdf_engine = rdfs.TripleStoreEngine(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
 
-    # If the triples are not versioned yet execute this:
-    # vieTZObject = timezone(timedelta(hours=2))
-    # initialcond_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
-    # rdf_engine.version_all_rows(initial_timestamp)
+    if config.get('VERSIONING', 'yn_init_version_all') == 'True':
+        vieTZObject = timezone(timedelta(hours=2))
+        initialcond_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
+        rdf_engine.version_all_rows(initialcond_timestamp)
+        config.set('VERSIONING', 'yn_init_version_all', 'False')
+        with open('../../../config.ini', 'w') as configfile:
+            config.write(configfile)
 
     # Query data with the latest validation data on triple level
     query_text = request.form['query_text']
-    vieTZObject = datetime.timezone(datetime.timedelta(hours=2))
-    query_data = QueryData(query=query_text, citation_timestamp=datetime.datetime.now(vieTZObject))
+    vieTZObject = timezone(timedelta(hours=2))
+    query_data = QueryData(query=query_text, citation_timestamp=datetime.now(vieTZObject))
     timestamped_query = query_data.timestamp_query()
 
     result_set = rdf_engine.get_data(timestamped_query)  # dataframe
@@ -71,13 +74,11 @@ def cite_query():
     print("Cite query")
 
     citation = Citation(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
-
     query_text = request.form['query_text']
-
+    print(query_text, citation_metadata, result_set_description)
     try:
         citation_data = citation.cite(query_text, citation_metadata=citation_metadata,
-                                      result_set_description=result_set_description,
-                                      unique_sort_index=('mention', 'document'))
+                                      result_set_description=result_set_description)
         citation_snippet = citation_data.citation_metadata.citation_snippet
 
         html_response = render_template('datacenter_sample_page_1/citation_page.html',
@@ -88,7 +89,7 @@ def cite_query():
                                         yn_unique_sort_index=citation_data.yn_unique_sort_index)
         return html_response
 
-    except NoUniqueSortIndexError as e:
+    except (NoUniqueSortIndexError, MissingSortVariables) as e:
         message = Markup("{0}".format(e))
         flash(message)
         html_response = render_template('datacenter_sample_page_1/citation_page.html',

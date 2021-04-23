@@ -1,5 +1,4 @@
 import numpy as np
-
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
 from tests.test_base import Test
@@ -14,6 +13,7 @@ class TestExecution:
         """Load configuration from .ini file."""
         self.test_config = configparser.ConfigParser()
         self.test_config.read('../../config.ini')
+        self.tests = []
 
         # Custom members for test execution
         self.rdf_engine = None
@@ -21,7 +21,6 @@ class TestExecution:
         self.cnt_initial_triples = None
         self.cnt_actual_triples = None
         self.query_cnt_triples = "select (count(*) as ?cnt) where {?s ?p ?o.}"
-        self.tests = []
 
     def print_test_results(self):
         """
@@ -84,15 +83,22 @@ class TestExecution:
         self.rdf_engine.reset_all_versions()
 
     def before_single_test(self):
+        """
+
+        :return:
+        """
+
+        print("Executing before_single_tests ...")
+
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
         self.cnt_actual_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
         self.rdf_engine.version_all_rows(self.initial_timestamp)
 
     def test_version__init_reset(self):
-        t1 = Test(test_number=1,
-                  tc_desc="The number of triples after calling version_all_triples and then reset_all_triples "
-                          "consecutively must equal the initial number of triples.",
-                  expected_result=str(self.cnt_initial_triples))
+        test = Test(test_number=1,
+                    tc_desc="The number of triples after calling version_all_triples and then reset_all_triples "
+                            "consecutively must equal the initial number of triples.",
+                    expected_result=str(self.cnt_initial_triples))
         # version_all_rows is executed in before_single_test
         self.rdf_engine.reset_all_versions()
         test_query = """
@@ -102,14 +108,14 @@ class TestExecution:
                """
         df = self.rdf_engine.get_data(test_query)  # dataframe
         cnt_triples_after_versioning_and_resetting = str(len(df.index))
-        t1.actual_result = cnt_triples_after_versioning_and_resetting
-        return t1
+        test.actual_result = cnt_triples_after_versioning_and_resetting
+        return test
 
     def test_version__init(self):
-        t2 = Test(test_number=2,
-                  tc_desc="The number of triples after initial versioning should "
-                          "be three times the initial number of triples.",
-                  expected_result=str(self.cnt_initial_triples * 3))
+        test = Test(test_number=2,
+                    tc_desc="The number of triples after initial versioning should "
+                            "be three times the initial number of triples.",
+                    expected_result=str(self.cnt_initial_triples * 3))
 
         test_query = """
                 select ?s ?p ?o {
@@ -118,8 +124,8 @@ class TestExecution:
                 """
         df = self.rdf_engine.get_data(test_query)  # dataframe
         cnt_triples_after_versioning = str(len(df.index))
-        t2.actual_result = cnt_triples_after_versioning
-        return t2
+        test.actual_result = cnt_triples_after_versioning
+        return test
 
     def test_update_single__delete_valid_until(self):
         test = Test(test_number=3,
@@ -577,6 +583,12 @@ class TestExecution:
             self.after_all_tests()
 
     def after_single_test(self):
+        """
+
+        :return:
+        """
+
+        print("Executing after_single_tests ...")
         self.rdf_engine.reset_all_versions()
 
     def after_all_tests(self):
@@ -584,6 +596,7 @@ class TestExecution:
 
         :return:
         """
+
         print("Executing after_tests ...")
         rdf_engine = self.rdf_engine
 

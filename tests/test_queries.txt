@@ -1,5 +1,4 @@
 #Prefixes
-PREFIX citing: <http://ontology.ontotext.com/citing/>
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX publishing: <http://ontology.ontotext.com/publishing#>

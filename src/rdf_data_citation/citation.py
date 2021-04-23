@@ -12,6 +12,10 @@ class SortVariablesNotInSelectError(Exception):
     pass
 
 
+class MissingSortVariables(Exception):
+    pass
+
+
 class Citation:
 
     def __init__(self, get_endpoint: str, post_endpoint: str):
@@ -31,8 +35,7 @@ class Citation:
         self.result_set_data = RDFDataSetData()
         self.citation_metadata = CitationData()
 
-    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str,
-             unique_sort_index: tuple):
+    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str):
         """
         Persistently Identify Specific Data Sets
 
@@ -92,8 +95,7 @@ class Citation:
         query_to_cite.pid = query_to_cite.generate_query_pid()
 
         # Create query tree and normalize query tree
-        # TODO: Check if this is needed because it is already computed durinig init of QueryData
-        query_to_cite.normalize_query_tree()
+        query_to_cite.normalized_query_algebra = query_to_cite.normalize_query_tree()
 
         # Extend query with timestamp
         timestamped_query = query_to_cite.timestamp_query()
@@ -103,6 +105,9 @@ class Citation:
 
         # Validate order by clause
         order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]
+        if not order_by_variables:
+            raise MissingSortVariables("There is no order by clause. Please provide an order by clause with "
+                                       "variables that yield a unique sort.")
         try:
             yn_unique_sort_index = result_set.set_index(order_by_variables).index.is_unique
         except KeyError as e:
