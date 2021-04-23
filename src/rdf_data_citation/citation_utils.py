@@ -127,6 +127,10 @@ def attach_prefixes(query, prefixes: dict) -> str:
     return query_with_prefixes
 
 
+class MultipleAliasesInBindError(Exception):
+    pass
+
+
 class QueryData:
 
     def __init__(self, query: str = None, citation_timestamp: datetime = None):
@@ -201,6 +205,28 @@ class QueryData:
         else:
             prefixes, query = self.split_prefixes_query(query)
 
+        """
+        #6
+        Aliases via BIND keyword just rename variables but the query result stays the same	.
+        
+        """
+        for var in self.variables:
+            pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*[?][a-zA-Z0-9_]*\\s*[)]".format(var)
+            binds = re.findall(pattern, query, re.MULTILINE)
+            for bind in binds:
+                pattern_alias = "(?<=as)\\s*[?][a-zA-Z0-9_]*"
+                aliases = re.findall(pattern_alias, bind)
+                pattern_orig_var_name = "[?][a-zA-Z0-9_]*\\s*(?=as)"
+                orig_var_names = re.findall(pattern_orig_var_name, bind)
+                if len(aliases) == 1 and len(orig_var_names) == 1:
+                    orig_var_name = orig_var_names[0].rstrip()
+                    alias = aliases[0].lstrip()
+                    query = query.replace(bind, "")
+                    replace_pattern = "\{0}(\\s+|\\s*(?=\?))".format(alias)
+                    query = re.sub(replace_pattern, orig_var_name, query)
+                else:
+                    raise MultipleAliasesInBindError("Check your bind statement in your "
+                                                     "query and whether it has more than one alias.")
         q_algebra = _query_algebra(query, prefixes)
 
         """
@@ -263,6 +289,7 @@ class QueryData:
             else:
                 return None
 
+        # TODO: problem with #6 normalization
         algebra.traverse(q_algebra, norm_vars_2)
 
         # Sort variables (in select statement)

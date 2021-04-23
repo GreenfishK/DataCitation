@@ -1,6 +1,6 @@
 class Test:
 
-    def __init__(self, tc_desc: str, expected_result: str, actual_result: str = None, test_number: int = None,
+    def __init__(self, tc_desc: str, expected_result: str = None, actual_result: str = None, test_number: int = None,
                  test_name: str = None):
         self.test_number = test_number
         self.test_name = test_name

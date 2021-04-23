@@ -19,8 +19,8 @@ class TestExecution:
 
         # Custom members for test execution
         self.rdf_engine = None
-        self.query_alt1 = None
-        self.query_alt2 = None
+        self.query_data_alt1 = None
+        self.query_data_alt2 = None
 
     def print_test_results(self):
         """
@@ -47,8 +47,8 @@ class TestExecution:
                     ACC_length = len(word) + 1
             return formatted_text
 
-        tests_df = pd.DataFrame(columns=['test_number', 'test_name', 'test_case_description',
-                                         'expected_result', 'actual_result', 'test_passed'])
+        tests_df = pd.DataFrame(columns=['test_number', 'test_passed', 'test_name', 'test_case_description',
+                                         'expected_result', 'actual_result'])
         for test in self.tests:
             if isinstance(test, Test):
                 formatted_tc_desc = format_text(test.tc_desc, 100)
@@ -56,11 +56,11 @@ class TestExecution:
                 formatted_actual_result = format_text(test.actual_result, 50)
 
                 tests_df = tests_df.append({'test_number': test.test_number,
+                                            'test_passed': test.yn_passed,
                                             'test_name': test.test_name,
                                             'test_case_description': formatted_tc_desc,
                                             'expected_result': formatted_expected_result,
-                                            'actual_result': formatted_actual_result,
-                                            'test_passed': test.yn_passed}, ignore_index=True)
+                                            'actual_result': formatted_actual_result}, ignore_index=True)
 
         tests_df.sort_values('test_number', inplace=True)
         pdtabulate = lambda df: tabulate(df, headers='keys', tablefmt='grid', )
@@ -85,99 +85,105 @@ class TestExecution:
         if self.annotated_tests:
             test_name = test_name[2:]
 
-        self.query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
-        self.query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
+        query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
+        self.query_data_alt1 = QueryData(query=query_alt1)
+        query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
+        self.query_data_alt2 = QueryData(query=query_alt2)
 
     def x_test_normalization__optional_where_clause(self):
-        q_utils_alt1 = QueryData(query=self.query_alt1)
         test = Test(test_number=1,
                     tc_desc='Tests if leaving out the "where" keyword yields the same checksum.',
-                    expected_result=q_utils_alt1.checksum)
-        q_utils_alt2 = QueryData(query=self.query_alt2)
-        test.actual_result = q_utils_alt2.checksum
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
         return test
 
     def x_test_normalization__rdf_type_predicate(self):
-        q_utils_alt1 = QueryData(query=self.query_alt1)
         test = Test(test_number=2,
                     tc_desc='Tests if replacing the predicate rdf:type by "a" yields the same checksum.',
-                    expected_result=q_utils_alt1.checksum)
-        q_utils_alt2 = QueryData(query=self.query_alt2)
-        test.actual_result = q_utils_alt2.checksum
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
         return test
 
-    def test_normalization__asterisk(self):
+    def x_test_normalization__asterisk(self):
+        # Order of variables is not important
         test = Test(test_number=3,
-                    tc_desc="",
-                    expected_result="")
+                    tc_desc="Tests if replacing the variable names in the select clause with an asterisk yields the "
+                            "same checksum. If the variable order is important this test will usually not pass. In "
+                            "this case, it would only pass if the order of variables after the asterisk gets resolved"
+                            "is the same as the user would place them. ",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
-    def test_normalization__leave_out_subject_in_triple_statements(self):
+    def x_test_normalization__leave_out_subject_in_triple_statements(self):
         test = Test(test_number=4,
-                    tc_desc="",
-                    expected_result="")
+                    tc_desc="If the same subject is used multiple times in subsequent triple statements (separated by "
+                            "a dot) it can be left out in all the subsequent triple statements where the subject "
+                            "occurs. Instead of the subject variable name a semicolon is written in subsequent triple "
+                            "statements where the same subject as in the first statement should be used.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
-    def test_normalization__order_of_triple_statements(self):
+    def x_test_normalization__order_of_triple_statements(self):
         test = Test(test_number=5,
-                    tc_desc="",
-                    expected_result="")
+                    tc_desc="Tests if differently permuted tripled statements yield the same checksum.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
-    def test_normalization__alias_via_bind(self):
+    def x_test_normalization__alias_via_bind(self):
         test = Test(test_number=6,
-                    tc_desc="",
-                    expected_result="")
+                    tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
+                            "as when not using any alias.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
     def test_normalization__variable_names(self):
         test = Test(test_number=7,
                     tc_desc="",
-                    expected_result="")
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
     def test_normalization__variables_not_bound(self):
         test = Test(test_number=8,
                     tc_desc="",
-                    expected_result="")
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
     def test_normalization__circumflex_invert(self):
         test = Test(test_number=9,
                     tc_desc="",
-                    expected_result="")
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
     def test_normalization__sequence_paths(self):
         test = Test(test_number=10,
                     tc_desc="",
-                    expected_result="")
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
     def test_normalization__prefix_alias(self):
         test = Test(test_number=11,
                     tc_desc="",
-                    expected_result="")
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
 
-        test.actual_result = ""
         return test
 
     def run_tests(self):

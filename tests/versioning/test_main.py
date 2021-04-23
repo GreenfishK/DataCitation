@@ -47,8 +47,8 @@ class TestExecution:
                     ACC_length = len(word) + 1
             return formatted_text
 
-        tests_df = pd.DataFrame(columns=['test_number', 'test_name', 'test_case_description',
-                                         'expected_result', 'actual_result', 'test_passed'])
+        tests_df = pd.DataFrame(columns=['test_number', 'test_passed', 'test_name', 'test_case_description',
+                                         'expected_result', 'actual_result'])
         for test in self.tests:
             if isinstance(test, Test):
                 formatted_tc_desc = format_text(test.tc_desc, 100)
@@ -56,11 +56,11 @@ class TestExecution:
                 formatted_actual_result = format_text(test.actual_result, 50)
 
                 tests_df = tests_df.append({'test_number': test.test_number,
+                                            'test_passed': test.yn_passed,
                                             'test_name': test.test_name,
                                             'test_case_description': formatted_tc_desc,
                                             'expected_result': formatted_expected_result,
-                                            'actual_result': formatted_actual_result,
-                                            'test_passed': test.yn_passed}, ignore_index=True)
+                                            'actual_result': formatted_actual_result}, ignore_index=True)
 
         tests_df.sort_values('test_number', inplace=True)
         pdtabulate = lambda df: tabulate(df, headers='keys', tablefmt='grid', )
