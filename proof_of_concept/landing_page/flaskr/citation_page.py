@@ -1,7 +1,6 @@
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation, MissingSortVariables
 from src.rdf_data_citation.citation_utils import CitationData, NoUniqueSortIndexError, QueryData
-import os
 from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
@@ -43,11 +42,11 @@ def execute_query():
     # set up endpoints
     rdf_engine = rdfs.TripleStoreEngine(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
 
-    if config.get('VERSIONING', 'yn_init_version_all') == 'True':
+    if config.get('VERSIONING', 'yn_init_version_all_applied') == 'False':
         vieTZObject = timezone(timedelta(hours=2))
         initialcond_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
         rdf_engine.version_all_rows(initialcond_timestamp)
-        config.set('VERSIONING', 'yn_init_version_all', 'False')
+        config.set('VERSIONING', 'yn_init_version_all_applied', 'True')
         with open('../../../config.ini', 'w') as configfile:
             config.write(configfile)
 

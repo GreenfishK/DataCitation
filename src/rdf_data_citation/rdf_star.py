@@ -1,10 +1,10 @@
-import os
+from src.rdf_data_citation._helper import _template_path, config
 from urllib.error import URLError
 import re
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
-from datetime import timezone, tzinfo, timedelta, datetime
+from datetime import datetime
 
 
 def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
@@ -109,10 +109,6 @@ def split_prefixes_query(query: str = None) -> list:
     return [prefixes, query_without_prefixes]
 
 
-def _template_path(template_rel_path: str):
-    return os.path.join(os.path.dirname(__file__), template_rel_path)
-
-
 def _citation_timestamp_format(citation_timestamp: datetime) -> str:
     """
 
@@ -180,7 +176,6 @@ class TripleStoreEngine:
             insert_statement = open(self._template_location +
                                     "/test_connection/test_connection_insert.txt", "r").read()
             self.sparql_post.setQuery(insert_statement)
-            print(insert_statement)
             self.sparql_post.query()
 
             delete_statement = open(self._template_location +
@@ -230,6 +225,7 @@ class TripleStoreEngine:
         delete_statement = template.format(citation_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
+        config().set('VERSIONING', 'yn_init_version_all_applied', 'False')
         print("All annotations have been removed.")
 
     def version_all_rows(self, initial_timestamp: datetime):
@@ -239,14 +235,17 @@ class TripleStoreEngine:
 
         :return:
         """
-
-        version_timestamp = _citation_timestamp_format(initial_timestamp)
-        template = open(self._template_location + "/version_all_rows.txt", "r").read()
-        final_prefixes = citation_prefixes("")
-        update_statement = template.format(final_prefixes, version_timestamp)
-        self.sparql_post.setQuery(update_statement)
-        self.sparql_post.query()
-        print("All rows have been annotated with the current timestamp")
+        if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
+            version_timestamp = _citation_timestamp_format(initial_timestamp)
+            template = open(self._template_location + "/version_all_rows.txt", "r").read()
+            final_prefixes = citation_prefixes("")
+            update_statement = template.format(final_prefixes, version_timestamp)
+            self.sparql_post.setQuery(update_statement)
+            self.sparql_post.query()
+            config().set('VERSIONING', 'yn_init_version_all_applied', 'True')
+            print("All rows have been annotated with the current timestamp.")
+        else:
+            print("All rows are already versioned.")
 
     def get_data(self, select_statement) -> pd.DataFrame:
         """

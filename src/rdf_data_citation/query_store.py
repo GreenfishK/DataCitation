@@ -1,18 +1,14 @@
 from src.rdf_data_citation.citation_utils import QueryData, RDFDataSetData, CitationData
 from src.rdf_data_citation.citation_utils import read_json
+from src.rdf_data_citation._helper import _template_path
 
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd
-import os
 
 
 def escape_apostrophe(string: str) -> str:
     return string.replace("'", "''")
-
-
-def _template_path(template_rel_path: str):
-    return os.path.join(os.path.dirname(__file__), template_rel_path)
 
 
 class QueryExistsError(Exception):

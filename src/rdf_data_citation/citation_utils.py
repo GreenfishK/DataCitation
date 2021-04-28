@@ -1,4 +1,5 @@
 from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes
+from src.rdf_data_citation._helper import _template_path
 from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Variable
 import rdflib.plugins.sparql.parser as parser
@@ -10,7 +11,6 @@ import datetime
 from pandas.util import hash_pandas_object
 import json
 import numpy as np
-import os
 import re
 
 
@@ -114,11 +114,6 @@ def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
 
 def _citation_timestamp_format(citation_timestamp: datetime) -> str:
     return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
-
-
-def _template_path(template_rel_path: str):
-    return os.path.join(os.path.dirname(__file__), template_rel_path)
-
 
 def attach_prefixes(query, prefixes: dict) -> str:
     template = open(_template_path("templates/prefixes_query_wrapper.txt"), "r").read()
@@ -531,16 +526,13 @@ class RDFDataSetData:
         Infers the primary key from a dataset.
         Two datasets with differently permuted columns but otherwise identical
         will yield a different order of key attributes if one or more composite keys are suggested.
-        Two datasets with different re-mapped column names that would result into a different order when sorted
+        Two datasets with differently re-mapped column names that would result into a different order when sorted
         will not affect the composition of the keys and therefore also not affect the sorting.
         A reduction of suggested composite keys will be made if there are two or more suggested composite keys and
         the number of "distinct summed key attribute values" of each of these composite keys differ from each other.
         In fact, the composite keys with the minimum sum of distinct key attribute values will be returned.
 
-        :param sort_order: A predefined sort order by the user
-        :param suggest_one_key: If True, the first (composite) key tuple will be returned from the list of potential keys
-        :param dataset: The dataset from which the (composite) indexes shall be inferred
-        :return:
+        :return: A list of suggested indexes to use for sorting the dataset.
         """
         if self.dataset is None:
             raise NoDataSetError("No dataset was provided. This function needs self.dataset as an input")
@@ -635,8 +627,8 @@ class RDFDataSetData:
             sort_index_used = self.create_sort_index()
             if len(sort_index_used) != 1:
                 raise MultipleSortIndexesError(
-                    "Only one unique index must be provided. Otherwise, "
-                    "it is undecidable which one to take for sorting.")
+                    "The create_sort_index algorithm yields more than one possible unique sort index. "
+                    "It is undecidable which one to take for sorting. Please provide one unique sort index.")
             sort_index_used = list(sort_index_used[0])
         else:
             # The tuple is passed in a list, therefore it must be taken out first

@@ -1,11 +1,10 @@
 from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
-from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, _intersection, generate_citation_snippet
+from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
 import datetime
 from datetime import datetime, timedelta, timezone
 import tzlocal
-from rdflib.term import Variable
 
 
 class SortVariablesNotInSelectError(Exception):
