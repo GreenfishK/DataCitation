@@ -1,3 +1,23 @@
+def format_text(comment, max_line_length):
+    # accumulated line length
+    ACC_length = 0
+    words = comment.split(" ")
+    formatted_text = ""
+    for word in words:
+        # if ACC_length + len(word) and a space is <= max_line_length
+        if ACC_length + (len(word) + 1) <= max_line_length:
+            # append the word and a space
+            formatted_text = formatted_text + word + " "
+            # length = length + length of word + length of space
+            ACC_length = ACC_length + len(word) + 1
+        else:
+            # append a line break, then the word and a space
+            formatted_text = formatted_text + "\n" + word + " "
+            # reset counter of length to the length of a word and a space
+            ACC_length = len(word) + 1
+    return formatted_text
+
+
 class Test:
 
     def __init__(self, tc_desc: str, expected_result: str = None, actual_result: str = None, test_number: int = None,

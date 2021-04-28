@@ -1,7 +1,7 @@
 import numpy as np
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
-from tests.test_base import Test
+from tests.test_base import Test, format_text
 import pandas as pd
 import configparser
 from tabulate import tabulate
@@ -27,25 +27,6 @@ class TestExecution:
 
         :return:
         """
-
-        def format_text(comment, max_line_length):
-            # accumulated line length
-            ACC_length = 0
-            words = comment.split(" ")
-            formatted_text = ""
-            for word in words:
-                # if ACC_length + len(word) and a space is <= max_line_length
-                if ACC_length + (len(word) + 1) <= max_line_length:
-                    # append the word and a space
-                    formatted_text = formatted_text + word + " "
-                    # length = length + length of word + length of space
-                    ACC_length = ACC_length + len(word) + 1
-                else:
-                    # append a line break, then the word and a space
-                    formatted_text = formatted_text + "\n" + word + " "
-                    # reset counter of length to the length of a word and a space
-                    ACC_length = len(word) + 1
-            return formatted_text
 
         tests_df = pd.DataFrame(columns=['test_number', 'test_passed', 'test_name', 'test_case_description',
                                          'expected_result', 'actual_result'])

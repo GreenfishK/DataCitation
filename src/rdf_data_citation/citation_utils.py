@@ -206,16 +206,17 @@ class QueryData:
             prefixes, query = self.split_prefixes_query(query)
 
         """
-        #6
+        #6.1
         Aliases via BIND keyword just rename variables but the query result stays the same	.
         
         """
+
         for var in self.variables:
             pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*[?][a-zA-Z0-9_]*\\s*[)]".format(var)
             binds = re.findall(pattern, query, re.MULTILINE)
             for bind in binds:
-                pattern_alias = "(?<=as)\\s*[?][a-zA-Z0-9_]*"
-                aliases = re.findall(pattern_alias, bind)
+                pattern_alias_variable = "(?<=as)\\s*[?][a-zA-Z0-9_]*"
+                aliases = re.findall(pattern_alias_variable, bind)
                 pattern_orig_var_name = "[?][a-zA-Z0-9_]*\\s*(?=as)"
                 orig_var_names = re.findall(pattern_orig_var_name, bind)
                 if len(aliases) == 1 and len(orig_var_names) == 1:
@@ -227,6 +228,16 @@ class QueryData:
                 else:
                     raise MultipleAliasesInBindError("Check your bind statement in your "
                                                      "query and whether it has more than one alias.")
+
+        """
+        #6.2
+        Aliases that are assigned in the select clause are just another means to #6.1 (using bind to
+        assign aliases). 
+        """
+        pattern = "(?<=select)(.*)(\\s*[(](\\s*[?][a-zA-Z0-9_]*)\\s*as\\s*[?][a-zA-Z0-9_]*\\s*[)])+"
+        while re.findall(pattern, query, re.MULTILINE):
+            query = re.sub(pattern, r"\1 \3", query)
+
         q_algebra = _query_algebra(query, prefixes)
 
         """

@@ -1,7 +1,7 @@
 import numpy as np
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
-from tests.test_base import Test
+from tests.test_base import Test, format_text
 import pandas as pd
 import configparser
 from tabulate import tabulate
@@ -27,25 +27,6 @@ class TestExecution:
 
         :return:
         """
-
-        def format_text(comment, max_line_length):
-            # accumulated line length
-            ACC_length = 0
-            words = comment.split(" ")
-            formatted_text = ""
-            for word in words:
-                # if ACC_length + len(word) and a space is <= max_line_length
-                if ACC_length + (len(word) + 1) <= max_line_length:
-                    # append the word and a space
-                    formatted_text = formatted_text + word + " "
-                    # length = length + length of word + length of space
-                    ACC_length = ACC_length + len(word) + 1
-                else:
-                    # append a line break, then the word and a space
-                    formatted_text = formatted_text + "\n" + word + " "
-                    # reset counter of length to the length of a word and a space
-                    ACC_length = len(word) + 1
-            return formatted_text
 
         tests_df = pd.DataFrame(columns=['test_number', 'test_passed', 'test_name', 'test_case_description',
                                          'expected_result', 'actual_result'])
@@ -146,23 +127,25 @@ class TestExecution:
 
         return test
 
-    def test_normalization__variable_names(self):
+    def x_test_normalization__alias_in_select(self):
         test = Test(test_number=7,
-                    tc_desc="",
+                    tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
+                            "as when not using any alias.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def x_test_normalization__variable_names(self):
+        test = Test(test_number=8,
+                    tc_desc="Test if two queries where as one has one variable renamed within the whole query"
+                            " (select statement, triple statements, filter, ...) yields the same checksum.",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 
         return test
 
     def test_normalization__variables_not_bound(self):
-        test = Test(test_number=8,
-                    tc_desc="",
-                    expected_result=self.query_data_alt1.checksum,
-                    actual_result=self.query_data_alt2.checksum)
-
-        return test
-
-    def test_normalization__circumflex_invert(self):
         test = Test(test_number=9,
                     tc_desc="",
                     expected_result=self.query_data_alt1.checksum,
@@ -170,7 +153,7 @@ class TestExecution:
 
         return test
 
-    def test_normalization__sequence_paths(self):
+    def test_normalization__circumflex_invert(self):
         test = Test(test_number=10,
                     tc_desc="",
                     expected_result=self.query_data_alt1.checksum,
@@ -178,8 +161,16 @@ class TestExecution:
 
         return test
 
-    def test_normalization__prefix_alias(self):
+    def test_normalization__sequence_paths(self):
         test = Test(test_number=11,
+                    tc_desc="",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def test_normalization__prefix_alias(self):
+        test = Test(test_number=12,
                     tc_desc="",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
