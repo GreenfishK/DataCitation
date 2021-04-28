@@ -145,9 +145,13 @@ class TestExecution:
 
         return test
 
-    def test_normalization__variables_not_bound(self):
+    def x_test_normalization__variables_not_bound(self):
         test = Test(test_number=9,
-                    tc_desc="",
+                    tc_desc='Finding variables that are not bound can be written in two ways: '
+                            '1. with optional keyword adding the optional triplet combined with filter condition: '
+                            'OPTIONAL { ?x dc:date ?date }'
+                            'filter (!bound(?date)) '
+                            '2. with "filter not exists {triple}"',
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 

@@ -115,6 +115,7 @@ def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
 def _citation_timestamp_format(citation_timestamp: datetime) -> str:
     return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
 
+
 def attach_prefixes(query, prefixes: dict) -> str:
     template = open(_template_path("templates/prefixes_query_wrapper.txt"), "r").read()
     sparql_prefixes = prefixes_to_sparql(prefixes)
@@ -207,12 +208,12 @@ class QueryData:
         """
 
         for var in self.variables:
-            pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*[?][a-zA-Z0-9_]*\\s*[)]".format(var)
+            pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*[?][a-zA-Z0-9-_]*\\s*[)]".format(var)
             binds = re.findall(pattern, query, re.MULTILINE)
             for bind in binds:
-                pattern_alias_variable = "(?<=as)\\s*[?][a-zA-Z0-9_]*"
+                pattern_alias_variable = "(?<=as)\\s*[?][a-zA-Z0-9-_]*"
                 aliases = re.findall(pattern_alias_variable, bind)
-                pattern_orig_var_name = "[?][a-zA-Z0-9_]*\\s*(?=as)"
+                pattern_orig_var_name = "[?][a-zA-Z0-9-_]*\\s*(?=as)"
                 orig_var_names = re.findall(pattern_orig_var_name, bind)
                 if len(aliases) == 1 and len(orig_var_names) == 1:
                     orig_var_name = orig_var_names[0].rstrip()
@@ -229,12 +230,22 @@ class QueryData:
         Aliases that are assigned in the select clause are just another means to #6.1 (using bind to
         assign aliases). 
         """
-        pattern = "(?<=select)(.*)(\\s*[(](\\s*[?][a-zA-Z0-9_]*)\\s*as\\s*[?][a-zA-Z0-9_]*\\s*[)])+"
+        pattern = "(?<=select)(.*)(\\s*[(](\\s*[?][a-zA-Z0-9-_]*)\\s*as\\s*[?][a-zA-Z0-9-_]*\\s*[)])+"
         while re.findall(pattern, query, re.MULTILINE):
             query = re.sub(pattern, r"\1 \3", query)
 
-        q_algebra = _query_algebra(query, prefixes)
+        """
+        # 8 
+        Regex will be used to convert "filter not exists {triple}" into the "filter + !bound" statement.
+        """
+        pattern = "(filter\\s*not\\s*exists\\s*)([{]" \
+                  "(?:\\s*(?:[?]|[a-zA-Z0-9-_]*:)[a-zA-Z0-9-_]*)" \
+                  "(?:\\s*(?:[?]|[a-zA-Z0-9-_]*:)[a-zA-Z0-9-_]*)" \
+                  "(\\s*(?:[?]|[a-zA-Z0-9-_]*:)[a-zA-Z0-9-_]*)[}])"
+        while re.findall(pattern, query, re.MULTILINE):
+            query = re.sub(pattern, r"OPTIONAL \2 . filter(!bound(\3))", query)
 
+        q_algebra = _query_algebra(query, prefixes)
         """
         #3
         In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
