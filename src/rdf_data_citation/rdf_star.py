@@ -176,11 +176,11 @@ class TripleStoreEngine:
         try:
             self.sparql_get.setQuery(open(self._template_location +
                                           "/test_connection/test_connection_select.txt", "r").read())
-            self.sparql_get.query()
 
             insert_statement = open(self._template_location +
                                     "/test_connection/test_connection_insert.txt", "r").read()
             self.sparql_post.setQuery(insert_statement)
+            print(insert_statement)
             self.sparql_post.query()
 
             delete_statement = open(self._template_location +

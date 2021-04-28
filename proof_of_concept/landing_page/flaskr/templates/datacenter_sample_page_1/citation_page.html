@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class=flashes title="Error message">
+                    {% for message in messages %}
+                        <p >{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="leftcolumn">
+          <div class="card">
+            <h2>Query editor</h2>
+            <textarea id="query_editor">Add query here... </textarea>
+            <button id="execute" type="button" class='btn btn-default'>Execute</button>
+          </div>
+
+          <div class="card">
+            <h2>Result set</h2>
+            <div id="result_set">
+                {{ dataframe|safe }}
+            </div>
+            <button id="cite" type="button" class='btn btn-default'>Cite</button>
+          </div>
+        </div>
+        <div class="rightcolumn">
+          <div class="card">
+            <h2>Metadata</h2>
+            <div>
+              <table class="key-value-table ux-light-table">
+                <tbody>
+                    <tr>
+                        <th class="metadata_key">Identifier:</th>
+                        <td>https://doi.org/pid/of/query</td>
+                    </tr>
+                    <tr>
+                        <th class="metadata_key">Creator:</th>
+                        <td>Filip Kovacevic</td>
+                    </tr>
+                    <tr>
+                        <th class="metadata_key">Title:</th>
+                        <td>Judy Chu occurences</td>
+                    </tr>
+                    <tr>
+                        <th class="metadata_key">Publisher:</th>
+                        <td>Filip Kovacevic</td>
+                    </tr>
+                    <tr>
+                        <th class="metadata_key">Publication year:</th>
+                        <td>2021</td>
+                    </tr>
+                    <tr>
+                        <th class="metadata_key">Resource type:</th>
+                        <td>Dataset/RDF data</td>
+                    </tr>
+                    <tr>
+                        <th class="metadata_key">Contributor:</th>
+                        <td>Tomasz Miksa</td>
+                    </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Execution and citation details</h2>
+            <div>
+              <table class="key-value-table ux-light-table">
+                <tbody>
+                    <tr>
+                        <th class="execution_key">Execution timestamp:</th>
+                        <td id="execution_timestamp">{{ execution_timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Number of rows:</th>
+                        <td id="number_of_rows"> {{ number_of_rows }}</td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Query already cited?:</th>
+                        <td id="yn_query_exists"> {{ yn_query_exists }}</td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Result set changed since last citation?:</th>
+                        <td id="yn_result_set_changed"> {{ yn_result_set_changed }} </td>
+                    </tr>
+                    <tr>
+                        <th class="execution_key">Order by attributes yield a unique sort?:</th>
+                        <td id="yn_unique_sort_index"> {{ yn_unique_sort_index }}</td>
+                    </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Follow Me</h2>
+            <p><a href="https://github.com/GreenfishK/DataCitation">https://github.com/GreenfishK/DataCitation</a></p>
+          </div>
+          <div class="card">
+            <h2>Citation Snippet</h2>
+            <p id="citation_snippet"> {{ citation_snippet }} </p>
+          </div>
+        </div>
+    </div>
+
+{% endblock %}
