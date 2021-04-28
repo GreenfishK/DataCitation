@@ -201,6 +201,16 @@ class QueryData:
         else:
             prefixes, query = self.split_prefixes_query(query)
 
+        # Common SPARQL regex patterns
+        re_variable = "[?][a-zA-Z0-9-_]*"
+        re_prefix_ref = "[a-zA-Z0-9-_]*[:][a-zA-Z0-9-_]*"
+        re_full_ref = "<[^\\s]>"
+        re_value = '["].*["]'
+        re_ref = re_full_ref + "|" + re_prefix_ref
+        re_subject = re_variable + "|" + re_prefix_ref + "|" + re_full_ref
+        re_predicate = re_variable + "|" + re_prefix_ref + "|" + re_full_ref
+        re_object = re_variable + "|" + re_prefix_ref + "|" + re_full_ref + "|" + re_value
+
         """
         #6.1
         Aliases via BIND keyword just rename variables but the query result stays the same	.
@@ -208,12 +218,12 @@ class QueryData:
         """
 
         for var in self.variables:
-            pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*[?][a-zA-Z0-9-_]*\\s*[)]".format(var)
+            pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*{1}\\s*[)]".format(var, re_variable)
             binds = re.findall(pattern, query, re.MULTILINE)
             for bind in binds:
                 pattern_alias_variable = "(?<=as)\\s*[?][a-zA-Z0-9-_]*"
                 aliases = re.findall(pattern_alias_variable, bind)
-                pattern_orig_var_name = "[?][a-zA-Z0-9-_]*\\s*(?=as)"
+                pattern_orig_var_name = "{0}\\s*(?=as)".format(re_variable)
                 orig_var_names = re.findall(pattern_orig_var_name, bind)
                 if len(aliases) == 1 and len(orig_var_names) == 1:
                     orig_var_name = orig_var_names[0].rstrip()
@@ -230,22 +240,55 @@ class QueryData:
         Aliases that are assigned in the select clause are just another means to #6.1 (using bind to
         assign aliases). 
         """
-        pattern = "(?<=select)(.*)(\\s*[(](\\s*[?][a-zA-Z0-9-_]*)\\s*as\\s*[?][a-zA-Z0-9-_]*\\s*[)])+"
+        pattern = "(?<=select)(.*)(\\s*[(](\\s*{variable})\\s*as\\s*{variable}\\s*[)])+".format(variable=re_variable)
         while re.findall(pattern, query, re.MULTILINE):
             query = re.sub(pattern, r"\1 \3", query)
 
         """
-        # 8 
+        #8 
         Regex will be used to convert "filter not exists {triple}" into the "filter + !bound" statement.
         """
         pattern = "(filter\\s*not\\s*exists\\s*)([{]" \
-                  "(?:\\s*(?:[?]|[a-zA-Z0-9-_]*:)[a-zA-Z0-9-_]*)" \
-                  "(?:\\s*(?:[?]|[a-zA-Z0-9-_]*:)[a-zA-Z0-9-_]*)" \
-                  "(\\s*(?:[?]|[a-zA-Z0-9-_]*:)[a-zA-Z0-9-_]*)[}])"
+                  "(?:\\s*(?:" + re_subject + "))" \
+                  "(?:\\s*(?:" + re_predicate + "))" \
+                  "(\\s*(?:" + re_object + "))[}])"
         while re.findall(pattern, query, re.MULTILINE):
             query = re.sub(pattern, r"OPTIONAL \2 . filter(!bound(\3))", query)
 
+        """
+        #9
+        Inverting the order of the triple statement (object predicate subject instead of subject predicate object) 
+        using "^" yields the same result as if actually exchanging the subject and object within the triple statement.
+        """
+        pattern = "(\\s*(?:" + re_subject + "))" \
+                  "(?:\\s*\^(" + re_ref + "))" \
+                  "(\\s*(?:" + re_object + "))"
+        while re.findall(pattern, query, re.MULTILINE):
+            query = re.sub(pattern, r"\3 \2 \1", query)
+
+        """
+        #10
+        Sequence paths can reduce the number of triplets in the query statement and are commonly used. They can be
+        resolved to 'normal' triple statements.
+        """
+        pattern = "\\s*(" + re_subject + ")" \
+                  "\\s*(" + re_predicate + ")" \
+                  "\\s*[/]"
+        dummy_cnt = 1
+        while re.findall(pattern, query, re.MULTILINE):
+            query = re.sub(pattern, r"\1 \2 ?dummy{0} . ?dummy{0} ".format(str(dummy_cnt)), query)
+            dummy_cnt += 1
+
         q_algebra = _query_algebra(query, prefixes)
+
+        """
+        #11
+        Prefixes can be interchanged in the prefix section before the query and subsequently 
+        in the query without changing the outcome
+        """
+        pass
+        # Implicitly solved by query algebra. Prefixes get resolved
+
         """
         #3
         In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
@@ -306,7 +349,6 @@ class QueryData:
             else:
                 return None
 
-        # TODO: problem with #6 normalization
         algebra.traverse(q_algebra, norm_vars_2)
 
         # Sort variables (in select statement)
