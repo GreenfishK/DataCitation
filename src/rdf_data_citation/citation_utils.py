@@ -522,20 +522,23 @@ class RDFDataSetData:
         else:
             self.checksum = None
 
-    def describe(self, description: str):
+    def describe(self, description: str = None):
         """
-        Generates a description from the dataset
+        Generates a description from the dataset. If a description is provided, the description will be returned.
 
         :return:
         """
 
-        # TODO: Use a natural language processor for RDF data to generate a description
-        #  for the dataset which will be suggested.
-
         if description is None:
-            # generate description from self.dataset
-            inferred_description = ""
-            return inferred_description
+            # TODO: Use a natural language processor for RDF data to generate a description
+            #  for the dataset which will be suggested.
+            dataset = self.dataset.copy()
+            if dataset.empty:
+                return "This is an empty dataset. We cannot infer any description from it."
+            dataset_description = dataset.describe()
+            if isinstance(dataset_description, pd.DataFrame):
+                dataset_description = dataset_description.stack()
+            return dataset_description.to_string()
         else:
             return description
 
@@ -675,7 +678,7 @@ class RDFDataSetData:
         be taken from the list of possible unique indexes.
         :return:
         """
-
+        dataset = self.dataset.copy()
         if sort_index is None:
             sort_index_used = self.create_sort_index()
             if len(sort_index_used) != 1:
@@ -686,12 +689,14 @@ class RDFDataSetData:
         else:
             # The tuple is passed in a list, therefore it must be taken out first
             sort_index_used = list(sort_index)
-            is_unique = self.dataset.set_index(sort_index_used).index.is_unique
+            is_unique = dataset.set_index(sort_index_used).index.is_unique
+
             if not is_unique:
                 raise NoUniqueSortIndexError("A non-unique sort index was given.")
 
         self.sort_order = sort_index_used
-        sorted_df = self.dataset.set_index(sort_index_used).sort_index()
+        sorted_df = dataset.set_index(sort_index_used).sort_index()
+        sorted_df = sorted_df.reset_index()
 
         return sorted_df
 

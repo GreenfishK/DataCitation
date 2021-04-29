@@ -52,10 +52,8 @@ class QueryStore:
 
     def lookup(self, query_checksum: str) -> [QueryData, RDFDataSetData, CitationData]:
         """
-        Checks whether the query exists in the database. If yes, its PID from the last citation data,
-        query and result set checksums  and citation snippet will be returned. This function only serves the purpose
-        to retrieve the citation snippet if the query to be cited already exists.
-        It is, however, not used to retrieve the data and display them on the landing page.
+        Checks whether the query exists in the database. If yes, query data, dataset metadata and citation metadata
+        (including provenance data and the citation snippet) are returned.
 
         :param query_checksum:
         :return:

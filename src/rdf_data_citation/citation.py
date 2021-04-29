@@ -34,7 +34,7 @@ class Citation:
         self.result_set_data = RDFDataSetData()
         self.citation_metadata = CitationData()
 
-    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str):
+    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str = None):
         """
         Persistently Identify Specific Data Sets
 
@@ -122,9 +122,10 @@ class Citation:
             self.yn_unique_sort_index = True
 
         # Sort result set
-        rdf_ds = RDFDataSetData(dataset=result_set, description=result_set_description)
+        rdf_ds = RDFDataSetData(dataset=result_set)
         # # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
+        rdf_ds.description = rdf_ds.describe(result_set_description)
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()
@@ -146,6 +147,7 @@ class Citation:
                 self.yn_result_set_changed = True
                 self.query_data = query_to_cite
                 self.result_set_data = rdf_ds
+                # citation_metadata.identifier = query_to_cite.pid
                 self.citation_metadata = citation_metadata
                 query_store.store(query_to_cite, rdf_ds, citation_metadata, yn_new_query=False)
             return self
@@ -157,6 +159,7 @@ class Citation:
             # Store query object
             self.query_data = query_to_cite
             self.result_set_data = rdf_ds
+            # citation_metadata.identifier = query_to_cite.pid
             self.citation_metadata = citation_metadata
             query_store.store(query_to_cite, rdf_ds, citation_metadata)
 

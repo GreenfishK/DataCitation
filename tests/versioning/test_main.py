@@ -1,51 +1,17 @@
-import numpy as np
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
-from tests.test_base import Test, format_text
-import pandas as pd
-import configparser
-from tabulate import tabulate
+from tests.test_base import Test, TestExecution, format_text
 
 
-class TestExecution:
+class TestVersioning(TestExecution):
 
-    def __init__(self):
-        """Load configuration from .ini file."""
-        self.test_config = configparser.ConfigParser()
-        self.test_config.read('../../config.ini')
-        self.tests = []
-
-        # Custom members for test execution
+    def __init__(self, annotated_tests: bool = False):
+        super().__init__(annotated_tests)
         self.rdf_engine = None
         self.initial_timestamp = None
         self.cnt_initial_triples = None
         self.cnt_actual_triples = None
         self.query_cnt_triples = "select (count(*) as ?cnt) where {?s ?p ?o.}"
-
-    def print_test_results(self):
-        """
-
-        :return:
-        """
-
-        tests_df = pd.DataFrame(columns=['test_number', 'test_passed', 'test_name', 'test_case_description',
-                                         'expected_result', 'actual_result'])
-        for test in self.tests:
-            if isinstance(test, Test):
-                formatted_tc_desc = format_text(test.tc_desc, 100)
-                formatted_expected_result = format_text(test.expected_result, 50)
-                formatted_actual_result = format_text(test.actual_result, 50)
-
-                tests_df = tests_df.append({'test_number': test.test_number,
-                                            'test_passed': test.yn_passed,
-                                            'test_name': test.test_name,
-                                            'test_case_description': formatted_tc_desc,
-                                            'expected_result': formatted_expected_result,
-                                            'actual_result': formatted_actual_result}, ignore_index=True)
-
-        tests_df.sort_values('test_number', inplace=True)
-        pdtabulate = lambda df: tabulate(df, headers='keys', tablefmt='grid', )
-        print(pdtabulate(tests_df))
 
     def before_all_tests(self):
         """
@@ -63,7 +29,7 @@ class TestExecution:
         self.cnt_initial_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
         self.rdf_engine.reset_all_versions()
 
-    def before_single_test(self):
+    def before_single_test(self, test_name: str):
         """
 
         :return:
@@ -74,6 +40,25 @@ class TestExecution:
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
         self.cnt_actual_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
         self.rdf_engine.version_all_rows(self.initial_timestamp)
+
+    def after_single_test(self):
+        """
+
+        :return:
+        """
+
+        print("Executing after_single_tests ...")
+        self.rdf_engine.reset_all_versions()
+
+    def after_all_tests(self):
+        """
+
+        :return:
+        """
+
+        print("Executing after_tests ...")
+        rdf_engine = self.rdf_engine
+        rdf_engine.reset_all_versions()
 
     def test_version__init_reset(self):
         test = Test(test_number=1,
@@ -535,55 +520,7 @@ class TestExecution:
 
         return test
 
-    def run_tests(self, annotated_tests: bool = False):
-        """
-        :param annotated_tests: If this flag is set only tests with the prefix "x_test" will be executed.
-        :return:
-        """
-        print("Executing tests ...")
 
-        self.before_all_tests()
-        test_prefix = 'test_'
-        if annotated_tests:
-            test_prefix = 'x_test_'
-        test_functions = [func for func in dir(t) if callable(getattr(t, func)) and func.startswith(test_prefix)]
-        try:
-            test_number = 1
-            for func in test_functions:
-                self.before_single_test()
-                test_function = getattr(self, func)
-                test = test_function()
-                test_number += 1
-                test.test_name = func
-                test.test()
-                self.tests.append(test)
-                self.after_single_test()
-        except Exception as e:
-            print(e)
-        finally:
-            self.after_all_tests()
-
-    def after_single_test(self):
-        """
-
-        :return:
-        """
-
-        print("Executing after_single_tests ...")
-        self.rdf_engine.reset_all_versions()
-
-    def after_all_tests(self):
-        """
-
-        :return:
-        """
-
-        print("Executing after_tests ...")
-        rdf_engine = self.rdf_engine
-
-        rdf_engine.reset_all_versions()
-
-
-t = TestExecution()
-t.run_tests(annotated_tests=False)
+t = TestVersioning(annotated_tests=False)
+t.run_tests()
 t.print_test_results()
