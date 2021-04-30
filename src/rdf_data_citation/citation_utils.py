@@ -536,9 +536,28 @@ class RDFDataSetData:
             if dataset.empty:
                 return "This is an empty dataset. We cannot infer any description from it."
             dataset_description = dataset.describe()
+            desc = ""
             if isinstance(dataset_description, pd.DataFrame):
                 dataset_description = dataset_description.stack()
-            return dataset_description.to_string()
+                dataset_description = dataset_description.sort_index()
+
+                cnt_freq = pd.concat([dataset_description['count'], dataset_description['freq']],
+                                     axis=1, join="inner")
+                cnt_freq.rename(columns={0: 'count', 1: 'freq'}, inplace=True)
+                cols_most_freq = cnt_freq.query("count == freq").index
+                if len(cols_most_freq) > 0:
+                    desc += "This dataset is about: "
+                    desc += ", ".join(dataset[col].iloc[0] for col in cols_most_freq) + "\n"
+
+                desc += "Each column has following number of non-empty values: \n"
+                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['count'].items()) + "\n"
+                desc += "For each column following frequencies were observed: "
+                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['freq'].items()) + "\n"
+                desc += "Each column has following max/top values: "
+                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['top'].items()) + "\n"
+                desc += "For each column following unique values were observed (opposite of frequencies): "
+                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['unique'].items()) + "\n"
+            return desc
         else:
             return description
 

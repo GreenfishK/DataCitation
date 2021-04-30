@@ -34,7 +34,8 @@ class Citation:
         self.result_set_data = RDFDataSetData()
         self.citation_metadata = CitationData()
 
-    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str = None):
+    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str = None,
+             citation_timestamp: datetime = None):
         """
         Persistently Identify Specific Data Sets
 
@@ -67,7 +68,8 @@ class Citation:
         [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
         [2]: Theory and Practice of Data Citation, Gianmaria Silvello
 
-        :param unique_sort_index:
+        :param citation_timestamp: If this parameter is left out the current system datetime will be used as citation
+        timestamp.
         :param result_set_description:
         :param citation_metadata:
         :param select_statement:
@@ -83,9 +85,14 @@ class Citation:
         timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
         execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
         execution_timestamp = execution_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                             + execution_datetime.strftime("%z")[3:5]
-        query_to_cite.citation_timestamp = execution_timestamp
+                              + execution_datetime.strftime("%z")[3:5]
         self.execution_timestamp = execution_timestamp
+        if not citation_timestamp:
+            query_to_cite.citation_timestamp = execution_timestamp
+        else:
+            user_citation_timestamp = citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
+                                      + citation_timestamp.strftime("%z")[3:5]
+            query_to_cite.citation_timestamp = user_citation_timestamp
 
         # Compute query checksum
         query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
@@ -131,7 +138,6 @@ class Citation:
         rdf_ds.checksum = rdf_ds.compute_checksum()
 
         # Lookup query by checksum
-        # TODO: empty dataset should also be valid
         existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
             = query_store.lookup(query_to_cite.checksum)
 
@@ -165,4 +171,5 @@ class Citation:
 
             return self
 
+        # TODO: assign identifier in citation.cite()
         # TODO: embed query timestamp (max valid_from of dataset). No idea what it means

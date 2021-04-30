@@ -1,3 +1,6 @@
+from datetime import datetime, timezone, timedelta
+
+from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct
 from src.rdf_data_citation.citation_utils import CitationData, QueryData, RDFDataSetData, generate_citation_snippet
@@ -9,6 +12,13 @@ class TestCitation(TestExecution):
     def __init__(self, annotated_tests: bool = False):
         super().__init__(annotated_tests)
         self.rdf_engine = None
+        self.citation_metadata = None
+        self.citation = None
+        self.initial_timestamp = None
+        self.citation_timestamp = None
+        self.select_statement = None
+        self.rdf_engine = None
+        # self.dataset_utils = None
 
     def before_all_tests(self):
         """
@@ -17,13 +27,34 @@ class TestCitation(TestExecution):
         """
 
         print("Executing before_tests ...")
+        self.citation_metadata = CitationData(identifier="https://doi.org/pid/of/query",
+                                              creator="Filip Kovacevic",
+                                              title="Obama occurrences",
+                                              publisher="Filip Kovacevic",
+                                              publication_year="2021",
+                                              resource_type="Dataset/RDF data",
+                                              other_citation_data={'Contributor': 'Tomasz Miksa'})
+
+        self.citation = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+        vie_tz = timezone(timedelta(hours=2))
+        citation_timestamp = datetime(2021, 4, 30, 12, 11, 21, 941000, vie_tz)
+        self.citation_timestamp = citation_timestamp
+        initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vie_tz)
+        self.initial_timestamp = initial_timestamp
+        self.rdf_engine = TripleStoreEngine(self.test_config.get('RDFSTORE', 'get'),
+                                            self.test_config.get('RDFSTORE', 'post'))
+        self.rdf_engine.version_all_rows(self.initial_timestamp)
 
     def before_single_test(self, test_name: str):
         """
 
         :return:
         """
+        if self.annotated_tests:
+            test_name = test_name[2:]
 
+        select_statement = open("test_data/{0}.txt".format(test_name), "r").read()
+        self.select_statement = select_statement
         print("Executing before_single_tests ...")
 
     def after_single_test(self):
@@ -33,6 +64,10 @@ class TestCitation(TestExecution):
         """
         print("Executing after_single_test")
 
+        # Clean up
+        query_store = QueryStore()
+        query_store._remove(self.citation.query_data.checksum)
+
     def after_all_tests(self):
         """
 
@@ -40,43 +75,59 @@ class TestCitation(TestExecution):
         """
 
         print("Executing after_tests ...")
+        self.rdf_engine.reset_all_versions()
 
     def x_test_citation__empty_dataset(self):
-        citation = ct.Citation(self.test_config.get('RDFSTORE', 'get'),
-                               self.test_config.get('RDFSTORE', 'post'))
+        citation = self.citation
+        self.citation_metadata.title = "Obama occurrences as Republican"
 
-        # TODO: assign identifier in ct.citation()
-        citation_metadata = CitationData(identifier="https://doi.org/pid/of/query",
-                                         creator="Filip Kovacevic",
-                                         title="Obama occurrences",
-                                         publisher="Filip Kovacevic",
-                                         publication_year="2021",
-                                         resource_type="Dataset/RDF data",
-                                         other_citation_data={'Contributor': 'Tomasz Miksa'})
+        # Actual results
+        citation.cite(select_statement=self.select_statement,
+                      citation_metadata=self.citation_metadata,
+                      citation_timestamp=self.citation_timestamp)
+        actual_result = citation.result_set_data.description + "\n" + citation.citation_metadata.citation_snippet
+        self.citation = citation
 
-        select_statement = open("test_data/test_citation__empty_dataset.txt", "r").read()
-        citation.cite(select_statement=select_statement, citation_metadata=citation_metadata)
-        citation_snippet = generate_citation_snippet(query_pid=citation.query_data.pid,
-                                                     citation_data=citation_metadata)
+        # Expected results
+        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
+                                                     citation_data=self.citation_metadata)
+        expected_result = "This is an empty dataset. We cannot infer any description from it.\n" + citation_snippet
 
+        # Test object
         test = Test(test_number=1,
-                    tc_desc='Test if an empty dataset can be cited',
-                    expected_result="This is an empty dataset. We cannot infer any description from it.\n"
-                                    + citation_snippet,
-                    actual_result=citation.result_set_data.description
-                                    + "\n"
-                                    + citation.citation_metadata.citation_snippet)
-        # Clean up
-        query_store = QueryStore()
-        query_store._remove(citation.query_data.checksum)
+                    tc_desc='Test if an empty dataset can be cited and a citation snippet is returned.',
+                    expected_result=expected_result,
+                    actual_result=actual_result)
 
         return test
 
-    def test_citation__non_empty_dataset(self):
+    def x_test_citation__non_empty_dataset(self):
+        citation = self.citation
+        self.citation_metadata.title = "Obama occurrences"
+
+        # Actual results
+        citation.cite(select_statement=self.select_statement,
+                      citation_metadata=self.citation_metadata,
+                      citation_timestamp=self.citation_timestamp)
+        actual_result = citation.result_set_data.description + "\n" + citation.citation_metadata.citation_snippet
+        self.citation = citation
+
+        # Expected results
+        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
+                                                     citation_data=self.citation_metadata)
+        timestamped_query = query_utils.timestamp_query()
+        result_set = self.rdf_engine.get_data(timestamped_query)
+        dataset_utils = RDFDataSetData(dataset=result_set)
+        dataset_description = dataset_utils.describe()
+        expected_result = dataset_description + "\n" + citation_snippet
+
+        # Test object
         test = Test(test_number=2,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
+                    tc_desc='Test if a non-empty dataset can be cited and a citation snippet is returned.',
+                    expected_result=expected_result,
+                    actual_result=actual_result)
 
         return test
 
