@@ -1,7 +1,6 @@
 from src.rdf_data_citation.citation_utils import QueryData, RDFDataSetData, CitationData
 from src.rdf_data_citation.citation_utils import read_json
 from src.rdf_data_citation._helper import _template_path
-
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd

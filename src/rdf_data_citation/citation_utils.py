@@ -1,7 +1,10 @@
+import logging
+
 from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes
 from src.rdf_data_citation._helper import _template_path
 from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Variable
+from rdflib.paths import SequencePath
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
@@ -35,8 +38,19 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     n3_triples = []
     for triple_list in triples:
         for triple in triple_list:
-            t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-            n3_triples.append(t)
+            if isinstance(triple[1], SequencePath):
+                sequences = triple[1].args
+                for i, ref in enumerate(sequences, start=1):
+                    if i == 1:
+                        t = triple[0].n3() + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
+                    elif i == len(sequences):
+                        t = "?dummy{0}".format(len(sequences) - 1) + " " + ref.n3() + " " + triple[2].n3()
+                    else:
+                        t = "?dummy{0}".format(str(i-1)) + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
+                    n3_triples.append(t)
+            else:
+                t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+                n3_triples.append(t)
 
     return sorted(n3_triples)
 
@@ -278,7 +292,6 @@ class QueryData:
         while re.findall(pattern, query, re.MULTILINE):
             query = re.sub(pattern, r"\1 \2 ?dummy{0} . ?dummy{0} ".format(str(dummy_cnt)), query)
             dummy_cnt += 1
-
         q_algebra = _query_algebra(query, prefixes)
 
         """
@@ -359,7 +372,6 @@ class QueryData:
                 return None
 
         algebra.traverse(q_algebra, visitPre=sort_list_of_string)
-
         return str(q_algebra)
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None,
@@ -449,6 +461,7 @@ class QueryData:
                                           "{0}{1}{2}".format(blue[0], timestamp, blue[1]),
                                           "{0}{1}{2}".format(magenta[0], versioning_query_extensions, magenta[1]),
                                           "{0}{1}{2}".format(cyan[0], sort_extension, cyan[1]))
+
         return decorated_query
 
     def compute_checksum(self, string: str = None) -> str:

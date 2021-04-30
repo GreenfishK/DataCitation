@@ -2,6 +2,7 @@ from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
+from copy import copy
 import datetime
 from datetime import datetime, timedelta, timezone
 import tzlocal
@@ -76,6 +77,7 @@ class Citation:
         :return:
         """
 
+        print("Citing... ")
         sparqlapi = self.sparqlapi
         query_store = QueryStore()
         query_to_cite = QueryData(select_statement)
@@ -149,27 +151,24 @@ class Citation:
                 self.citation_metadata = existing_query_citation_data
                 print("Query already exists and the result set has not changed since the last execution. "
                       "The existing citation snippet will be returned.")
+                return self
             else:
                 self.yn_result_set_changed = True
-                self.query_data = query_to_cite
-                self.result_set_data = rdf_ds
-                # citation_metadata.identifier = query_to_cite.pid
-                self.citation_metadata = citation_metadata
-                query_store.store(query_to_cite, rdf_ds, citation_metadata, yn_new_query=False)
-            return self
+
+        # Store new query data
+        self.query_data = query_to_cite
+        self.result_set_data = rdf_ds
+        # TODO: assign identifier in citation_metadata.identifier
+        citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_metadata)
+        self.citation_metadata = copy(citation_metadata)
+        self.citation_metadata.citation_snippet = citation_snippet
+
+        if self.yn_query_exists:
+            if self.yn_result_set_changed:
+                query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=False)
         else:
-            # Generate citation snippet
-            citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_metadata)
-            citation_metadata.citation_snippet = citation_snippet
+            query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
 
-            # Store query object
-            self.query_data = query_to_cite
-            self.result_set_data = rdf_ds
-            # citation_metadata.identifier = query_to_cite.pid
-            self.citation_metadata = citation_metadata
-            query_store.store(query_to_cite, rdf_ds, citation_metadata)
+        return self
 
-            return self
-
-        # TODO: assign identifier in citation.cite()
         # TODO: embed query timestamp (max valid_from of dataset). No idea what it means

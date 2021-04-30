@@ -3,6 +3,7 @@ import configparser
 import os
 import sys
 from tabulate import tabulate
+import logging
 
 
 def format_text(comment, max_line_length):
@@ -99,6 +100,7 @@ class TestExecution:
         :return:
         """
         print("Executing tests ...")
+        logging.getLogger().setLevel(int(self.test_config.get('TEST', 'log_level')))
 
         self.before_all_tests()
         test_prefix = 'test_'
@@ -110,6 +112,7 @@ class TestExecution:
             for func in test_functions:
                 self.before_single_test(func)
                 test_function = getattr(self, func)
+                logging.info("Executing test: " + func)
                 test = test_function()
                 test_number += 1
                 test.test_name = func

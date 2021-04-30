@@ -1,10 +1,10 @@
-from datetime import datetime, timezone, timedelta
-
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct
 from src.rdf_data_citation.citation_utils import CitationData, QueryData, RDFDataSetData, generate_citation_snippet
 from src.rdf_data_citation.query_store import QueryStore
+from datetime import datetime, timezone, timedelta
+import logging
 
 
 class TestCitation(TestExecution):
@@ -131,31 +131,148 @@ class TestCitation(TestExecution):
 
         return test
 
-    def test_citation__changed_dataset(self):
+    def x_test_citation__changed_dataset(self):
+        citation1 = self.citation
+        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+        self.citation_metadata.title = "Obama occurrences, new mention"
+
+        # Actual results
+        # Citation1
+        citation1.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=self.citation_timestamp)
+
+        # Insert two new triple
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        mention = "<hhttp://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
+        hasInstance = "publishing:hasInstance"
+        person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
+        self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
+
+        document = "<http://www.reuters.com/article/2014/10/10/us-usa-california-mountains-idUSKCN0HZ0U720141010>"
+        containsMention = "publishing:containsMention"
+        mention = "<hhttp://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
+        self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
+
+        # Citation2
+        vie_tz = timezone(timedelta(hours=2))
+        citation_timestamp2 = datetime.now(vie_tz)
+        citation2.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=citation_timestamp2)
+
+        # Concat Citation1 + Citation2 into actual results
+        actual_result = citation1.citation_metadata.citation_snippet \
+                          + "\n" + citation2.citation_metadata.citation_snippet
+
+        self.citation = citation1
+
+        # Expected results
+        # Citation1
+        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
+                                                      citation_data=self.citation_metadata)
+        # Citation2
+        query_utils = QueryData(query=self.select_statement, citation_timestamp=citation_timestamp2)
+        citation_snippet2 = generate_citation_snippet(query_pid=query_utils.pid,
+                                                      citation_data=self.citation_metadata)
+
+        expected_result = citation_snippet1 + "\n" + citation_snippet2
+
+        # Clean up
+        self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
+        self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+
         test = Test(test_number=3,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
+                    tc_desc='Test if a new query PID is created if the dataset has changed since the last citation and'
+                            'the query stayed the same. Check also if the query checksum must stayed the same.',
+                    expected_result=expected_result,
+                    actual_result=actual_result)
 
         return test
 
-    def test_citation__changed_provenance(self):
+    def x_test_citation__recite_unchanged_dataset(self):
+        citation1 = self.citation
+        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+        self.citation_metadata.title = "Obama occurrences, new mention"
+
+        # Actual results
+        # Citation1
+        citation1.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=self.citation_timestamp)
+
+        # Citation2
+        vie_tz = timezone(timedelta(hours=2))
+        citation_timestamp2 = datetime.now(vie_tz)
+        citation2.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=citation_timestamp2)
+
+        # Concat Citation1 + Citation2 into actual results
+        actual_result = citation1.citation_metadata.citation_snippet \
+                          + "\n" + citation2.citation_metadata.citation_snippet
+
+        self.citation = citation1
+
+        # Expected results
+        # Citation1
+        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
+                                                      citation_data=self.citation_metadata)
+
+        expected_result = citation_snippet1 + "\n" + citation_snippet1
+
         test = Test(test_number=4,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
+                    tc_desc='Test if reciting a query where the dataset has not changed since the last citation '
+                            'returns the citation snippet as of last citation where the query was either new '
+                            'or the dataset changed.',
+                    expected_result=expected_result,
+                    actual_result=actual_result)
 
         return test
 
-    def test_citation__recite_existing(self):
+    def x_test_citation__recite_semantically_identical(self):
+        citation1 = self.citation
+        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+        self.citation_metadata.title = "Obama occurrences, new mention"
+
+        # Actual results
+        # Citation1
+        citation1.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=self.citation_timestamp)
+
+        # Citation2
+        vie_tz = timezone(timedelta(hours=2))
+        citation_timestamp2 = datetime.now(vie_tz)
+        select_statement2 = open("test_data/test_citation__recite_semantically_identical2.txt", "r").read()
+        citation2.cite(select_statement=select_statement2,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=citation_timestamp2)
+
+        # Concat Citation1 + Citation2 into actual results
+        actual_result = citation1.citation_metadata.citation_snippet \
+                          + "\n" + citation2.citation_metadata.citation_snippet
+
+        self.citation = citation1
+
+        # Expected results
+        # Citation1
+        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
+                                                      citation_data=self.citation_metadata)
+
+        expected_result = citation_snippet1 + "\n" + citation_snippet1
         test = Test(test_number=5,
                     tc_desc='',
-                    expected_result='',
-                    actual_result='')
+                    expected_result=expected_result,
+                    actual_result=actual_result)
 
         return test
 
-    def test_citation__recite_semantically_identical(self):
+    def test_citation__cite_non_unique_sort(self):
         test = Test(test_number=6,
                     tc_desc='',
                     expected_result='',
@@ -163,24 +280,8 @@ class TestCitation(TestExecution):
 
         return test
 
-    def test_citation__cite_non_unique_sort(self):
-        test = Test(test_number=7,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
-
-        return test
-
     def test_citation__sort_by_not_select_variable(self):
-        test = Test(test_number=8,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
-
-        return test
-
-    def test_citation__select_clause_differently_ordered_variables(self):
-        test = Test(test_number=9,
+        test = Test(test_number=7,
                     tc_desc='',
                     expected_result='',
                     actual_result='')
@@ -192,16 +293,3 @@ t = TestCitation(annotated_tests=True)
 t.run_tests()
 t.print_test_results()
 
-
-
-
-
-
-
-# Test 1: Cite one query, then cite it again
-# Test 2: Cite one query with an empty dataset
-# Test 3: Cite one query, then change the order of two triple statements and cite again
-# Test 4: Try to cite a query with a non-unique order-by
-# Test 5: Try to cite a query with an order by variable that is not in the select statement
-# Test 6: Cite a query with differently ordered variables in the select clause
-# Test 7: Cite a query, change the result set and try to cite again
