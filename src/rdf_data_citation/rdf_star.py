@@ -123,6 +123,10 @@ class ReservedPrefixError(Exception):
     pass
 
 
+class NoVersioningMode(Exception):
+    pass
+
+
 class TripleStoreEngine:
     """
 
@@ -239,7 +243,12 @@ class TripleStoreEngine:
         """
         if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
             version_timestamp = _citation_timestamp_format(initial_timestamp)
-            template = open(self._template_location + "/version_all_rows_save_mem.txt", "r").read()
+            if self.versioning_mode == self.VersioningMode.SAVE_MEM:
+                template = open(self._template_location + "/version_all_rows_save_mem.txt", "r").read()
+            elif self.versioning_mode == self.VersioningMode.Q_PERF:
+                template = open(self._template_location + "/version_all_rows_q_perf.txt", "r").read()
+            else:
+                raise NoVersioningMode("Either query performance or memory saving mode must be set.")
             final_prefixes = citation_prefixes("")
             update_statement = template.format(final_prefixes, version_timestamp)
             self.sparql_post.setQuery(update_statement)
