@@ -426,7 +426,7 @@ class QueryData:
         triples = _query_triples(query, final_prefixes)
 
         versioning_query_extensions_template = \
-            open(_template_path("templates/versioning_query_extensions.txt"), "r").read()
+            open(_template_path("templates/versioning_query_extensions_save_mem.txt"), "r").read()
 
         versioning_query_extensions = ""
         for i, triple in enumerate(triples):
