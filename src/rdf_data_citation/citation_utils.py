@@ -1,5 +1,3 @@
-import logging
-
 from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes
 from src.rdf_data_citation._helper import _template_path
 from rdflib.plugins.sparql.parserutils import CompValue

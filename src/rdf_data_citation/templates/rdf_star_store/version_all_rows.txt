@@ -1,8 +1,7 @@
 {0}
 insert
 {{
-    <<?s ?p ?o>> citing:valid_from ?currentTimestamp;
-                 citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+    <<?s ?p ?o>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
 }}
 where
 {{
