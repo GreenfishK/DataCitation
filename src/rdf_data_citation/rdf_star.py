@@ -5,6 +5,7 @@ from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
 from datetime import datetime
+from enum import Enum
 
 
 def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
@@ -126,6 +127,9 @@ class TripleStoreEngine:
     """
 
     """
+    class VersioningMode(Enum):
+        Q_PERF = 1
+        SAVE_MEM = 2
 
     class Credentials:
 
@@ -133,7 +137,8 @@ class TripleStoreEngine:
             self.user_name = user_name
             self.pw = pw
 
-    def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None):
+    def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None,
+                 versioning_mode=VersioningMode.Q_PERF):
         """
         During initialization a few queries are executed against the RDF* store to test connection but also whether
         the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and
@@ -150,16 +155,13 @@ class TripleStoreEngine:
         :param credentials: The user name and password for the remote RDF store
         """
 
-        # Parameters
+        self.versioning_mode = versioning_mode
         self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_post = SPARQLWrapper(update_endpoint)
         self.credentials = credentials
-
-        # Settings
         self._template_location = _template_path("templates/rdf_star_store")
         self.sparql_post.setHTTPAuth(DIGEST)
         self.sparql_post.setMethod(POST)
-
         self.sparql_get.setHTTPAuth(DIGEST)
         self.sparql_get.setMethod(GET)
         self.sparql_get.setReturnFormat(JSON)
@@ -237,7 +239,7 @@ class TripleStoreEngine:
         """
         if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
             version_timestamp = _citation_timestamp_format(initial_timestamp)
-            template = open(self._template_location + "/version_all_rows.txt", "r").read()
+            template = open(self._template_location + "/version_all_rows_save_mem.txt", "r").read()
             final_prefixes = citation_prefixes("")
             update_statement = template.format(final_prefixes, version_timestamp)
             self.sparql_post.setQuery(update_statement)

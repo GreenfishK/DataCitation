@@ -475,7 +475,7 @@ class TestVersioning(TestExecution):
 
     def test_update_multi__timeline_consistency(self):
         test = Test(test_number=15,
-                    tc_desc='If a set of triples is updated multiple times each consecutive update must come'
+                    tc_desc='If a set of triples is updated multiple times each consecutive update must come '
                             'with a newer citing:valid_until timestamp. The most recent one must have the value'
                             '"9999-12-31T00:00:00.000+02:00".',
                     expected_result="valid_from_positive_deltas: 2")
