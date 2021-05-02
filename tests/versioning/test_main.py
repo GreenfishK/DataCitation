@@ -78,10 +78,20 @@ class TestVersioning(TestExecution):
         return test
 
     def test_version__init(self):
+        versioning_mode = self.test_config.get('VERSIONING', 'versioning_mode')
+        if versioning_mode == "Q_PERF":
+            expected_result = str(self.cnt_initial_triples * 3)
+        elif versioning_mode == "SAVE_MEM":
+            expected_result = str(self.cnt_initial_triples * 2)
+        else:
+            expected_result = "This is an exception and not the real expected result! " \
+                              "The versioning mode in config.ini must be set either to " \
+                              "Q_PERF or SVE_MEM."
+
         test = Test(test_number=2,
-                    tc_desc="The number of triples after initial versioning should "
+                    tc_desc="The number of triples after initial versioning_modes should "
                             "be three times the initial number of triples.",
-                    expected_result=str(self.cnt_initial_triples * 3))
+                    expected_result=expected_result)
 
         test_query = """
                 select ?s ?p ?o {
@@ -474,11 +484,21 @@ class TestVersioning(TestExecution):
         return test
 
     def test_update_multi__timeline_consistency(self):
+        versioning_mode = self.test_config.get('VERSIONING', 'versioning_mode')
+        if versioning_mode == "Q_PERF":
+            expected_result = "valid_from_positive_deltas: 2"
+        elif versioning_mode == "SAVE_MEM":
+            expected_result = "valid_from_positive_deltas: 1"
+        else:
+            expected_result = "This is an exception and not the real expected result! " \
+                              "The versioning mode in config.ini must be set either to " \
+                              "Q_PERF or SVE_MEM."
+
         test = Test(test_number=15,
                     tc_desc='If a set of triples is updated multiple times each consecutive update must come '
                             'with a newer citing:valid_until timestamp. The most recent one must have the value'
                             '"9999-12-31T00:00:00.000+02:00".',
-                    expected_result="valid_from_positive_deltas: 2")
+                    expected_result=expected_result)
         # Read
         triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
 

@@ -131,9 +131,6 @@ class TripleStoreEngine:
     """
 
     """
-    class VersioningMode(Enum):
-        Q_PERF = 1
-        SAVE_MEM = 2
 
     class Credentials:
 
@@ -141,8 +138,7 @@ class TripleStoreEngine:
             self.user_name = user_name
             self.pw = pw
 
-    def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None,
-                 versioning_mode=VersioningMode.Q_PERF):
+    def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None):
         """
         During initialization a few queries are executed against the RDF* store to test connection but also whether
         the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and
@@ -159,7 +155,6 @@ class TripleStoreEngine:
         :param credentials: The user name and password for the remote RDF store
         """
 
-        self.versioning_mode = versioning_mode
         self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_post = SPARQLWrapper(update_endpoint)
         self.credentials = credentials
@@ -241,11 +236,14 @@ class TripleStoreEngine:
 
         :return:
         """
+
         if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
+            versioning_mode = config().get("VERSIONING", "versioning_mode")
             version_timestamp = _citation_timestamp_format(initial_timestamp)
-            if self.versioning_mode == self.VersioningMode.SAVE_MEM:
+
+            if versioning_mode == "SAVE_MEM":
                 template = open(self._template_location + "/version_all_rows_save_mem.txt", "r").read()
-            elif self.versioning_mode == self.VersioningMode.Q_PERF:
+            elif versioning_mode == "Q_PERF":
                 template = open(self._template_location + "/version_all_rows_q_perf.txt", "r").read()
             else:
                 raise NoVersioningMode("Either query performance or memory saving mode must be set.")

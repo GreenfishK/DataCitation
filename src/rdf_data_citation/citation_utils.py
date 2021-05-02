@@ -1,5 +1,5 @@
-from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes
-from src.rdf_data_citation._helper import _template_path
+from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes, NoVersioningMode
+from src.rdf_data_citation._helper import _template_path, config
 from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Variable
 from rdflib.paths import SequencePath
@@ -22,7 +22,7 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     :return: transformed result set with columns: s, p, o
     """
 
-    template = open(_template_path("templates/prefixes_query.txt"), "r").read()
+    template = open(_template_path("templates/query_utils/prefixes_query.txt"), "r").read()
 
     if sparql_prefixes:
         statement = template.format(sparql_prefixes, query)
@@ -51,11 +51,6 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
                 n3_triples.append(t)
 
     return sorted(n3_triples)
-
-
-def _intersection(lst1, lst2):
-    lst3 = [value for value in lst1 if value in lst2]
-    return lst3
 
 
 def _query_algebra(query: str, sparql_prefixes: str):
@@ -129,7 +124,7 @@ def _citation_timestamp_format(citation_timestamp: datetime) -> str:
 
 
 def attach_prefixes(query, prefixes: dict) -> str:
-    template = open(_template_path("templates/prefixes_query_wrapper.txt"), "r").read()
+    template = open(_template_path("templates/query_utils/prefixes_query_wrapper.txt"), "r").read()
     sparql_prefixes = prefixes_to_sparql(prefixes)
     query_with_prefixes = template.format(sparql_prefixes, query)
     return query_with_prefixes
@@ -389,6 +384,8 @@ class QueryData:
         :return: A query string extended with the given timestamp
         """
 
+        versioning_mode = config().get("VERSIONING", "versioning_mode")
+
         if colored:
             red = ("\x1b[31m", "\x1b[0m")
             green = ("\x1b[32m", "\x1b[0m")
@@ -402,7 +399,7 @@ class QueryData:
             magenta = ("", "")
             cyan = ("", "")
 
-        template = open(_template_path("templates/query_wrapper.txt"), "r").read()
+        template = open(_template_path("templates/query_utils/query_wrapper.txt"), "r").read()
 
         if query is None:
             if self.query is not None:
@@ -422,11 +419,17 @@ class QueryData:
             select_variables = _query_variables(_query_algebra(query, final_prefixes), variable_set_type='select')
         variables_string = " ".join(v.n3() for v in select_variables)
 
-        # QueryData extensions for versioning injection
+        # QueryData extensions for versioning_modes injection
         triples = _query_triples(query, final_prefixes)
 
-        versioning_query_extensions_template = \
-            open(_template_path("templates/versioning_query_extensions_save_mem.txt"), "r").read()
+        if versioning_mode == "Q_PERF":
+            versioning_query_extensions_template = \
+                open(_template_path("templates/query_utils/versioning_query_extensions_q_perf.txt"), "r").read()
+        elif versioning_mode == "SAVE_MEM":
+            versioning_query_extensions_template = \
+                open(_template_path("templates/query_utils/versioning_query_extensions_save_mem.txt"), "r").read()
+        else:
+            raise NoVersioningMode("Either query performance or memory saving mode must be set.")
 
         versioning_query_extensions = ""
         for i, triple in enumerate(triples):

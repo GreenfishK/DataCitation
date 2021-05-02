@@ -6,7 +6,7 @@ setup(
     version="0.7.0",
     author="Filip Kovacevic",
     author_email="f.kovacevic@gmx.at",
-    description="A package for versioning and citing RDF data.",
+    description="A package for versioning_modes and citing RDF data.",
     license="GPL",
     keywords="example documentation tutorial",
     url="https://github.com/GreenfishK/DataCitation.git",
