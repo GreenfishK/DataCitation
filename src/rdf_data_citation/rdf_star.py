@@ -243,7 +243,7 @@ class TripleStoreEngine:
             self.sparql_post.setQuery(update_statement)
             self.sparql_post.query()
             config().set('VERSIONING', 'yn_init_version_all_applied', 'True')
-            print("All rows have been annotated with the current timestamp.")
+            print("All rows have been annotated with an artificial end date.")
         else:
             print("All rows are already versioned.")
 
