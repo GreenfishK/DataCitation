@@ -7,10 +7,6 @@ from sqlalchemy import exc
 import pandas as pd
 
 
-def escape_apostrophe(string: str) -> str:
-    return string.replace("'", "''")
-
-
 class QueryStore:
 
     def __init__(self):

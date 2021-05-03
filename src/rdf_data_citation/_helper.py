@@ -23,6 +23,10 @@ def intersection(lst1, lst2):
     return lst3
 
 
+def escape_apostrophe(string: str) -> str:
+    return string.replace("'", "''")
+
+
 def citation_timestamp_format(citation_timestamp: datetime) -> str:
     """
     This format is taken from the result set of GraphDB's queries.
