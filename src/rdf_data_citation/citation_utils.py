@@ -10,8 +10,7 @@ import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import pandas as pd
 import hashlib
-from datetime import datetime, tzinfo, timedelta, timezone
-import tzlocal
+import datetime
 from pandas.util import hash_pandas_object
 import json
 import numpy as np
@@ -111,15 +110,13 @@ class QueryUtils:
             self.normalized_query_algebra = self.normalize_query_tree()
             self.checksum = self.compute_checksum()
 
-            if citation_timestamp is None:
-                current_datetime = datetime.now()
-                timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
-                cit_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
-                self.citation_timestamp = citation_timestamp_format(cit_datetime)
+            if citation_timestamp is not None:
+                self.citation_timestamp = citation_timestamp_format(citation_timestamp)  # -> str
+                self.timestamped_query = self.timestamp_query()
+                self.pid = self.generate_query_pid()
             else:
-                self.citation_timestamp = citation_timestamp_format(citation_timestamp)
-            self.timestamped_query = self.timestamp_query()
-            self.pid = self.generate_query_pid()
+                self.citation_timestamp = None
+                self.pid = None
         else:
             self.query = None
             self.variables = None
