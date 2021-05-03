@@ -15,6 +15,7 @@ class TestVersioning(TestExecution):
 
     def before_all_tests(self):
         """
+        Make sure that versioning has not been applied to the RDF store before executing the tests!
 
         :return:
         """

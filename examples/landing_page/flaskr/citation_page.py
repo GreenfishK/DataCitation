@@ -1,7 +1,7 @@
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
-from src.rdf_data_citation.exceptions import MissingSortVariables
-from src.rdf_data_citation.citation_utils import CitationData, NoUniqueSortIndexError, QueryUtils
+from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError
+from src.rdf_data_citation.citation_utils import CitationData, QueryUtils
 from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
@@ -51,13 +51,10 @@ def execute_query():
         with open('../../../config.ini', 'w') as configfile:
             config.write(configfile)
 
-    # Query data with the latest validation data on triple level
-    query_text = request.form['query_text']
-    vieTZObject = timezone(timedelta(hours=2))
-    query_data = QueryUtils(query=query_text, citation_timestamp=datetime.now(vieTZObject))
-    timestamped_query = query_data.timestamp_query()
+    # Query the latest version of data (as of now)
+    query_utils = QueryUtils(query=request.form['query_text'])
+    result_set = rdf_engine.get_data(query_utils.timestamped_query)  # dataframe
 
-    result_set = rdf_engine.get_data(timestamped_query)  # dataframe
     number_of_rows = len(result_set.index)
     html_response = render_template('datacenter_sample_page_1/citation_page.html',
                                     dataframe=result_set.to_html(header='true'),

@@ -1,3 +1,5 @@
+import logging
+
 from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
 from src.rdf_data_citation.exceptions import ReservedPrefixError, NoVersioningMode
@@ -145,7 +147,10 @@ class TripleStoreEngine:
         delete_statement = template.format(citation_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
+        logging.getLogger().setLevel(10)
+        logging.debug(config().get('VERSIONING', 'yn_init_version_all_applied'))
         config().set('VERSIONING', 'yn_init_version_all_applied', 'False')
+        logging.debug(config().get('VERSIONING', 'yn_init_version_all_applied'))
         print("All annotations have been removed.")
 
     def version_all_rows(self, initial_timestamp: datetime):

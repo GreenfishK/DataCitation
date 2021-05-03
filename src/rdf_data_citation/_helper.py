@@ -11,8 +11,6 @@ def config() -> configparser.ConfigParser:
 
     :return:
     """
-    logging.getLogger().setLevel(10)
-
     cnf = configparser.ConfigParser()
     rdf_data_citation_module_path = os.path.dirname(sys.modules[config.__module__].__file__)
     config_path = rdf_data_citation_module_path + "/../../config.ini"
