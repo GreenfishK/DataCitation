@@ -1,5 +1,7 @@
-from src.rdf_data_citation.rdf_star import prefixes_to_sparql, citation_prefixes, NoVersioningMode
-from src.rdf_data_citation._helper import _template_path, config
+from src.rdf_data_citation.rdf_star import citation_prefixes
+from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
+from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
+    MultipleSortIndexesError, NoUniqueSortIndexError
 from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Variable
 from rdflib.paths import SequencePath
@@ -22,7 +24,7 @@ def _query_triples(query, sparql_prefixes: str = None) -> list:
     :return: transformed result set with columns: s, p, o
     """
 
-    template = open(_template_path("templates/query_utils/prefixes_query.txt"), "r").read()
+    template = open(template_path("templates/query_utils/prefixes_query.txt"), "r").read()
 
     if sparql_prefixes:
         statement = template.format(sparql_prefixes, query)
@@ -119,21 +121,6 @@ def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
     return variables
 
 
-def _citation_timestamp_format(citation_timestamp: datetime) -> str:
-    return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
-
-
-def attach_prefixes(query, prefixes: dict) -> str:
-    template = open(_template_path("templates/query_utils/prefixes_query_wrapper.txt"), "r").read()
-    sparql_prefixes = prefixes_to_sparql(prefixes)
-    query_with_prefixes = template.format(sparql_prefixes, query)
-    return query_with_prefixes
-
-
-class MultipleAliasesInBindError(Exception):
-    pass
-
-
 class QueryData:
 
     def __init__(self, query: str = None, citation_timestamp: datetime = None):
@@ -154,7 +141,7 @@ class QueryData:
             self.checksum = self.compute_checksum()
 
             if citation_timestamp is not None:
-                self.citation_timestamp = _citation_timestamp_format(citation_timestamp)  # -> str
+                self.citation_timestamp = citation_timestamp_format(citation_timestamp)  # -> str
                 self.timestamped_query = self.timestamp_query()
                 self.pid = self.generate_query_pid()
             else:
@@ -399,7 +386,7 @@ class QueryData:
             magenta = ("", "")
             cyan = ("", "")
 
-        template = open(_template_path("templates/query_utils/query_wrapper.txt"), "r").read()
+        template = open(template_path("templates/query_utils/query_wrapper.txt"), "r").read()
 
         if query is None:
             if self.query is not None:
@@ -424,10 +411,10 @@ class QueryData:
 
         if versioning_mode == "Q_PERF":
             versioning_query_extensions_template = \
-                open(_template_path("templates/query_utils/versioning_query_extensions_q_perf.txt"), "r").read()
+                open(template_path("templates/query_utils/versioning_query_extensions_q_perf.txt"), "r").read()
         elif versioning_mode == "SAVE_MEM":
             versioning_query_extensions_template = \
-                open(_template_path("templates/query_utils/versioning_query_extensions_save_mem.txt"), "r").read()
+                open(template_path("templates/query_utils/versioning_query_extensions_save_mem.txt"), "r").read()
         else:
             raise NoVersioningMode("Either query performance or memory saving mode must be set.")
 
@@ -442,7 +429,7 @@ class QueryData:
         normalized_query_formatted = query.replace('\n', '\n \t')
 
         if citation_timestamp is not None:
-            timestamp = _citation_timestamp_format(citation_timestamp)
+            timestamp = citation_timestamp_format(citation_timestamp)
         else:
             timestamp = self.citation_timestamp
 
@@ -498,25 +485,13 @@ class QueryData:
         if citation_timestamp is None:
             citation_timestamp = self.citation_timestamp
         else:
-            citation_timestamp = _citation_timestamp_format(citation_timestamp)
+            citation_timestamp = citation_timestamp_format(citation_timestamp)
 
         if None not in (query_checksum, citation_timestamp):
             query_pid = query_checksum + citation_timestamp
         else:
             query_pid = "No query PID could be generated because of missing parameters."
         return query_pid
-
-
-class NoUniqueSortIndexError(Exception):
-    pass
-
-
-class MultipleSortIndexesError(Exception):
-    pass
-
-
-class NoDataSetError(Exception):
-    pass
 
 
 class RDFDataSetData:

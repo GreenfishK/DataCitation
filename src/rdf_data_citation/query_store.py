@@ -1,6 +1,7 @@
 from src.rdf_data_citation.citation_utils import QueryData, RDFDataSetData, CitationData
 from src.rdf_data_citation.citation_utils import read_json
-from src.rdf_data_citation._helper import _template_path
+from src.rdf_data_citation._helper import template_path
+from src.rdf_data_citation.exceptions import QueryExistsError
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd
@@ -8,10 +9,6 @@ import pandas as pd
 
 def escape_apostrophe(string: str) -> str:
     return string.replace("'", "''")
-
-
-class QueryExistsError(Exception):
-    pass
 
 
 class QueryStore:
@@ -22,7 +19,7 @@ class QueryStore:
         Tables: query_hub, query_citation
         """
 
-        self.path_to_persistence = _template_path("persistence")
+        self.path_to_persistence = template_path("persistence")
         db_path = self.path_to_persistence + "/query_store.db"
         self.engine = sql.create_engine("sqlite:///{0}".format(db_path))
 

@@ -1,11 +1,11 @@
-from src.rdf_data_citation._helper import _template_path, config
+from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format, prefixes_to_sparql
+from src.rdf_data_citation.exceptions import ReservedPrefixError, NoVersioningMode
 from urllib.error import URLError
 import re
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
 from datetime import datetime
-from enum import Enum
 
 
 def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
@@ -45,21 +45,6 @@ def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
     return df
 
 
-def prefixes_to_sparql(prefixes: dict) -> str:
-    """
-    Converts a dict of prefixes to a string with SPARQL syntax for prefixes
-    :param prefixes:
-    :return: SPARQL prefixes as string
-    """
-    if prefixes is None:
-        return ""
-
-    sparql_prefixes = ""
-    for key, value in prefixes.items():
-        sparql_prefixes += "PREFIX {0}: <{1}> \n".format(key, value)
-    return sparql_prefixes
-
-
 def citation_prefixes(prefixes: dict or str) -> str:
     """
     Extends the given prefixes by citing: <http://ontology.ontotext.com/citing/>
@@ -95,8 +80,7 @@ def citation_prefixes(prefixes: dict or str) -> str:
 
 def split_prefixes_query(query: str = None) -> list:
     """
-    Separates the prefixes from the actual query and stores either information in self.query and
-    self.sparql_prefixes respectively.
+    Separates the prefixes from the actual query.
 
     :param query: A query string with or without prefixes
     :return: A list with the prefixes as the first element and the actual query string as the second element.
@@ -108,23 +92,6 @@ def split_prefixes_query(query: str = None) -> list:
     query_without_prefixes = re.sub(pattern, "", query, re.MULTILINE)
 
     return [prefixes, query_without_prefixes]
-
-
-def _citation_timestamp_format(citation_timestamp: datetime) -> str:
-    """
-
-    :param citation_timestamp: must be provided including the timezone
-    :return:
-    """
-    return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
-
-
-class ReservedPrefixError(Exception):
-    pass
-
-
-class NoVersioningMode(Exception):
-    pass
 
 
 class TripleStoreEngine:
@@ -158,7 +125,7 @@ class TripleStoreEngine:
         self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_post = SPARQLWrapper(update_endpoint)
         self.credentials = credentials
-        self._template_location = _template_path("templates/rdf_star_store")
+        self._template_location = template_path("templates/rdf_star_store")
         self.sparql_post.setHTTPAuth(DIGEST)
         self.sparql_post.setMethod(POST)
         self.sparql_get.setHTTPAuth(DIGEST)
@@ -239,7 +206,7 @@ class TripleStoreEngine:
 
         if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
             versioning_mode = config().get("VERSIONING", "versioning_mode")
-            version_timestamp = _citation_timestamp_format(initial_timestamp)
+            version_timestamp = citation_timestamp_format(initial_timestamp)
 
             if versioning_mode == "SAVE_MEM":
                 template = open(self._template_location + "/version_all_rows_save_mem.txt", "r").read()

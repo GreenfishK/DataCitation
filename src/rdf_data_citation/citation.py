@@ -2,18 +2,11 @@ from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
+from src.rdf_data_citation._helper import citation_timestamp_format
 from copy import copy
 import datetime
 from datetime import datetime, timedelta, timezone
 import tzlocal
-
-
-class SortVariablesNotInSelectError(Exception):
-    pass
-
-
-class MissingSortVariables(Exception):
-    pass
 
 
 class Citation:
@@ -78,7 +71,6 @@ class Citation:
         """
 
         print("Citing... ")
-        sparqlapi = self.sparqlapi
         query_store = QueryStore()
         query_to_cite = QueryData(select_statement)
 
@@ -86,14 +78,12 @@ class Citation:
         current_datetime = datetime.now()
         timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
         execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
-        execution_timestamp = execution_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                              + execution_datetime.strftime("%z")[3:5]
+        execution_timestamp = citation_timestamp_format(execution_datetime)
         self.execution_timestamp = execution_timestamp
         if not citation_timestamp:
             query_to_cite.citation_timestamp = execution_timestamp
         else:
-            user_citation_timestamp = citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" \
-                                      + citation_timestamp.strftime("%z")[3:5]
+            user_citation_timestamp = citation_timestamp_format(citation_timestamp)
             query_to_cite.citation_timestamp = user_citation_timestamp
 
         # Compute query checksum
@@ -109,7 +99,7 @@ class Citation:
         timestamped_query = query_to_cite.timestamp_query()
 
         # Execute query
-        result_set = sparqlapi.get_data(timestamped_query)
+        result_set = self.sparqlapi.get_data(timestamped_query)
 
         # Validate order by clause
         order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]
