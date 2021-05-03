@@ -1,5 +1,5 @@
-from src.rdf_data_citation.citation_utils import QueryData, RDFDataSetData, CitationData
-from src.rdf_data_citation.citation_utils import read_json
+from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, CitationData
+from src.rdf_data_citation.citation_utils import json_to_cd
 from src.rdf_data_citation._helper import template_path
 from src.rdf_data_citation.exceptions import QueryExistsError
 import sqlalchemy as sql
@@ -42,7 +42,7 @@ class QueryStore:
         """
         pass
 
-    def lookup(self, query_checksum: str) -> [QueryData, RDFDataSetData, CitationData]:
+    def lookup(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, CitationData]:
         """
         Checks whether the query exists in the database. If yes, query data, dataset metadata and citation metadata
         (including provenance data and the citation snippet) are returned.
@@ -61,20 +61,20 @@ class QueryStore:
 
                 df.columns = result.keys()
 
-                query_data = QueryData()
+                query_data = QueryUtils()
                 query_data.checksum = df.query_checksum.loc[0]
                 query_data.pid = df.query_pid.loc[0]
                 query_data.normalized_query_algebra = df.normal_query.loc[0]
                 query_data.sparql_prefixes = df.query_prefixes.loc[0]
                 query_data.citation_timestamp = df.citation_timestamp.loc[0]
 
-                result_set_data = RDFDataSetData()
+                result_set_data = RDFDataSetUtils()
                 result_set_data.dataset = df
                 result_set_data.checksum = df.result_set_checksum.loc[0]
                 result_set_data.description = df.result_set_description.loc[0]
                 result_set_data.sort_order = df.result_set_sort_order.loc[0]
 
-                citation_data = read_json(df.citation_data.loc[0])
+                citation_data = json_to_cd(df.citation_data.loc[0])
                 citation_data.citation_snippet = df.citation_snippet.loc[0]
 
                 print("New query checksum: {0}; Existing query checksum: {1}".format(
@@ -84,7 +84,7 @@ class QueryStore:
             except Exception as e:
                 print(e)
 
-    def store(self, query_data: QueryData, rs_data: RDFDataSetData, citation_data: CitationData,  yn_new_query=True):
+    def store(self, query_data: QueryUtils, rs_data: RDFDataSetUtils, citation_data: CitationData, yn_new_query=True):
         """
 
         common metadata:

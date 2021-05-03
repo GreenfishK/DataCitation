@@ -1,5 +1,5 @@
 from tests.test_base import Test, TestExecution, format_text
-from src.rdf_data_citation.citation_utils import QueryData
+from src.rdf_data_citation.citation_utils import QueryUtils
 
 
 class TestNormalization(TestExecution):
@@ -22,9 +22,9 @@ class TestNormalization(TestExecution):
             test_name = test_name[2:]
 
         query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
-        self.query_data_alt1 = QueryData(query=query_alt1)
+        self.query_data_alt1 = QueryUtils(query=query_alt1)
         query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
-        self.query_data_alt2 = QueryData(query=query_alt2)
+        self.query_data_alt2 = QueryUtils(query=query_alt2)
 
     def test_normalization__optional_where_clause(self):
         test = Test(test_number=1,

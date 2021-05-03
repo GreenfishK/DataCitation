@@ -1,6 +1,6 @@
 from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
-from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetData, QueryData, generate_citation_snippet
+from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetUtils, QueryUtils, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
 from src.rdf_data_citation._helper import citation_timestamp_format
 from copy import copy
@@ -24,8 +24,8 @@ class Citation:
         self.yn_result_set_changed = False
         self.yn_unique_sort_index = False
         self.execution_timestamp = None
-        self.query_data = QueryData()
-        self.result_set_data = RDFDataSetData()
+        self.query_utils = QueryUtils()
+        self.result_set_utils = RDFDataSetUtils()
         self.citation_metadata = CitationData()
 
     def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str = None,
@@ -72,7 +72,7 @@ class Citation:
 
         print("Citing... ")
         query_store = QueryStore()
-        query_to_cite = QueryData(select_statement)
+        query_to_cite = QueryUtils(select_statement)
 
         # Assign citation timestamp to query object
         current_datetime = datetime.now()
@@ -121,7 +121,7 @@ class Citation:
             self.yn_unique_sort_index = True
 
         # Sort result set
-        rdf_ds = RDFDataSetData(dataset=result_set)
+        rdf_ds = RDFDataSetUtils(dataset=result_set)
         # # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
         rdf_ds.description = rdf_ds.describe(result_set_description)
@@ -136,8 +136,8 @@ class Citation:
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
             self.yn_query_exists = True
             if rdf_ds.checksum == existing_query_rdf_ds_data.checksum:
-                self.query_data = existing_query_data
-                self.result_set_data = existing_query_rdf_ds_data
+                self.query_utils = existing_query_data
+                self.result_set_utils = existing_query_rdf_ds_data
                 self.citation_metadata = existing_query_citation_data
                 print("Query already exists and the result set has not changed since the last execution. "
                       "The existing citation snippet will be returned.")
@@ -146,8 +146,8 @@ class Citation:
                 self.yn_result_set_changed = True
 
         # Store new query data
-        self.query_data = query_to_cite
-        self.result_set_data = rdf_ds
+        self.query_utils = query_to_cite
+        self.result_set_utils = rdf_ds
         # TODO: assign identifier in citation_metadata.identifier
         citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_metadata)
         self.citation_metadata = copy(citation_metadata)

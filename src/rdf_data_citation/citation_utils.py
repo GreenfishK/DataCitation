@@ -1,5 +1,5 @@
-from src.rdf_data_citation.rdf_star import citation_prefixes
 from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
+from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
     MultipleSortIndexesError, NoUniqueSortIndexError
 from rdflib.plugins.sparql.parserutils import CompValue
@@ -17,45 +17,13 @@ import numpy as np
 import re
 
 
-def _query_triples(query, sparql_prefixes: str = None) -> list:
+def _query_algebra(query: str, sparql_prefixes: str) -> algebra:
     """
-    Takes a query and transforms it into a result set with three columns: s, p, o. This result set includes all
-    stored triples connected to the result set of the input query.
-    :return: transformed result set with columns: s, p, o
+    Takes query and prefixes as strings and generates the query tree.
+    :param query:
+    :param sparql_prefixes: A query tree
+    :return:
     """
-
-    template = open(template_path("templates/query_utils/prefixes_query.txt"), "r").read()
-
-    if sparql_prefixes:
-        statement = template.format(sparql_prefixes, query)
-    else:
-        statement = template.format("", query)
-
-    q_desc = parser.parseQuery(statement)
-    q_algebra = algebra.translateQuery(q_desc).algebra
-    triples = nested_lookup('triples', q_algebra)
-
-    n3_triples = []
-    for triple_list in triples:
-        for triple in triple_list:
-            if isinstance(triple[1], SequencePath):
-                sequences = triple[1].args
-                for i, ref in enumerate(sequences, start=1):
-                    if i == 1:
-                        t = triple[0].n3() + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
-                    elif i == len(sequences):
-                        t = "?dummy{0}".format(len(sequences) - 1) + " " + ref.n3() + " " + triple[2].n3()
-                    else:
-                        t = "?dummy{0}".format(str(i-1)) + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
-                    n3_triples.append(t)
-            else:
-                t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-                n3_triples.append(t)
-
-    return sorted(n3_triples)
-
-
-def _query_algebra(query: str, sparql_prefixes: str):
     if sparql_prefixes:
         q_desc = parser.parseQuery(sparql_prefixes + " " + query)
     else:
@@ -64,7 +32,7 @@ def _query_algebra(query: str, sparql_prefixes: str):
     return query_tree
 
 
-def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
+def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') -> list:
     """
     The query must be a valid query including prefixes.
     The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
@@ -75,6 +43,8 @@ def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
     :param variable_set_type: can be 'all', 'select' or 'order_by'
     :return: a list of variables used in the query
     """
+
+    query_algebra = _query_algebra(query, prefixes)
 
     variables = []
     other_variables = []
@@ -121,7 +91,7 @@ def _query_variables(query_algebra, variable_set_type: str = 'all') -> list:
     return variables
 
 
-class QueryData:
+class QueryUtils:
 
     def __init__(self, query: str = None, citation_timestamp: datetime = None):
         """
@@ -133,10 +103,10 @@ class QueryData:
         """
 
         if query is not None:
-            self.sparql_prefixes, self.query = self.split_prefixes_query(query)
-            self.variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes))
-            self.select_variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes), 'select')
-            self.order_by_variables = _query_variables(_query_algebra(self.query, self.sparql_prefixes), 'order_by')
+            self.sparql_prefixes, self.query = split_prefixes_query(query)
+            self.variables = _query_variables(self.query, self.sparql_prefixes)
+            self.select_variables = _query_variables(self.query, self.sparql_prefixes, 'select')
+            self.order_by_variables = _query_variables(self.query, self.sparql_prefixes, 'order_by')
             self.normalized_query_algebra = self.normalize_query_tree()
             self.checksum = self.compute_checksum()
 
@@ -152,28 +122,6 @@ class QueryData:
             self.variables = None
             self.normalized_query_algebra = None
             self.checksum = None
-
-    def split_prefixes_query(self, query: str = None) -> list:
-        """
-        Separates the prefixes from the actual query and stores either information in self.query and
-        self.sparql_prefixes respectively.
-
-        :param query: A query string with or without prefixes
-        :return: A list with the prefixes as the first element and the actual query string as the second element.
-        """
-        pattern = "PREFIX\\s*[a-zA-Z0-9]*:\\s*<.*>\\s*"
-
-        if not query:
-            query = self.query
-        prefixes_list = re.findall(pattern, query, re.MULTILINE)
-        prefixes = ''.join(prefixes_list)
-        query_without_prefixes = re.sub(pattern, "", query, re.MULTILINE)
-
-        if not query:
-            self.sparql_prefixes = prefixes
-            self.query = query_without_prefixes
-
-        return [prefixes, query_without_prefixes]
 
     def normalize_query_tree(self, query: str = None):
         """
@@ -193,7 +141,7 @@ class QueryData:
             else:
                 return "Query could not be normalized because the query string was not set."
         else:
-            prefixes, query = self.split_prefixes_query(query)
+            prefixes, query = split_prefixes_query(query)
 
         # Common SPARQL regex patterns
         re_variable = "[?][a-zA-Z0-9-_]*"
@@ -319,7 +267,7 @@ class QueryData:
         # Replace variables with letters
         int_norm_var = 'a'
         variables_mapping = {}
-        extended_variables = _query_variables(q_algebra)
+        extended_variables = _query_variables(query, prefixes)
 
         for i, v in enumerate(extended_variables):
             next_norm_var = chr(ord(int_norm_var) + i)
@@ -395,7 +343,7 @@ class QueryData:
             else:
                 return "Query could not be normalized because the query string was not set."
         else:
-            prefixes, query = self.split_prefixes_query(query)
+            prefixes, query = split_prefixes_query(query)
 
         final_prefixes = citation_prefixes(prefixes)
 
@@ -403,11 +351,48 @@ class QueryData:
         if self.variables is not None:
             select_variables = self.select_variables
         else:
-            select_variables = _query_variables(_query_algebra(query, final_prefixes), variable_set_type='select')
+            select_variables = _query_variables(query, final_prefixes, variable_set_type='select')
         variables_string = " ".join(v.n3() for v in select_variables)
 
         # QueryData extensions for versioning_modes injection
-        triples = _query_triples(query, final_prefixes)
+        def query_triples(query, sparql_prefixes: str = None) -> list:
+            """
+            Takes a query and extracts the triple statements from it that are found in the query body.
+
+            :return: A list of triple statements.
+            """
+
+            template = open(template_path("templates/query_utils/prefixes_query.txt"), "r").read()
+
+            if sparql_prefixes:
+                statement = template.format(sparql_prefixes, query)
+            else:
+                statement = template.format("", query)
+
+            q_desc = parser.parseQuery(statement)
+            q_algebra = algebra.translateQuery(q_desc).algebra
+            triples = nested_lookup('triples', q_algebra)
+
+            n3_triples = []
+            for triple_list in triples:
+                for triple in triple_list:
+                    if isinstance(triple[1], SequencePath):
+                        sequences = triple[1].args
+                        for i, ref in enumerate(sequences, start=1):
+                            if i == 1:
+                                t = triple[0].n3() + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
+                            elif i == len(sequences):
+                                t = "?dummy{0}".format(len(sequences) - 1) + " " + ref.n3() + " " + triple[2].n3()
+                            else:
+                                t = "?dummy{0}".format(str(i - 1)) + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
+                            n3_triples.append(t)
+                    else:
+                        t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+                        n3_triples.append(t)
+
+            return sorted(n3_triples)
+
+        triples = query_triples(query, final_prefixes)
 
         if versioning_mode == "Q_PERF":
             versioning_query_extensions_template = \
@@ -494,7 +479,7 @@ class QueryData:
         return query_pid
 
 
-class RDFDataSetData:
+class RDFDataSetUtils:
 
     def __init__(self, dataset: pd.DataFrame = None, description: str = None,
                  unique_sort_index: tuple = None):
@@ -740,14 +725,14 @@ class CitationData:
         return citation_data_json
 
 
-def read_json(json_string) -> CitationData:
+def json_to_cd(citation_data_json: str) -> CitationData:
     """
     Reads the citation metadata provided as a json strings and creates the CitationData object.
-    :param json_string:
+    :param citation_data_json:
     :return: the citation metadata, but without the citation snippet
     """
 
-    citation_data_dict = json.loads(json_string)
+    citation_data_dict = json.loads(citation_data_json)
 
     citation_data = CitationData(citation_data_dict['identifier'], citation_data_dict['creator'],
                                  citation_data_dict['title'], citation_data_dict['publisher'],

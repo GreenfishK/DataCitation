@@ -1,5 +1,7 @@
+import logging
 import os
 import configparser
+import sys
 from datetime import datetime
 
 
@@ -9,9 +11,14 @@ def config() -> configparser.ConfigParser:
 
     :return:
     """
-    config = configparser.ConfigParser()
-    config.read('../../config.ini')
-    return config
+    logging.getLogger().setLevel(10)
+
+    cnf = configparser.ConfigParser()
+    rdf_data_citation_module_path = os.path.dirname(sys.modules[config.__module__].__file__)
+    config_path = rdf_data_citation_module_path + "/../../config.ini"
+    cnf.read(config_path)
+
+    return cnf
 
 
 def template_path(template_rel_path: str):
@@ -35,31 +42,3 @@ def citation_timestamp_format(citation_timestamp: datetime) -> str:
     """
     return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
 
-
-def prefixes_to_sparql(prefixes: dict) -> str:
-    """
-    Converts a dict of prefixes to a string with SPARQL syntax for prefixes.
-    :param prefixes:
-    :return: SPARQL prefixes as string
-    """
-    if prefixes is None:
-        return ""
-
-    sparql_prefixes = ""
-    for key, value in prefixes.items():
-        sparql_prefixes += "PREFIX {0}: <{1}> \n".format(key, value)
-    return sparql_prefixes
-
-
-def attach_prefixes(query, prefixes: dict) -> str:
-    """
-    Attaches prefixes in SPARQL syntax to the SPARQL query. The passed query should therefore have no prefixes.
-
-    :param query:
-    :param prefixes:
-    :return:
-    """
-    template = open(template_path("templates/query_utils/prefixes_query_wrapper.txt"), "r").read()
-    sparql_prefixes = prefixes_to_sparql(prefixes)
-    query_with_prefixes = template.format(sparql_prefixes, query)
-    return query_with_prefixes

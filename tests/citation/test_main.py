@@ -1,7 +1,7 @@
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct
-from src.rdf_data_citation.citation_utils import CitationData, QueryData, RDFDataSetData, generate_citation_snippet
+from src.rdf_data_citation.citation_utils import CitationData, QueryUtils, RDFDataSetUtils, generate_citation_snippet
 from src.rdf_data_citation.query_store import QueryStore
 from datetime import datetime, timezone, timedelta
 import logging
@@ -66,7 +66,7 @@ class TestCitation(TestExecution):
 
         # Clean up
         query_store = QueryStore()
-        query_store._remove(self.citation.query_data.checksum)
+        query_store._remove(self.citation.query_utils.checksum)
 
     def after_all_tests(self):
         """
@@ -85,11 +85,11 @@ class TestCitation(TestExecution):
         citation.cite(select_statement=self.select_statement,
                       citation_metadata=self.citation_metadata,
                       citation_timestamp=self.citation_timestamp)
-        actual_result = citation.result_set_data.description + "\n" + citation.citation_metadata.citation_snippet
+        actual_result = citation.result_set_utils.description + "\n" + citation.citation_metadata.citation_snippet
         self.citation = citation
 
         # Expected results
-        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
         citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
                                                      citation_data=self.citation_metadata)
         expected_result = "This is an empty dataset. We cannot infer any description from it.\n" + citation_snippet
@@ -110,16 +110,16 @@ class TestCitation(TestExecution):
         citation.cite(select_statement=self.select_statement,
                       citation_metadata=self.citation_metadata,
                       citation_timestamp=self.citation_timestamp)
-        actual_result = citation.result_set_data.description + "\n" + citation.citation_metadata.citation_snippet
+        actual_result = citation.result_set_utils.description + "\n" + citation.citation_metadata.citation_snippet
         self.citation = citation
 
         # Expected results
-        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
         citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
                                                      citation_data=self.citation_metadata)
         timestamped_query = query_utils.timestamp_query()
         result_set = self.rdf_engine.get_data(timestamped_query)
-        dataset_utils = RDFDataSetData(dataset=result_set)
+        dataset_utils = RDFDataSetUtils(dataset=result_set)
         dataset_description = dataset_utils.describe()
         expected_result = dataset_description + "\n" + citation_snippet
 
@@ -170,11 +170,11 @@ class TestCitation(TestExecution):
 
         # Expected results
         # Citation1
-        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
         citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
                                                       citation_data=self.citation_metadata)
         # Citation2
-        query_utils = QueryData(query=self.select_statement, citation_timestamp=citation_timestamp2)
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
         citation_snippet2 = generate_citation_snippet(query_pid=query_utils.pid,
                                                       citation_data=self.citation_metadata)
 
@@ -218,7 +218,7 @@ class TestCitation(TestExecution):
 
         # Expected results
         # Citation1
-        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
         citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
                                                       citation_data=self.citation_metadata)
 
@@ -260,7 +260,7 @@ class TestCitation(TestExecution):
 
         # Expected results
         # Citation1
-        query_utils = QueryData(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
         citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
                                                       citation_data=self.citation_metadata)
 
