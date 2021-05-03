@@ -1,7 +1,8 @@
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct
-from src.rdf_data_citation.citation_utils import CitationData, QueryUtils, RDFDataSetUtils, generate_citation_snippet
+from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet
+from src.rdf_data_citation.citation import MetaData
 from src.rdf_data_citation.query_store import QueryStore
 from datetime import datetime, timezone, timedelta
 import logging
@@ -27,13 +28,13 @@ class TestCitation(TestExecution):
         """
 
         print("Executing before_tests ...")
-        self.citation_metadata = CitationData(identifier="https://doi.org/pid/of/query",
-                                              creator="Filip Kovacevic",
-                                              title="Obama occurrences",
-                                              publisher="Filip Kovacevic",
-                                              publication_year="2021",
-                                              resource_type="Dataset/RDF data",
-                                              other_citation_data={'Contributor': 'Tomasz Miksa'})
+        self.citation_metadata = MetaData(identifier="https://doi.org/pid/of/query",
+                                          creator="Filip Kovacevic",
+                                          title="Obama occurrences",
+                                          publisher="Filip Kovacevic",
+                                          publication_year="2021",
+                                          resource_type="Dataset/RDF data",
+                                          other_citation_data={'Contributor': 'Tomasz Miksa'})
 
         self.citation = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         vie_tz = timezone(timedelta(hours=2))

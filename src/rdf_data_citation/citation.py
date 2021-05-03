@@ -1,12 +1,63 @@
 from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
-from src.rdf_data_citation.citation_utils import CitationData, RDFDataSetUtils, QueryUtils, generate_citation_snippet
+from src.rdf_data_citation.citation_utils import RDFDataSetUtils, QueryUtils, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
 from src.rdf_data_citation._helper import citation_timestamp_format
+from src.rdf_data_citation.exceptions import MissingSortVariables, SortVariablesNotInSelectError
 from copy import copy
 import datetime
+import json
 from datetime import datetime, timedelta, timezone
 import tzlocal
+
+
+class MetaData:
+
+    def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
+                 publication_year: str = None, resource_type: str = None,
+                 other_citation_data: dict = None):
+        """
+        Initialize the mandatory fields from DataCite's metadata model version 4.3
+        """
+        # TODO: Data operator defines which metadata to store. The user is able to change the description
+        #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
+
+        # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
+        self.identifier = identifier
+        self.creator = creator
+        self.title = title
+        self.publisher = publisher
+        self.publication_year = publication_year
+        self.resource_type = resource_type
+
+        # Other user-defined provenance data and other metadata
+        self.other_citation_data = other_citation_data
+
+        self.citation_snippet = None
+
+    def to_json(self):
+        meta_data = vars(self).copy()
+        del meta_data['citation_snippet']
+        meta_data_json = json.dumps(meta_data, indent=4)
+
+        return meta_data_json
+
+    def set_metadata(self, meta_data_json: str):
+        """
+        Reads the citation metadata provided as a json strings and creates the CitationData object.
+        :param meta_data_json:
+        :return: the citation metadata, but without the citation snippet
+        """
+
+        meta_data_dict = json.loads(meta_data_json)
+
+        self.identifier = meta_data_dict['identifier']
+        self.creator = meta_data_dict['creator']
+        self.title = meta_data_dict['title']
+        self.publisher = meta_data_dict['publisher']
+        self.publication_year = meta_data_dict['publication_year']
+        self.resource_type = meta_data_dict['resource_type']
+        self.other_citation_data = meta_data_dict['other_citation_data']
 
 
 class Citation:
@@ -26,9 +77,9 @@ class Citation:
         self.execution_timestamp = None
         self.query_utils = QueryUtils()
         self.result_set_utils = RDFDataSetUtils()
-        self.citation_metadata = CitationData()
+        self.citation_metadata = MetaData()
 
-    def cite(self, select_statement: str, citation_metadata: CitationData, result_set_description: str = None,
+    def cite(self, select_statement: str, citation_metadata: MetaData, result_set_description: str = None,
              citation_timestamp: datetime = None):
         """
         Persistently Identify Specific Data Sets
@@ -162,3 +213,5 @@ class Citation:
         return self
 
         # TODO: embed query timestamp (max valid_from of dataset). No idea what it means
+
+

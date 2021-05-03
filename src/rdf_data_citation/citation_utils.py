@@ -1,4 +1,5 @@
 from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
+from src.rdf_data_citation.citation import MetaData
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
     MultipleSortIndexesError, NoUniqueSortIndexError
@@ -125,6 +126,7 @@ class QueryUtils:
 
     def normalize_query_tree(self, query: str = None):
         """
+        R4 - Query Uniqueness
         Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
         query algebra as different ways of writing a query usually boil down to one algebra. For cases where
         normalization is still needed, the query algebra is be updated. First, the query is wrapped with a select
@@ -305,6 +307,7 @@ class QueryUtils:
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None,
                         sort_variables: tuple = None, colored: bool = False):
         """
+        R7 - Query timestamping
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
         the query with a code snippet that ensures that a snapshot of the data as of citation
         time gets returned when the query is executed. Optionally, but recommended, the order by clause
@@ -460,6 +463,7 @@ class QueryUtils:
 
     def generate_query_pid(self, query_checksum: str = None, citation_timestamp: datetime = None):
         """
+        R8 - Query PID (The handling and fulfillment of this recommendation is done in citation.cite)
         Generates a query PID by concatenating the provided query checksum and the citation timestamp from the
         QueryData object.
 
@@ -537,6 +541,7 @@ class RDFDataSetUtils:
 
     def compute_checksum(self, column_order_dependent: bool = False):
         """
+        R6 - Result set verification
         A column order dependent or independent computation of the dataset checksum.
 
         Algorithm:
@@ -663,6 +668,7 @@ class RDFDataSetUtils:
 
     def sort(self, sort_index: tuple = None):
         """
+        R5 - Stable Sorting
         Sorts by the index that is derived from create_sort_index. As this method can return more than one possible
         unique indexes, the first one will be taken.
 
@@ -694,56 +700,9 @@ class RDFDataSetUtils:
         return sorted_df
 
 
-class CitationData:
-
-    def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
-                 publication_year: str = None, resource_type: str = None,
-                 other_citation_data: dict = None):
-        """
-        Initialize the mandatory fields from DataCite's metadata model version 4.3
-        """
-        # TODO: Data operator defines which metadata to store. The user is able to change the description
-        #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
-
-        # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
-        self.identifier = identifier
-        self.creator = creator
-        self.title = title
-        self.publisher = publisher
-        self.publication_year = publication_year
-        self.resource_type = resource_type
-
-        # Other user-defined provenance data and other metadata
-        self.other_citation_data = other_citation_data
-
-        self.citation_snippet = None
-
-    def to_json(self):
-        citation_data = vars(self).copy()
-        del citation_data['citation_snippet']
-        citation_data_json = json.dumps(citation_data, indent=4)
-        return citation_data_json
-
-
-def json_to_cd(citation_data_json: str) -> CitationData:
+def generate_citation_snippet(query_pid: str, citation_data: MetaData) -> str:
     """
-    Reads the citation metadata provided as a json strings and creates the CitationData object.
-    :param citation_data_json:
-    :return: the citation metadata, but without the citation snippet
-    """
-
-    citation_data_dict = json.loads(citation_data_json)
-
-    citation_data = CitationData(citation_data_dict['identifier'], citation_data_dict['creator'],
-                                 citation_data_dict['title'], citation_data_dict['publisher'],
-                                 citation_data_dict['publication_year'], citation_data_dict['resource_type'],
-                                 citation_data_dict['other_citation_data'])
-
-    return citation_data
-
-
-def generate_citation_snippet(query_pid: str, citation_data: CitationData) -> str:
-    """
+    R10 - Automated citation text
     Generates the citation snippet out of DataCite's mandatory attributes within its metadata schema.
     :param query_pid:
     :param citation_data:

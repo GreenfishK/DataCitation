@@ -1,10 +1,11 @@
-from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, CitationData
-from src.rdf_data_citation.citation_utils import json_to_cd
+from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils
+from src.rdf_data_citation.citation import MetaData
 from src.rdf_data_citation._helper import template_path
 from src.rdf_data_citation.exceptions import QueryExistsError
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd
+import json
 
 
 class QueryStore:
@@ -42,7 +43,7 @@ class QueryStore:
         """
         pass
 
-    def lookup(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, CitationData]:
+    def lookup(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
         Checks whether the query exists in the database. If yes, query data, dataset metadata and citation metadata
         (including provenance data and the citation snippet) are returned.
@@ -74,19 +75,20 @@ class QueryStore:
                 result_set_data.description = df.result_set_description.loc[0]
                 result_set_data.sort_order = df.result_set_sort_order.loc[0]
 
-                citation_data = json_to_cd(df.citation_data.loc[0])
-                citation_data.citation_snippet = df.citation_snippet.loc[0]
+                meta_data = MetaData()
+                meta_data.set_metadata(df.citation_data.loc[0])
+                meta_data.citation_snippet = df.citation_snippet.loc[0]
 
                 print("New query checksum: {0}; Existing query checksum: {1}".format(
                     query_checksum, df.query_checksum.loc[0]))
 
-                return [query_data, result_set_data, citation_data]
+                return [query_data, result_set_data, meta_data]
             except Exception as e:
                 print(e)
 
-    def store(self, query_data: QueryUtils, rs_data: RDFDataSetUtils, citation_data: CitationData, yn_new_query=True):
+    def store(self, query_data: QueryUtils, rs_data: RDFDataSetUtils, meta_data: MetaData, yn_new_query=True):
         """
-
+        R9 - Store Query
         common metadata:
         author*
         publication date*
@@ -104,7 +106,7 @@ class QueryStore:
 
         :param query_data:
         :param rs_data:
-        :param citation_data: A set of mandatory attributes from DataCite's Metadata Schema and additional
+        :param meta_data: A set of mandatory attributes from DataCite's Metadata Schema and additional
         attributes that  might be provided
         :param yn_new_query: True, if the query is not found by its checksum in the query table. Otherwise false.
         :return:
@@ -136,8 +138,8 @@ class QueryStore:
                                    result_set_checksum=rs_data.checksum,
                                    result_set_description=rs_data.description,
                                    result_set_sort_order=", ".join(rs_data.sort_order),
-                                   citation_data=citation_data.to_json(),
-                                   citation_snippet=citation_data.citation_snippet,
+                                   citation_data=meta_data.to_json(),
+                                   citation_snippet=meta_data.citation_snippet,
                                    citation_timestamp=query_data.citation_timestamp)
                 if not yn_new_query:
                     print("A new citation has been added to the existing query with checksum {0} ."
@@ -152,24 +154,3 @@ class QueryStore:
                 connection.execute(update_statement, query_checksum=query_data.checksum)
             except Exception as e:
                 print("Could not update the last citation PID in query_hub.last_citation_pid")
-
-    def citation_snippet(self, query_pid: str):
-        """
-
-        :param query_pid:
-        :return:
-        """
-
-        # TODO: maybe obsolete and remove this entire function? The citation snippet gets already retrieved
-        #  in the lookup function
-
-        select_statement = open("{0}/citation_snippet_select.sql".format(self.path_to_persistence), "r").read()
-        with self.engine.connect() as connection:
-            try:
-                result = connection.execute(select_statement, query_pid=query_pid)
-                df = pd.DataFrame(result.fetchall())
-                df.columns = result.keys()
-                snippet = df.citation_snippet.loc[0]
-            except Exception as e:
-                print(e)
-        return snippet
