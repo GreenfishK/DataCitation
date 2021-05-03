@@ -1,63 +1,13 @@
 from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
-from src.rdf_data_citation.citation_utils import RDFDataSetUtils, QueryUtils, generate_citation_snippet
+from src.rdf_data_citation.citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
 from src.rdf_data_citation._helper import citation_timestamp_format
 from src.rdf_data_citation.exceptions import MissingSortVariables, SortVariablesNotInSelectError
 from copy import copy
 import datetime
-import json
 from datetime import datetime, timedelta, timezone
 import tzlocal
-
-
-class MetaData:
-
-    def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
-                 publication_year: str = None, resource_type: str = None,
-                 other_citation_data: dict = None):
-        """
-        Initialize the mandatory fields from DataCite's metadata model version 4.3
-        """
-        # TODO: Data operator defines which metadata to store. The user is able to change the description
-        #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
-
-        # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
-        self.identifier = identifier
-        self.creator = creator
-        self.title = title
-        self.publisher = publisher
-        self.publication_year = publication_year
-        self.resource_type = resource_type
-
-        # Other user-defined provenance data and other metadata
-        self.other_citation_data = other_citation_data
-
-        self.citation_snippet = None
-
-    def to_json(self):
-        meta_data = vars(self).copy()
-        del meta_data['citation_snippet']
-        meta_data_json = json.dumps(meta_data, indent=4)
-
-        return meta_data_json
-
-    def set_metadata(self, meta_data_json: str):
-        """
-        Reads the citation metadata provided as a json strings and creates the CitationData object.
-        :param meta_data_json:
-        :return: the citation metadata, but without the citation snippet
-        """
-
-        meta_data_dict = json.loads(meta_data_json)
-
-        self.identifier = meta_data_dict['identifier']
-        self.creator = meta_data_dict['creator']
-        self.title = meta_data_dict['title']
-        self.publisher = meta_data_dict['publisher']
-        self.publication_year = meta_data_dict['publication_year']
-        self.resource_type = meta_data_dict['resource_type']
-        self.other_citation_data = meta_data_dict['other_citation_data']
 
 
 class Citation:
@@ -123,7 +73,6 @@ class Citation:
 
         print("Citing... ")
         query_store = QueryStore()
-        query_to_cite = QueryUtils(select_statement)
 
         # Assign citation timestamp to query object
         current_datetime = datetime.now()
@@ -131,26 +80,29 @@ class Citation:
         execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
         execution_timestamp = citation_timestamp_format(execution_datetime)
         self.execution_timestamp = execution_timestamp
+
         if not citation_timestamp:
-            query_to_cite.citation_timestamp = execution_timestamp
+            query_to_cite = QueryUtils(select_statement)
+            #query_to_cite.citation_timestamp = execution_timestamp
         else:
-            user_citation_timestamp = citation_timestamp_format(citation_timestamp)
-            query_to_cite.citation_timestamp = user_citation_timestamp
+            query_to_cite = QueryUtils(select_statement, citation_timestamp)
+            #user_citation_timestamp = citation_timestamp_format(citation_timestamp)
+            #query_to_cite.citation_timestamp = user_citation_timestamp
 
         # Compute query checksum
-        query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
+        #query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
 
         # Generate query PID
-        query_to_cite.pid = query_to_cite.generate_query_pid()
+        #query_to_cite.pid = query_to_cite.generate_query_pid()
 
         # Create query tree and normalize query tree
-        query_to_cite.normalized_query_algebra = query_to_cite.normalize_query_tree()
+        #query_to_cite.normalized_query_algebra = query_to_cite.normalize_query_tree()
 
         # Extend query with timestamp
-        timestamped_query = query_to_cite.timestamp_query()
+        # timestamped_query = query_to_cite.timestamp_query()
 
         # Execute query
-        result_set = self.sparqlapi.get_data(timestamped_query)
+        result_set = self.sparqlapi.get_data(select_statement, citation_timestamp)
 
         # Validate order by clause
         order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]

@@ -1,5 +1,4 @@
-from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils
-from src.rdf_data_citation.citation import MetaData
+from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, MetaData
 from src.rdf_data_citation._helper import template_path
 from src.rdf_data_citation.exceptions import QueryExistsError
 import sqlalchemy as sql

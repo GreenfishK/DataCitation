@@ -1,7 +1,7 @@
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
 from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError
-from src.rdf_data_citation.citation_utils import CitationData, QueryUtils
+from src.rdf_data_citation.citation_utils import MetaData, QueryUtils
 from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
@@ -12,10 +12,10 @@ config = configparser.ConfigParser()
 config.read('../../../config.ini')
 
 # Example citation data and result set description
-citation_metadata = CitationData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
-                                 title="Judy Chu occurences", publisher="Filip Kovacevic",
-                                 publication_year="2021", resource_type="Dataset/RDF data",
-                                 other_citation_data={"Contributor": "Tomasz Miksa"})
+citation_metadata = MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
+                             title="Judy Chu occurences", publisher="Filip Kovacevic",
+                             publication_year="2021", resource_type="Dataset/RDF data",
+                             other_citation_data={"Contributor": "Tomasz Miksa"})
 
 result_set_description = "Result set description: All documents where Judy Chu was mentioned with every mention listed"
 
@@ -52,8 +52,8 @@ def execute_query():
             config.write(configfile)
 
     # Query the latest version of data (as of now)
-    query_utils = QueryUtils(query=request.form['query_text'])
-    result_set = rdf_engine.get_data(query_utils.timestamped_query)  # dataframe
+    # query_utils = QueryUtils(query=request.form['query_text'])
+    result_set = rdf_engine.get_data(request.form['query_text'])  # dataframe
 
     number_of_rows = len(result_set.index)
     html_response = render_template('datacenter_sample_page_1/citation_page.html',

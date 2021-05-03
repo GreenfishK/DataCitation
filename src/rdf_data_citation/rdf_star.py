@@ -1,10 +1,9 @@
-import logging
-
+from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from src.rdf_data_citation.exceptions import ReservedPrefixError, NoVersioningMode
+from src.rdf_data_citation.exceptions import NoVersioningMode
 from urllib.error import URLError
-import re
+import logging
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
 import pandas as pd
@@ -147,10 +146,7 @@ class TripleStoreEngine:
         delete_statement = template.format(citation_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
-        logging.getLogger().setLevel(10)
-        logging.debug(config().get('VERSIONING', 'yn_init_version_all_applied'))
         config().set('VERSIONING', 'yn_init_version_all_applied', 'False')
-        logging.debug(config().get('VERSIONING', 'yn_init_version_all_applied'))
         print("All annotations have been removed.")
 
     def version_all_rows(self, initial_timestamp: datetime):
@@ -180,19 +176,32 @@ class TripleStoreEngine:
         else:
             print("All rows are already versioned.")
 
-    def get_data(self, select_statement) -> pd.DataFrame:
+    def get_data(self, select_statement, timestamp: datetime = None, yn_timestamp_query: bool = True) -> pd.DataFrame:
         """
-        Executes the SPARQL select statement and returns a result set.
+        Executes the SPARQL select statement and returns a result set. If the timestamp is provided the result set
+        will be a snapshot of the data as of timestamp. Otherwise, the most recent version of the data will be returned.
 
-        snapshot of the date as of "timestamp".
+        :param yn_timestamp_query: If true, the select statement will be wrapped with the versioning template. This
+        also means that the data must have already been versioned using version_all_rows(). Otherwise, the query
+        is executed as it is against the RDF store.
+        :param timestamp:
         :param select_statement:
         :return:
         """
 
-        query = select_statement
-        self.sparql_get.setQuery(query)
+        if yn_timestamp_query:
+            if timestamp is None:
+                query_utils = QueryUtils(query=select_statement)
+            else:
+                query_utils = QueryUtils(query=select_statement, citation_timestamp=timestamp)
+
+            query = query_utils.timestamped_query
+            self.sparql_get.setQuery(query)
+        else:
+            self.sparql_get.setQuery(select_statement)
         result = self.sparql_get.query()
         df = _to_df(result)
+
         return df
 
     def update(self, select_statement, new_value):

@@ -1,5 +1,6 @@
+import logging
+
 from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
-from src.rdf_data_citation.citation import MetaData
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
     MultipleSortIndexesError, NoUniqueSortIndexError
@@ -16,6 +17,8 @@ from pandas.util import hash_pandas_object
 import json
 import numpy as np
 import re
+from datetime import datetime, timedelta, timezone
+import tzlocal
 
 
 def _query_algebra(query: str, sparql_prefixes: str) -> algebra:
@@ -113,11 +116,14 @@ class QueryUtils:
 
             if citation_timestamp is not None:
                 self.citation_timestamp = citation_timestamp_format(citation_timestamp)  # -> str
-                self.timestamped_query = self.timestamp_query()
-                self.pid = self.generate_query_pid()
             else:
-                self.citation_timestamp = None
-                self.pid = None
+                current_datetime = datetime.now()
+                timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
+                execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
+                execution_timestamp = citation_timestamp_format(execution_datetime)
+                self.citation_timestamp = execution_timestamp
+            self.timestamped_query = self.timestamp_query()
+            self.pid = self.generate_query_pid()
         else:
             self.query = None
             self.variables = None
@@ -287,7 +293,7 @@ class QueryUtils:
         # identify _var sets and sort the variables inside
         def norm_vars_2(x):
             if isinstance(x, set):
-                normalized_variables = [variables_mapping[a] for a in x]
+                normalized_variables = [variables_mapping[a] for a in x if not a.n3().startswith('?__agg')]
                 return sorted(normalized_variables)
             else:
                 return None
@@ -698,6 +704,55 @@ class RDFDataSetUtils:
         sorted_df = sorted_df.reset_index()
 
         return sorted_df
+
+
+class MetaData:
+
+    def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
+                 publication_year: str = None, resource_type: str = None,
+                 other_citation_data: dict = None):
+        """
+        Initialize the mandatory fields from DataCite's metadata model version 4.3
+        """
+        # TODO: Data operator defines which metadata to store. The user is able to change the description
+        #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
+
+        # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
+        self.identifier = identifier
+        self.creator = creator
+        self.title = title
+        self.publisher = publisher
+        self.publication_year = publication_year
+        self.resource_type = resource_type
+
+        # Other user-defined provenance data and other metadata
+        self.other_citation_data = other_citation_data
+
+        self.citation_snippet = None
+
+    def to_json(self):
+        meta_data = vars(self).copy()
+        del meta_data['citation_snippet']
+        meta_data_json = json.dumps(meta_data, indent=4)
+
+        return meta_data_json
+
+    def set_metadata(self, meta_data_json: str):
+        """
+        Reads the citation metadata provided as a json strings and creates the CitationData object.
+        :param meta_data_json:
+        :return: the citation metadata, but without the citation snippet
+        """
+
+        meta_data_dict = json.loads(meta_data_json)
+
+        self.identifier = meta_data_dict['identifier']
+        self.creator = meta_data_dict['creator']
+        self.title = meta_data_dict['title']
+        self.publisher = meta_data_dict['publisher']
+        self.publication_year = meta_data_dict['publication_year']
+        self.resource_type = meta_data_dict['resource_type']
+        self.other_citation_data = meta_data_dict['other_citation_data']
 
 
 def generate_citation_snippet(query_pid: str, citation_data: MetaData) -> str:

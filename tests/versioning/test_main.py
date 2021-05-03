@@ -26,7 +26,7 @@ class TestVersioning(TestExecution):
         self.initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
         self.rdf_engine = TripleStoreEngine(self.test_config.get('RDFSTORE', 'get'),
                                             self.test_config.get('RDFSTORE', 'post'))
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         self.cnt_initial_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
         self.rdf_engine.reset_all_versions()
 
@@ -38,7 +38,7 @@ class TestVersioning(TestExecution):
 
         print("Executing before_single_tests ...")
 
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         self.cnt_actual_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
         self.rdf_engine.version_all_rows(self.initial_timestamp)
 
@@ -73,7 +73,7 @@ class TestVersioning(TestExecution):
                    ?s ?p ?o .
                } 
                """
-        df = self.rdf_engine.get_data(test_query)  # dataframe
+        df = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)  # dataframe
         cnt_triples_after_versioning_and_resetting = str(len(df.index))
         test.actual_result = cnt_triples_after_versioning_and_resetting
         return test
@@ -99,7 +99,7 @@ class TestVersioning(TestExecution):
                     ?s ?p ?o .
                 } 
                 """
-        df = self.rdf_engine.get_data(test_query)  # dataframe
+        df = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)  # dataframe
         cnt_triples_after_versioning = str(len(df.index))
         test.actual_result = cnt_triples_after_versioning
         return test
@@ -116,9 +116,9 @@ class TestVersioning(TestExecution):
 
         test_query = open("test_data/test_update_single__delete_valid_until.txt", "r").read()
 
-        result_set_before_update = self.rdf_engine.get_data(test_query)
+        result_set_before_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         self.rdf_engine.update(triples_to_update, new_value)
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_before_update.index)) + "_" + str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
@@ -145,7 +145,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_single__outdate.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         print(result_set_after_update)
         test.actual_result = str(len(result_set_after_update.index))
 
@@ -173,7 +173,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_single__add_new_triple.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         new_value = result_set_after_update['party'].iloc[0]
         test.actual_result = str(len(result_set_after_update.index)) + "_" + new_value
 
@@ -202,7 +202,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_single__timestamp_new_triple_valid_from.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
@@ -230,7 +230,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_single__timestamp_new_triple_valid_until.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_after_update.index)) + "_" \
                              + result_set_after_update['valid_until'].iloc[0]
 
@@ -257,9 +257,9 @@ class TestVersioning(TestExecution):
 
         test_query = open("test_data/test_update_multi__delete_valid_until.txt", "r").read()
 
-        result_set_before_update = self.rdf_engine.get_data(test_query)
+        result_set_before_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         self.rdf_engine.update(triples_to_update, new_value)
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_before_update.index)) + "_" + str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
@@ -290,7 +290,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_multi__outdate.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         print(result_set_after_update)
         test.actual_result = str(len(result_set_after_update.index))
 
@@ -324,7 +324,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_multi__add_new_triple.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         new_value = result_set_after_update['party'].iloc[0]
         test.actual_result = str(len(result_set_after_update.index)) + "_" + new_value
 
@@ -357,7 +357,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_multi__timestamp_new_triple_valid_from.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
@@ -389,7 +389,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_multi__timestamp_new_triple_valid_until.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_after_update.index)) + "_" \
                              + result_set_after_update['valid_until'].iloc[0]
 
@@ -415,7 +415,7 @@ class TestVersioning(TestExecution):
 
         # Read
         self.rdf_engine.update(triples_to_update, new_value)
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_first_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test = Test(test_number=13,
@@ -424,7 +424,7 @@ class TestVersioning(TestExecution):
                     expected_result=str(cnt_triples_after_first_update))
 
         self.rdf_engine.update(triples_to_update, new_value)
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_second_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test.actual_result = str(cnt_triples_after_second_update)
@@ -446,13 +446,13 @@ class TestVersioning(TestExecution):
     def test_update_multi__two_updates(self):
         # Read
         triples_to_update = open("test_data/multi_triples_update.txt", "r").read()
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_before_first_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         # Update 1
         new_value_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
         self.rdf_engine.update(triples_to_update, new_value_1)
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_first_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test = Test(test_number=14,
@@ -463,7 +463,7 @@ class TestVersioning(TestExecution):
         # Update 2
         new_value_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
         self.rdf_engine.update(triples_to_update, new_value_2)
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples)
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_second_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test.actual_result = str(cnt_triples_after_second_update - cnt_triples_after_first_update)
@@ -513,7 +513,7 @@ class TestVersioning(TestExecution):
 
         # Read
         test_query = open("test_data/test_update_multi__timeline_consistency.txt", "r").read()
-        result_set_after_update = self.rdf_engine.get_data(test_query)
+        result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         result_set_after_update = result_set_after_update.pivot(index=['valid_from', 'valid_until'], columns='member',
                                                                 values='party')
         result_set_after_update.reset_index(inplace=True)

@@ -1,8 +1,7 @@
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct
-from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet
-from src.rdf_data_citation.citation import MetaData
+from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet, MetaData
 from src.rdf_data_citation.query_store import QueryStore
 from datetime import datetime, timezone, timedelta
 import logging
@@ -118,8 +117,7 @@ class TestCitation(TestExecution):
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
         citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
                                                      citation_data=self.citation_metadata)
-        timestamped_query = query_utils.timestamp_query()
-        result_set = self.rdf_engine.get_data(timestamped_query)
+        result_set = self.rdf_engine.get_data(self.select_statement, self.citation_timestamp)
         dataset_utils = RDFDataSetUtils(dataset=result_set)
         dataset_description = dataset_utils.describe()
         expected_result = dataset_description + "\n" + citation_snippet
@@ -284,6 +282,15 @@ class TestCitation(TestExecution):
     def test_citation__sort_by_not_select_variable(self):
         test = Test(test_number=7,
                     tc_desc='',
+                    expected_result='',
+                    actual_result='')
+
+        return test
+
+    def test_citation__aggregated_dataset(self):
+        test = Test(test_number=8,
+                    tc_desc='Test if a query that uses aggregate functions like count yields the right result before '
+                            'and after an insert.',
                     expected_result='',
                     actual_result='')
 
