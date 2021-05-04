@@ -1,3 +1,5 @@
+import logging
+
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from datetime import timezone, timedelta, datetime
 from tests.test_base import Test, TestExecution, format_text
@@ -594,6 +596,41 @@ class TestVersioning(TestExecution):
         # Clean up
         self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
         self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+
+        return test
+
+    def x_test_outdate__outdate_triples(self):
+        # Data before insert
+        dataset_query = open("test_data/test_outdate__dataset_query.txt", "r").read()
+        triples_to_outdate = open("test_data/test_outdate__outdate_triples.txt", "r").read()
+
+        # +2 hours timezone because this is how graphDB sets it for the vienna timezone.
+        vieTZObject = timezone(timedelta(hours=2))
+        timestamp_before_outdate = datetime.now(vieTZObject)
+
+        # Count triples before outdate
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
+        cnt_before_outdate = int(cnt_triples_df['cnt'].item().split(" ")[0])
+
+        # Outdate
+        self.rdf_engine.outdate_triples(triples_to_outdate)
+
+        # Count triples after outdate
+        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
+        cnt_after_outdate = int(cnt_triples_df['cnt'].item().split(" ")[0])
+
+        dataset_before_outdate = self.rdf_engine.get_data(dataset_query, timestamp_before_outdate)
+        dataset_after_outdate = self.rdf_engine.get_data(dataset_query)
+
+        test = Test(test_number=19,
+                    tc_desc='Test if the number of triples in the RDF store after outdating a set of triples '
+                            'did not change. Moreover, test if the result set after the triples have been outdated '
+                            'is empty. ',
+                    expected_result="number of triples in db: {0}; number of rows in "
+                                    "dataset after outdate: {1}".format(str(cnt_before_outdate), 0),
+                    actual_result="number of triples in db: {0}; number of rows in "
+                                    "dataset after outdate: {1}".format(str(cnt_after_outdate),
+                                                                        len(dataset_after_outdate.index)))
 
         return test
 

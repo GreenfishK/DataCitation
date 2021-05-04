@@ -1,0 +1,19 @@
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select ?subjectToOutdate ?predicateToOutdate ?objectToOutdate {
+    ?mention publishing:hasInstance ?person .
+    ?document publishing:containsMention ?mention .
+    ?person pub:memberOfPoliticalParty ?party .
+    ?person pub:preferredLabel ?personLabel .
+    ?party pub:hasValue ?value .
+    ?value pub:preferredLabel ?party_label .
+    filter(?personLabel = "Barack Obama"@en && ?party_label = "Democratic Party"@en)
+
+    # User input
+    bind(?person as ?subjectToOutdate)
+    bind(pub:memberOfPoliticalParty as ?predicateToOutdate)
+    bind(?party as ?objectToOutdate)
+
+}

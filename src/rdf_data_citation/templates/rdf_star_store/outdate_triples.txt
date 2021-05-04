@@ -3,11 +3,11 @@
 
 # Delete and insert statements
 delete {{
-    <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
+    <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
 }}
 insert {{
     # outdate old triples with date as of now()
-    <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
+    <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until ?newVersion.
 }}
 where {{
     # business logic - rows to outdate as select statement
@@ -16,7 +16,6 @@ where {{
     }}
 
     # versioning
-    <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until .
+    <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime .
     BIND(xsd:dateTime(NOW()) AS ?newVersion).
-    filter(?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
 }}

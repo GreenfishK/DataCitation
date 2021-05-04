@@ -291,23 +291,37 @@ class TripleStoreEngine:
         result = self.sparql_post.query()
         return result
 
-    def outdate_triples(self, select_statement, prefixes):
+    def outdate_triples(self, select_statement):
         """
         Triples provided as input will be outdated and marked with an valid_until timestamp. Thus, they will
         not appear in result sets queried from the most recent graph version or any other version that came after
         their expiration.
-        The triples provided must exist in the triple store.
+        The triples provided must exist in the triple store. They must be provided as select statement in the following
+        form:
+
+        # Prefixes
+        <prefixes>
+
+        select ?subjectToOutdate ?predicateToOutdate ?objectToOutdate {
+            # Triple staments, filter, ...
+            <triple statement>
+            <triple statement>
+            ...
+
+            bind(<subject> as ?subjectToOutdate)
+            bind(<predicate> as ?predicateToOutdate)
+            bind(<object> as ?objectToOutdate)
+
+        } order by ?mention
 
         :param select_statement:
-        :param prefixes:
         :return:
         """
 
-        statement = open(self._template_location + "/outdate_triples.txt", "r").read()
-        sparql_prefixes = ""
-        if prefixes:
-            sparql_prefixes = citation_prefixes(prefixes)
-        statement = statement.format(sparql_prefixes, select_statement)
+        template = open(self._template_location + "/outdate_triples.txt", "r").read()
+        query_prefixes, query = split_prefixes_query(select_statement)
+        final_prefixes = citation_prefixes(query_prefixes)
+        statement = template.format(final_prefixes, query)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
 
