@@ -560,7 +560,44 @@ class TestVersioning(TestExecution):
 
         return test
 
+    def x_test_insert__two_consecutive_inserts(self):
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
 
-t = TestVersioning(annotated_tests=False)
+        # Data before insert
+        dataset_query = open("test_data/test_insert__dataset_query.txt", "r").read()
+
+        # +2 hours timezone because this is how graphDB sets it for the vienna timezone.
+        vieTZObject = timezone(timedelta(hours=2))
+        timestamp_before_insert = datetime.now(vieTZObject)
+
+        # First insert
+        mention = "<hhttp://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
+        hasInstance = "publishing:hasInstance"
+        person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
+        document = "<http://www.reuters.com/article/2014/10/10/us-usa-california-mountains-idUSKCN0HZ0U720141010>"
+        containsMention = "publishing:containsMention"
+
+        self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
+        self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
+
+        dataset_before_insert = self.rdf_engine.get_data(dataset_query, timestamp_before_insert)
+        dataset_after_insert = self.rdf_engine.get_data(dataset_query)
+
+        test = Test(test_number=18,
+                    tc_desc='Make two consecutive inserts and retrieve the dataset as it was before, between '
+                            'and after the inserts. Check that the datasets reflect the right information as of'
+                            'each timestamp. ',
+                    expected_result=str(len(dataset_before_insert.index) + 1),
+                    actual_result=str(len(dataset_after_insert.index)))
+
+        # Clean up
+        self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
+        self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+
+        return test
+
+
+t = TestVersioning(annotated_tests=True)
 t.run_tests()
 t.print_test_results()

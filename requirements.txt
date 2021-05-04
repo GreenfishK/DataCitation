@@ -7,3 +7,4 @@ setuptools~=49.6.0
 flask~=1.1.2
 tzlocal~=2.1
 click~=7.1.2
+tabulate
