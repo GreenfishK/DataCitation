@@ -83,23 +83,8 @@ class Citation:
 
         if not citation_timestamp:
             query_to_cite = QueryUtils(select_statement)
-            #query_to_cite.citation_timestamp = execution_timestamp
         else:
             query_to_cite = QueryUtils(select_statement, citation_timestamp)
-            #user_citation_timestamp = citation_timestamp_format(citation_timestamp)
-            #query_to_cite.citation_timestamp = user_citation_timestamp
-
-        # Compute query checksum
-        #query_to_cite.compute_checksum(query_to_cite.normalized_query_algebra)
-
-        # Generate query PID
-        #query_to_cite.pid = query_to_cite.generate_query_pid()
-
-        # Create query tree and normalize query tree
-        #query_to_cite.normalized_query_algebra = query_to_cite.normalize_query_tree()
-
-        # Extend query with timestamp
-        # timestamped_query = query_to_cite.timestamp_query()
 
         # Execute query
         result_set = self.sparqlapi.get_data(select_statement, citation_timestamp)

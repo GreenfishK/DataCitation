@@ -1,5 +1,3 @@
-import logging
-
 from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
@@ -103,7 +101,6 @@ class QueryUtils:
 
         :param query: The SPARQL select statement that is used to retrieve the data set for citing.
         :param citation_timestamp: The timestamp as of citation.
-        :param prefixes: prefixes used in the SPARQL query.
         """
 
         if query is not None:

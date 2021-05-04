@@ -541,6 +541,25 @@ class TestVersioning(TestExecution):
 
         return test
 
+    def test_versioning_injection__query_with_union(self):
+        test = Test(test_number=16,
+                    tc_desc='Test if a query that has two select blocks which are conjoined with the '
+                            '"union" keyword has "timestamp extensions" for each block separately.',
+                    expected_result='',
+                    actual_result='')
+
+        return test
+
+    def test_versioning_injection__nested_select(self):
+        test = Test(test_number=17,
+                    tc_desc='Test if the extensions for versioning/timestamping a query are injected into every select '
+                            'block with a basic graph pattern (BGP). For each triple statement inside a block one '
+                            'extension must be injected.',
+                    expected_result='',
+                    actual_result='')
+
+        return test
+
 
 t = TestVersioning(annotated_tests=False)
 t.run_tests()
