@@ -620,7 +620,7 @@ class TestVersioning(TestExecution):
         cnt_after_outdate = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         dataset_before_outdate = self.rdf_engine.get_data(dataset_query, timestamp_before_outdate)
-        #data_set_before_outdate_non_empty = dataset_before_outdate.empty
+        # data_set_before_outdate_non_empty = dataset_before_outdate.empty
         dataset_after_outdate = self.rdf_engine.get_data(dataset_query)
 
         test = Test(test_number=19,

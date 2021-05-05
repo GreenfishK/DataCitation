@@ -1,7 +1,9 @@
-from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
+import rdflib.plugins.sparql.parser
+
+from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
-    MultipleSortIndexesError, NoUniqueSortIndexError
+    MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString
 from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import Variable
 from rdflib.paths import SequencePath
@@ -19,20 +21,20 @@ from datetime import datetime, timedelta, timezone
 import tzlocal
 
 
-def _query_algebra(query: str, sparql_prefixes: str) -> algebra:
+def _query_algebra(query: str, sparql_prefixes: str) -> rdflib.plugins.sparql.algebra.Query:
     """
     Takes query and prefixes as strings and generates the query tree.
     :param query:
     :param sparql_prefixes: A query tree
     :return:
     """
-    print(query)
+
     if sparql_prefixes:
-        q_desc = parser.parseQuery(sparql_prefixes + " " + query)
+        parse_tree = parser.parseQuery(sparql_prefixes + " " + query)
     else:
-        q_desc = parser.parseQuery(query)
-    query_tree = algebra.translateQuery(q_desc).algebra
-    return query_tree
+        parse_tree = parser.parseQuery(query)
+    query_algebra = algebra.translateQuery(parse_tree)
+    return query_algebra
 
 
 def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') -> list:
@@ -47,7 +49,7 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') 
     :return: a list of variables used in the query
     """
 
-    query_algebra = _query_algebra(query, prefixes)
+    query_algebra = _query_algebra(query, prefixes).algebra
 
     variables = []
     other_variables = []
@@ -109,7 +111,7 @@ class QueryUtils:
             self.variables = _query_variables(self.query, self.sparql_prefixes)
             self.select_variables = _query_variables(self.query, self.sparql_prefixes, 'select')
             self.order_by_variables = _query_variables(self.query, self.sparql_prefixes, 'order_by')
-            self.normalized_query_algebra = self.normalize_query_tree()
+            self.normalized_query_algebra = str(self.normalize_query_tree().algebra)
             self.checksum = self.compute_checksum()
 
             if citation_timestamp is not None:
@@ -128,7 +130,7 @@ class QueryUtils:
             self.normalized_query_algebra = None
             self.checksum = None
 
-    def normalize_query_tree(self, query: str = None):
+    def normalize_query_tree(self, query: str = None) -> rdflib.plugins.sparql.algebra.Query:
         """
         R4 - Query Uniqueness
         Normalizes the query tree by computing its algebra first. Most of the ambiguities are implicitly solved by the
@@ -145,7 +147,7 @@ class QueryUtils:
                 prefixes = self.sparql_prefixes
                 query = self.query
             else:
-                return "Query could not be normalized because the query string was not set."
+                raise NoQueryString("Query could not be normalized because the query string was not set.")
         else:
             prefixes, query = split_prefixes_query(query)
 
@@ -286,7 +288,7 @@ class QueryUtils:
             else:
                 return None
 
-        algebra.traverse(q_algebra, norm_vars_1)
+        algebra.traverse(q_algebra.algebra, norm_vars_1)
 
         # identify _var sets and sort the variables inside
         def norm_vars_2(x):
@@ -296,7 +298,7 @@ class QueryUtils:
             else:
                 return None
 
-        algebra.traverse(q_algebra, norm_vars_2)
+        algebra.traverse(q_algebra.algebra, norm_vars_2)
 
         # Sort variables (in select statement)
         def sort_list_of_string(list_node):
@@ -305,8 +307,8 @@ class QueryUtils:
             else:
                 return None
 
-        algebra.traverse(q_algebra, visitPre=sort_list_of_string)
-        return str(q_algebra)
+        algebra.traverse(q_algebra.algebra, visitPre=sort_list_of_string)
+        return q_algebra
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None,
                         sort_variables: tuple = None, colored: bool = False):

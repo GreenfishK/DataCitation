@@ -1,5 +1,5 @@
 from src.rdf_data_citation.citation_utils import QueryUtils
-from src.rdf_data_citation._helper import template_path, config, citation_timestamp_format
+from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
 from src.rdf_data_citation.exceptions import NoVersioningMode
 from urllib.error import URLError
@@ -152,7 +152,6 @@ class TripleStoreEngine:
         delete_statement = template.format(citation_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
-        config().set('VERSIONING', 'yn_init_version_all_applied', 'False')
         print("All annotations have been removed.")
 
     def version_all_rows(self, initial_timestamp: datetime, versioning_mode: VersioningMode = VersioningMode.SAVE_MEM):
@@ -171,34 +170,31 @@ class TripleStoreEngine:
         :return:
         """
 
-        if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
-            version_timestamp = citation_timestamp_format(initial_timestamp)
-            template = open(self._template_location + "/version_all_rows.txt", "r").read()
-            final_prefixes = citation_prefixes("")
-            versioning_mode_dir = self._template_location + "/../query_utils/versioning_modes"
-            if versioning_mode == VersioningMode.Q_PERF:
-                update_statement = template.format(final_prefixes, "<<?s ?p ?o>> citing:valid_from ?currentTimestamp;",
-                                                   version_timestamp)
+        version_timestamp = citation_timestamp_format(initial_timestamp)
+        template = open(self._template_location + "/version_all_rows.txt", "r").read()
+        final_prefixes = citation_prefixes("")
+        versioning_mode_dir = self._template_location + "/../query_utils/versioning_modes"
+        if versioning_mode == VersioningMode.Q_PERF:
+            update_statement = template.format(final_prefixes, "<<?s ?p ?o>> citing:valid_from ?currentTimestamp;",
+                                               version_timestamp)
 
-                # Prepare template for query timestamping/versioning
-                versioning_mode_template = \
-                    open(versioning_mode_dir + "/versioning_query_extensions_q_perf.txt", "r").read()
+            # Prepare template for query timestamping/versioning
+            versioning_mode_template = \
+                open(versioning_mode_dir + "/versioning_query_extensions_q_perf.txt", "r").read()
 
-            else:
-                update_statement = template.format(final_prefixes, "", version_timestamp)
-
-                # Prepare template for query timestamping/versioning
-                versioning_mode_template = \
-                    open(versioning_mode_dir + "/versioning_query_extensions_save_mem.txt", "r").read()
-
-            with open(self._template_location + "/../query_utils/versioning_query_extensions.txt", "w") as vers:
-                vers.write(versioning_mode_template)
-
-            self.sparql_post.setQuery(update_statement)
-            self.sparql_post.query()
-            print("All rows have been annotated with an artificial end date.")
         else:
-            print("All rows are already versioned.")
+            update_statement = template.format(final_prefixes, "", version_timestamp)
+
+            # Prepare template for query timestamping/versioning
+            versioning_mode_template = \
+                open(versioning_mode_dir + "/versioning_query_extensions_save_mem.txt", "r").read()
+
+        with open(self._template_location + "/../query_utils/versioning_query_extensions.txt", "w") as vers:
+            vers.write(versioning_mode_template)
+
+        self.sparql_post.setQuery(update_statement)
+        self.sparql_post.query()
+        print("All rows have been annotated with an artificial end date.")
 
     def get_data(self, select_statement, timestamp: datetime = None, yn_timestamp_query: bool = True) -> pd.DataFrame:
         """

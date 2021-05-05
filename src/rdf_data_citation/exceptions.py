@@ -32,3 +32,7 @@ class MissingSortVariables(Exception):
 
 class QueryExistsError(Exception):
     pass
+
+
+class NoQueryString(Exception):
+    pass
