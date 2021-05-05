@@ -26,6 +26,7 @@ def _query_algebra(query: str, sparql_prefixes: str) -> algebra:
     :param sparql_prefixes: A query tree
     :return:
     """
+    print(query)
     if sparql_prefixes:
         q_desc = parser.parseQuery(sparql_prefixes + " " + query)
     else:
@@ -325,8 +326,6 @@ class QueryUtils:
         :return: A query string extended with the given timestamp
         """
 
-        versioning_mode = config().get("VERSIONING", "versioning_mode")
-
         if colored:
             red = ("\x1b[31m", "\x1b[0m")
             green = ("\x1b[32m", "\x1b[0m")
@@ -400,14 +399,8 @@ class QueryUtils:
 
         triples = query_triples(query, final_prefixes)
 
-        if versioning_mode == "Q_PERF":
-            versioning_query_extensions_template = \
-                open(template_path("templates/query_utils/versioning_query_extensions_q_perf.txt"), "r").read()
-        elif versioning_mode == "SAVE_MEM":
-            versioning_query_extensions_template = \
-                open(template_path("templates/query_utils/versioning_query_extensions_save_mem.txt"), "r").read()
-        else:
-            raise NoVersioningMode("Either query performance or memory saving mode must be set.")
+        versioning_query_extensions_template = \
+            open(template_path("templates/query_utils/versioning_query_extensions.txt"), "r").read()
 
         versioning_query_extensions = ""
         for i, triple in enumerate(triples):

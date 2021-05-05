@@ -1,6 +1,6 @@
 import logging
 
-from src.rdf_data_citation.rdf_star import TripleStoreEngine
+from src.rdf_data_citation.rdf_star import TripleStoreEngine, VersioningMode
 from datetime import timezone, timedelta, datetime
 from tests.test_base import Test, TestExecution, format_text
 
@@ -17,7 +17,7 @@ class TestVersioning(TestExecution):
 
     def before_all_tests(self):
         """
-        Make sure that versioning has not been applied to the RDF store before executing the tests!
+        Make sure that versioning_modes has not been applied to the RDF store before executing the tests!
 
         :return:
         """
@@ -88,7 +88,7 @@ class TestVersioning(TestExecution):
             expected_result = str(self.cnt_initial_triples * 2)
         else:
             expected_result = "This is an exception and not the real expected result! " \
-                              "The versioning mode in config.ini must be set either to " \
+                              "The versioning_modes mode in config.ini must be set either to " \
                               "Q_PERF or SVE_MEM."
 
         test = Test(test_number=2,
@@ -494,7 +494,7 @@ class TestVersioning(TestExecution):
             expected_result = "valid_from_positive_deltas: 1"
         else:
             expected_result = "This is an exception and not the real expected result! " \
-                              "The versioning mode in config.ini must be set either to " \
+                              "The versioning_modes mode in config.ini must be set either to " \
                               "Q_PERF or SVE_MEM."
 
         test = Test(test_number=15,
@@ -543,7 +543,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def test_versioning_injection__query_with_union(self):
+    def x_test_versioning_injection__query_with_union(self):
         test = Test(test_number=16,
                     tc_desc='Test if a query that has two select blocks which are conjoined with the '
                             '"union" keyword has "timestamp extensions" for each block separately.',
@@ -552,9 +552,9 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def test_versioning_injection__nested_select(self):
+    def x_test_versioning_injection__nested_select(self):
         test = Test(test_number=17,
-                    tc_desc='Test if the extensions for versioning/timestamping a query are injected into every select '
+                    tc_desc='Test if the extensions for versioning_modes/timestamping a query are injected into every select '
                             'block with a basic graph pattern (BGP). For each triple statement inside a block one '
                             'extension must be injected.',
                     expected_result='',
@@ -620,6 +620,7 @@ class TestVersioning(TestExecution):
         cnt_after_outdate = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         dataset_before_outdate = self.rdf_engine.get_data(dataset_query, timestamp_before_outdate)
+        #data_set_before_outdate_non_empty = dataset_before_outdate.empty
         dataset_after_outdate = self.rdf_engine.get_data(dataset_query)
 
         test = Test(test_number=19,

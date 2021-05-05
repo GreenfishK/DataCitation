@@ -1,7 +1,7 @@
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
 from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError
-from src.rdf_data_citation.citation_utils import MetaData, QueryUtils
+from src.rdf_data_citation.citation_utils import MetaData
 from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
@@ -52,7 +52,6 @@ def execute_query():
             config.write(configfile)
 
     # Query the latest version of data (as of now)
-    # query_utils = QueryUtils(query=request.form['query_text'])
     result_set = rdf_engine.get_data(request.form['query_text'])  # dataframe
 
     number_of_rows = len(result_set.index)

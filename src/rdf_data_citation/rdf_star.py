@@ -3,6 +3,7 @@ from src.rdf_data_citation._helper import template_path, config, citation_timest
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
 from src.rdf_data_citation.exceptions import NoVersioningMode
 from urllib.error import URLError
+from enum import Enum
 import logging
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
 from rdflib.term import Literal
@@ -45,6 +46,11 @@ def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
         values.append(row)
     df = df.append(pd.DataFrame(values, columns=df.columns))
     return df
+
+
+class VersioningMode(Enum):
+    Q_PERF = 1
+    SAVE_MEM = 2
 
 
 class TripleStoreEngine:
@@ -149,29 +155,47 @@ class TripleStoreEngine:
         config().set('VERSIONING', 'yn_init_version_all_applied', 'False')
         print("All annotations have been removed.")
 
-    def version_all_rows(self, initial_timestamp: datetime):
+    def version_all_rows(self, initial_timestamp: datetime, versioning_mode: VersioningMode = VersioningMode.SAVE_MEM):
         """
-        Version all rows with the current timestamp.
-        :param initial_timestamp: must also include the timezone
+        Version all triples with an artificial end date. If the mode is Q_PERF then every triple is additionally
+        annotated with a valid_from date where the date is the initial_timestamp provided by the caller.
+
+        :param versioning_mode: The mode to use for versioning your data in the RDF store. The Q_PERF mode takes up
+        more storage as for every triple in the RDF store two additional triples are added. In return, querying
+        timestamped data is faster. The SAVE_MEM mode only adds one additional triple per triple in the RDF store.
+        However, the queries are more time-consuming as additional filters are needed. Make sure to choose the mode
+        the better suits your need as the mode gets set only once at the beginning. Every subsequent query that gets
+        send to the RDF endpoint using get_data() will also operate in the chosen mode.
+        :param initial_timestamp: Timestamp which also must include the timezone. Only relevant for Q_PERF mode.
 
         :return:
         """
 
         if config().get('VERSIONING', 'yn_init_version_all_applied') == 'False':
-            versioning_mode = config().get("VERSIONING", "versioning_mode")
             version_timestamp = citation_timestamp_format(initial_timestamp)
-
-            if versioning_mode == "SAVE_MEM":
-                template = open(self._template_location + "/version_all_rows_save_mem.txt", "r").read()
-            elif versioning_mode == "Q_PERF":
-                template = open(self._template_location + "/version_all_rows_q_perf.txt", "r").read()
-            else:
-                raise NoVersioningMode("Either query performance or memory saving mode must be set.")
+            template = open(self._template_location + "/version_all_rows.txt", "r").read()
             final_prefixes = citation_prefixes("")
-            update_statement = template.format(final_prefixes, version_timestamp)
+            versioning_mode_dir = self._template_location + "/../query_utils/versioning_modes"
+            if versioning_mode == VersioningMode.Q_PERF:
+                update_statement = template.format(final_prefixes, "<<?s ?p ?o>> citing:valid_from ?currentTimestamp;",
+                                                   version_timestamp)
+
+                # Prepare template for query timestamping/versioning
+                versioning_mode_template = \
+                    open(versioning_mode_dir + "/versioning_query_extensions_q_perf.txt", "r").read()
+
+            else:
+                update_statement = template.format(final_prefixes, "", version_timestamp)
+
+                # Prepare template for query timestamping/versioning
+                versioning_mode_template = \
+                    open(versioning_mode_dir + "/versioning_query_extensions_save_mem.txt", "r").read()
+
+            with open(self._template_location + "/../query_utils/versioning_query_extensions.txt", "w") as vers:
+                vers.write(versioning_mode_template)
+
             self.sparql_post.setQuery(update_statement)
             self.sparql_post.query()
-            config().set('VERSIONING', 'yn_init_version_all_applied', 'True')
             print("All rows have been annotated with an artificial end date.")
         else:
             print("All rows are already versioned.")

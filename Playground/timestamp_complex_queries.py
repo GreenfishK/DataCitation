@@ -1,6 +1,5 @@
 import rdflib
 from rdflib.plugins.sparql.parserutils import CompValue
-
 from src.rdf_data_citation._helper import template_path
 from rdflib.paths import SequencePath
 import rdflib.plugins.sparql.parser as parser
@@ -98,3 +97,9 @@ def query_triples(query, sparql_prefixes: str = None) -> dict:
 
 
 n3_triple_sets = query_triples(q1)
+
+
+statement = "Select ?s ?p ?o where {?s ?p ?o.}"
+query_tree = parser.parseQuery(statement) # query parse-tree
+q_algebra = algebra.translateQuery(query_tree) # query algebra
+algebra.pprintAlgebra(q_algebra)
