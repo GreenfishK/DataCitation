@@ -1,3 +1,5 @@
+import logging
+
 from tests.test_base import Test, TestExecution, format_text
 from src.rdf_data_citation.citation_utils import QueryUtils
 
@@ -123,6 +125,10 @@ class TestNormalization(TestExecution):
         return test
 
     def test_normalization__sequence_paths(self):
+        logging.debug("alt 1")
+        logging.debug(self.query_data_alt1.query)
+        logging.debug("alt 2")
+        logging.debug(self.query_data_alt2.query)
         test = Test(test_number=11,
                     tc_desc="Sequence paths can reduce the number of triples in the query "
                             "and are commonly used.",

@@ -562,7 +562,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def x_test_insert__two_consecutive_inserts(self):
+    def test_insert__two_consecutive_inserts(self):
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
 
@@ -599,7 +599,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def x_test_outdate__outdate_triples(self):
+    def test_outdate__outdate_triples(self):
         # Data before insert
         dataset_query = open("test_data/test_outdate__dataset_query.txt", "r").read()
         triples_to_outdate = open("test_data/test_outdate__outdate_triples.txt", "r").read()
@@ -636,6 +636,6 @@ class TestVersioning(TestExecution):
         return test
 
 
-t = TestVersioning(annotated_tests=True)
+t = TestVersioning(annotated_tests=False)
 t.run_tests()
 t.print_test_results()

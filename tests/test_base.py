@@ -110,9 +110,9 @@ class TestExecution:
         try:
             test_number = 1
             for func in test_functions:
+                logging.info("Executing test: " + func)
                 self.before_single_test(func)
                 test_function = getattr(self, func)
-                logging.info("Executing test: " + func)
                 test = test_function()
                 test_number += 1
                 test.test_name = func

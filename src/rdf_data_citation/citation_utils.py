@@ -1,3 +1,6 @@
+import copy
+import logging
+
 import rdflib.plugins.sparql.parser
 
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
@@ -37,25 +40,32 @@ def _query_algebra(query: str, sparql_prefixes: str) -> rdflib.plugins.sparql.al
     return query_algebra
 
 
-def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') -> list:
+def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') -> list:
     """
     The query must be a valid query including prefixes.
     The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
     variables within a list. However, each of these lists enumerates the same variables only the first list
     will be selected and returned.
 
-    :param query_algebra:
     :param variable_set_type: can be 'all', 'select' or 'order_by'
     :return: a list of variables used in the query
     """
 
-    query_algebra = _query_algebra(query, prefixes).algebra
-
+    query_algebra = _query_algebra(query, prefixes)
     variables = []
-    other_variables = []
-    if variable_set_type == 'all':
-        query_triples = nested_lookup('triples', query_algebra)
-        for triple_list in query_triples:
+
+    if variable_set_type == 'bgp':
+        bgp_triples = {}
+
+        def retrieve_bgp_variables(node):
+            if isinstance(node, CompValue) and node.name == 'BGP':
+                bgp_triples[node.name+str(len(bgp_triples))] = node.get('triples')
+                return node
+            else:
+                return None
+        algebra.traverse(query_algebra.algebra, retrieve_bgp_variables)
+
+        for bgp_index, triple_list in bgp_triples.items():
             for triple in triple_list:
                 if isinstance(triple[0], Variable):
                     variables.append(triple[0])
@@ -63,10 +73,7 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') 
                     variables.append(triple[1])
                 if isinstance(triple[2], Variable):
                     variables.append(triple[2])
-        # So far this is used to identify bound variables found after the "bind" keyword
         variables = list(dict.fromkeys(variables))
-        other_variables = nested_lookup('var', query_algebra)
-        variables = variables + other_variables
 
     elif variable_set_type == 'select':
         def retrieve_select_variables(node):
@@ -75,7 +82,7 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') 
                 return node.get('PV')
             else:
                 del node
-        algebra.traverse(query_algebra, retrieve_select_variables)
+        algebra.traverse(query_algebra.algebra, retrieve_select_variables)
 
     elif variable_set_type == 'order_by':
         def retrieve_order_by_variables(node):
@@ -91,7 +98,7 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'all') 
                 del node
 
         # Traverses the query tree and extracts the variables into a list 'variables' that is defined above.
-        algebra.traverse(query_algebra, retrieve_order_by_variables)
+        algebra.traverse(query_algebra.algebra, retrieve_order_by_variables)
 
     return variables
 
@@ -108,7 +115,7 @@ class QueryUtils:
 
         if query is not None:
             self.sparql_prefixes, self.query = split_prefixes_query(query)
-            self.variables = _query_variables(self.query, self.sparql_prefixes)
+            self.bgp_variables = _query_variables(self.query, self.sparql_prefixes, 'bgp')
             self.select_variables = _query_variables(self.query, self.sparql_prefixes, 'select')
             self.order_by_variables = _query_variables(self.query, self.sparql_prefixes, 'order_by')
             self.normalized_query_algebra = str(self.normalize_query_tree().algebra)
@@ -126,7 +133,7 @@ class QueryUtils:
             self.pid = self.generate_query_pid()
         else:
             self.query = None
-            self.variables = None
+            self.bgp_variables = None
             self.normalized_query_algebra = None
             self.checksum = None
 
@@ -163,11 +170,11 @@ class QueryUtils:
 
         """
         #6.1
-        Aliases via BIND keyword just rename variables but the query result stays the same	.
+        Aliases via BIND keyword just rename variables but the query result stays the same.
         
         """
 
-        for var in self.variables:
+        for var in self.bgp_variables:
             pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*{1}\\s*[)]".format(var, re_variable)
             binds = re.findall(pattern, query, re.MULTILINE)
             for bind in binds:
@@ -196,7 +203,7 @@ class QueryUtils:
 
         """
         #8 
-        Regex will be used to convert "filter not exists {triple}" into the "filter + !bound" statement.
+        "filter not exists {triple}" expressions will be converted into the "filter + !bound" expression.
         """
         pattern = "(filter\\s*not\\s*exists\\s*)([{]" \
                   "(?:\\s*(?:" + re_subject + "))" \
@@ -275,7 +282,7 @@ class QueryUtils:
         # Replace variables with letters
         int_norm_var = 'a'
         variables_mapping = {}
-        extended_variables = _query_variables(query, prefixes)
+        extended_variables = _query_variables(query, prefixes, 'bgp')
 
         for i, v in enumerate(extended_variables):
             next_norm_var = chr(ord(int_norm_var) + i)
@@ -308,6 +315,7 @@ class QueryUtils:
                 return None
 
         algebra.traverse(q_algebra.algebra, visitPre=sort_list_of_string)
+
         return q_algebra
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None,
@@ -355,7 +363,7 @@ class QueryUtils:
         final_prefixes = citation_prefixes(prefixes)
 
         # Variables from the original query's select clause
-        if self.variables is not None:
+        if self.bgp_variables is not None:
             select_variables = self.select_variables
         else:
             select_variables = _query_variables(query, final_prefixes, variable_set_type='select')
