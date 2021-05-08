@@ -369,6 +369,11 @@ class QueryUtils:
             select_variables = _query_variables(query, final_prefixes, variable_set_type='select')
         variables_string = " ".join(v.n3() for v in select_variables)
 
+        if citation_timestamp is not None:
+            timestamp = citation_timestamp_format(citation_timestamp)
+        else:
+            timestamp = self.citation_timestamp
+
         # QueryData extensions for versioning_modes injection
         def query_triples(query, sparql_prefixes: str = None) -> list:
             """
@@ -422,27 +427,12 @@ class QueryUtils:
         # Formatting and styling select statement
         normalized_query_formatted = query.replace('\n', '\n \t')
 
-        if citation_timestamp is not None:
-            timestamp = citation_timestamp_format(citation_timestamp)
-        else:
-            timestamp = self.citation_timestamp
-
-        # Extending query with order by
-        if sort_variables is not None:
-            sort_variables_string = ""
-            for v in sort_variables:
-                v_n3 = Variable(v)
-                sort_variables_string += v_n3.n3() + " "
-            sort_extension = "order by " + ' ' + sort_variables_string
-        else:
-            sort_extension = ""
-
         decorated_query = template.format(final_prefixes,
                                           "{0}{1}{2}".format(red[0], variables_string, red[1]),
                                           "{0}{1}{2}".format(green[0], normalized_query_formatted, green[1]),
                                           "{0}{1}{2}".format(blue[0], timestamp, blue[1]),
                                           "{0}{1}{2}".format(magenta[0], versioning_query_extensions, magenta[1]),
-                                          "{0}{1}{2}".format(cyan[0], sort_extension, cyan[1]))
+                                          "{0}{1}{2}".format(cyan[0], "", cyan[1]))
 
         return decorated_query
 
