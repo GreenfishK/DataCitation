@@ -12,6 +12,13 @@ import re
 
 q1 = open("test_query1.txt", "r").read()
 q2 = open("test_query2.txt", "r").read()
+q3 = open("test_query3.txt", "r").read()
+q4 = open("test_query4.txt", "r").read()
+q5 = open("test_query5.txt", "r").read()
+q6 = open("test_query6.txt", "r").read()
+q7 = open("test_query7.txt", "r").read()
+q8 = open("test_query8.txt", "r").read()
+q9 = open("test_query9.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -90,27 +97,64 @@ def to_sparql_query_text(query: str = None):
             file.write(filedata)
 
     def sparql_query_text(node):
+        """
+         https://www.w3.org/TR/sparql11-query/#sparqlSyntax
+
+        :param node:
+        :return:
+        """
         if isinstance(node, CompValue):
+            # 18.2 Query Forms
             if node.name == "SelectQuery":
                 overwrite("{inner_node}")
+
+            # 18.2 Graph Pattern
+            if node.name == "BGP":
+                triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
+                                  for triple in node.triples)
+                replace("{inner_node}", triples)
+            if node.name == "Join":
+                replace("{inner_node}", "{inner_node}{inner_node}")  # if there was an union already before
+            if node.name == "LeftJoin":
+                replace("{inner_node}", "{inner_node}OPTIONAL{{inner_node}}")  # if there was an union already before
+            if node.name == "Filter":
+                replace("{inner_node}", "filter({inner_node}){inner_node}")
+            if node.name == "Union":
+                replace("{inner_node}", "{{inner_node}}union{{inner_node}}")  # if there was an union already before
+            if node.name == "Graph":
+                expr = "graph " + node.term.n3() + " {{inner_node}}"
+                replace("{inner_node}", expr)
+            if node.name == "Extend":
+                expr = "{inner_node} BIND({inner_node} as " + node.var.n3() + ")"
+                replace("{inner_node}", expr)
+            if node.name == "Minus":
+                pass
+            if node.name == "Group":
+                pass
+            if node.name == "Aggregation":
+                pass
+            if node.name == "AggregateJoin":
+                pass
+            # 18.2 Solution modifiers
+            if node.name == "ToList":
+                pass
+            if node.name == "OrderBy":
+                pass
             if node.name == "Project":
                 PVs = " ".join(elem.n3() for elem in node.get('PV'))
                 replace("{inner_node}", "select {vars} {brackets}".format(vars=PVs, brackets="{{inner_node}}"))
-            if node.name == "Extend":
-                if isinstance(node.get('expr'), Expr):
-                    if node.get('expr').name.endswith('CONCAT'):
-                        alias = node.get('var').n3()
-                        expr = '(CONCAT({vars}) as {var})' \
-                            .format(vars=", ".join(elem.n3() for elem in node.get('expr').arg),
-                                    var=alias)
-                        replace(alias, expr)
-                    # TODO: Cover other expressions
-                if isinstance(node.get('expr'), Variable):
-                    alias = node.get('var').n3()
-                    expr = '({var} as {alias})'.format(var=node.get('expr').n3(), alias=alias)
-                    replace(alias, expr)
-            if node.name == "Filter":
-                replace("{inner_node}", "filter({inner_node}){inner_node}")
+            if node.name == "Distinct":
+                pass
+            if node.name == "Reduced":
+                pass
+            if node.name == "Slice":
+                pass
+            if node.name == "ToMultiSet":
+                replace("{inner_node}", "{" + "{inner_node}" + "}")
+
+            # 18.2 Property Path
+
+            # 17.3 Operator Mapping
             if node.name == "RelationalExpression":
                 expr = node.expr.n3()
                 op = node.op
@@ -124,23 +168,33 @@ def to_sparql_query_text(query: str = None):
             if node.name == "ConditionalOrExpression":
                 inner_nodes = " || ".join(["{inner_node}" for expr in node.other if isinstance(expr, Expr)])
                 replace("{inner_node}", "({inner_node} || " + inner_nodes + ")")
-            if node.name == "BGP":
-                triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
-                                  for triple in node.triples)
-                replace("{inner_node}", triples)
-            if node.name == "ToMultiSet":
-                replace("{inner_node}", "{" + "{inner_node}" + "}")
-            if node.name == "Union":
-                replace("{inner_node}", "{{inner_node}}union{{inner_node}}")  # if there was an union already before
-            if node.name == "Join":
-                replace("{inner_node}", "{inner_node}{inner_node}")  # if there was an union already before
+
+            # 17.4.3 Functions on Strings
+            if node.name.endswith('CONCAT'):
+                expr = 'concat({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
+                replace("{inner_node}", expr)
+            if node.name.endswith('REGEX'):
+                expr = "regex(" + node.text.n3() + ", " + node.pattern.n3() + ")"
+                replace("{inner_node}", expr)
+            if node.name.endswith('SUBSTR'):
+                expr = "substr(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
+                replace("{inner_node}", expr)
+                pass
 
     algebra.traverse(query_algebra.algebra, sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
 
 
-to_sparql_query_text(q1)
+# to_sparql_query_text(q1)
 # to_sparql_query_text(q2)
+# to_sparql_query_text(q3)
+# to_sparql_query_text(q4)
+# to_sparql_query_text(q5)
+# to_sparql_query_text(q6)
+# to_sparql_query_text(q7)
+# to_sparql_query_text(q8)
+to_sparql_query_text(q9)
+
 
 query = open("query.txt", "r").read()
 p = '{'

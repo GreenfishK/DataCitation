@@ -1,0 +1,15 @@
+PREFIX citing: <http://ontology.ontotext.com/citing/>
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+
+select ?document ?mention ?party ?person ?personLabel ?value {
+    ?mention publishing:hasInstance ?person .
+    ?document publishing:containsMention ?mention .
+    ?person pub:memberOfPoliticalParty ?party .
+    ?person pub:preferredLabel ?personLabel .
+    ?party pub:hasValue ?value .
+    ?value pub:preferredLabel "Democratic Party"@en .
+    filter regex(?personLabel, "Barack Obama") .
+
+}
