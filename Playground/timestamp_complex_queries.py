@@ -10,93 +10,8 @@ import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import re
 
-q1 = """
-# Prefixes
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX publishing: <http://ontology.ontotext.com/publishing#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
-select ?document (?mention as ?men) (concat(?personLabel, "hi", "hi2") as ?personName) ?party_label {
-    {
-        select *  {
-            ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty ?party .
-            ?person pub:preferredLabel ?personLabel .
-            ?party pub:hasValue ?value .
-            ?value pub:preferredLabel ?party_label .
-            filter(?personLabel = "Judy Chu"@en)
-            
-            {
-                Select * where {
-                    ?mention publishing:hasInstance ?person .
-                    
-                }
-            }
-        }
-    }
-    union
-    {
-        select * where {
-            ?mention publishing:hasInstance ?person .
-            ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty / pub:hasValue / pub:preferredLabel ?party_label .
-            ?person pub:preferredLabel ?personLabel .
-            filter(?personLabel = "Barack Obama"@en)
-        }
-    }
-    union
-    {
-        select * where {
-            ?mention publishing:hasInstance ?person .
-            ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty / pub:hasValue / pub:preferredLabel ?party_label .
-            ?person pub:preferredLabel ?personLabel .
-            filter(?personLabel = "Michelle Obama"@en)
-        }
-    }
-
-}
-"""
-
-q2 = """
-# Prefixes
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX publishing: <http://ontology.ontotext.com/publishing#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
-select ?document (?mention as ?men) (concat(?personLabel, "hi", "hi2") as ?personName) ?party_label {
-    {  
-        ?document publishing:containsMention ?mention .
-        ?person pub:memberOfPoliticalParty ?party .
-        ?person pub:preferredLabel ?personLabel .
-        ?party pub:hasValue ?value .
-        ?value pub:preferredLabel ?party_label .
-    }
-    union
-    {
-        select * where {
-            ?mention publishing:hasInstance ?person .
-            ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty / pub:hasValue / pub:preferredLabel ?party_label .
-            ?person pub:preferredLabel ?personLabel .
-            filter(?personLabel = "Barack Obama"@en)
-
-        }
-        
-    }
-    union
-    {
-        select * where {
-            ?mention publishing:hasInstance ?person .
-            ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty / pub:hasValue / pub:preferredLabel ?party_label .
-            ?person pub:preferredLabel ?personLabel .
-            filter(?personLabel = "Michelle Obama"@en)
-        }
-    }
-
-}
-"""
+q1 = open("test_query1.txt", "r").read()
+q2 = open("test_query2.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -195,14 +110,20 @@ def to_sparql_query_text(query: str = None):
                     expr = '({var} as {alias})'.format(var=node.get('expr').n3(), alias=alias)
                     replace(alias, expr)
             if node.name == "Filter":
-                replace("{inner_node}", "{inner_node}{filter}")
-                if isinstance(node.get('expr'), Expr) and node.get('expr').name == "RelationalExpression":
-                    expr = node.get('expr').expr.n3()
-                    op = node.get('expr').op
-                    other = node.get('expr').other.n3()
-                    filter = "filter({left} {operator} {right}).".format(left=expr, operator=op, right=other)
-                    replace("{filter}", filter)
-                    print(filter)
+                replace("{inner_node}", "filter({inner_node}){inner_node}")
+            if node.name == "RelationalExpression":
+                expr = node.expr.n3()
+                op = node.op
+                other = node.other.n3()
+                condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
+                print(condition)
+                replace("{inner_node}", condition)
+            if node.name == "ConditionalAndExpression":
+                inner_nodes = " && ".join(["{inner_node}" for expr in node.other if isinstance(expr, Expr)])
+                replace("{inner_node}", "{inner_node} && " + inner_nodes)
+            if node.name == "ConditionalOrExpression":
+                inner_nodes = " || ".join(["{inner_node}" for expr in node.other if isinstance(expr, Expr)])
+                replace("{inner_node}", "({inner_node} || " + inner_nodes + ")")
             if node.name == "BGP":
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
@@ -211,12 +132,15 @@ def to_sparql_query_text(query: str = None):
                 replace("{inner_node}", "{" + "{inner_node}" + "}")
             if node.name == "Union":
                 replace("{inner_node}", "{{inner_node}}union{{inner_node}}")  # if there was an union already before
+            if node.name == "Join":
+                replace("{inner_node}", "{inner_node}{inner_node}")  # if there was an union already before
 
     algebra.traverse(query_algebra.algebra, sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
 
 
-to_sparql_query_text(q2)
+to_sparql_query_text(q1)
+# to_sparql_query_text(q2)
 
 query = open("query.txt", "r").read()
 p = '{'

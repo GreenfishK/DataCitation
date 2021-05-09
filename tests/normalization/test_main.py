@@ -125,10 +125,6 @@ class TestNormalization(TestExecution):
         return test
 
     def test_normalization__sequence_paths(self):
-        logging.debug("alt 1")
-        logging.debug(self.query_data_alt1.query)
-        logging.debug("alt 2")
-        logging.debug(self.query_data_alt2.query)
         test = Test(test_number=11,
                     tc_desc="Sequence paths can reduce the number of triples in the query "
                             "and are commonly used.",
@@ -141,6 +137,15 @@ class TestNormalization(TestExecution):
         test = Test(test_number=12,
                     tc_desc="Prefixes can be interchanged in the prefix section before the query "
                             "and subsequently in the query without changing the outcome.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def test_normalization__switched_filter_statements(self):
+        test = Test(test_number=13,
+                    tc_desc="Filters can stated in different orders in a MultiSet or Basic Graph Pattern (BGP) without"
+                            "affecting the result. ",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 
