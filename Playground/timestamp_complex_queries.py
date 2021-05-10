@@ -19,6 +19,8 @@ q6 = open("test_query6.txt", "r").read()
 q7 = open("test_query7.txt", "r").read()
 q8 = open("test_query8.txt", "r").read()
 q9 = open("test_query9.txt", "r").read()
+q10 = open("test_query10.txt", "r").read()
+q11 = open("test_query11.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -84,13 +86,28 @@ def to_sparql_query_text(query: str = None):
         file.write(text)
         file.close()
 
-    def replace(old, new):
+    def replace(old, new, on_match: int = 1):
         # Read in the file
         with open('query.txt', 'r') as file:
             filedata = file.read()
 
         # Replace the target string
-        filedata = filedata.replace(old, new, 1)
+        def nth_repl(s, sub, repl, n):
+            find = s.find(sub)
+            # If find is not -1 we have found at least one match for the substring
+            i = find != -1
+            # loop util we find the nth or we find no match
+            while find != -1 and i != n:
+                # find + 1 means we start searching from after the last match
+                find = s.find(sub, find + 1)
+                i += 1
+            # If i is equal to n we found nth match so replace
+            if i == n:
+                return s[:find] + repl + s[find + len(sub):]
+            return s
+
+        filedata = nth_repl(filedata, old, new, on_match)
+        #filedata = filedata.replace(old, new, on_match)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
@@ -128,13 +145,29 @@ def to_sparql_query_text(query: str = None):
                 expr = "{inner_node} BIND({inner_node} as " + node.var.n3() + ")"
                 replace("{inner_node}", expr)
             if node.name == "Minus":
-                pass
+                expr = "{inner_node} minus {{inner_node}}"
+                replace("{inner_node}", expr)
             if node.name == "Group":
                 pass
             if node.name == "Aggregation":
                 pass
             if node.name == "AggregateJoin":
-                pass
+                for agg_func in node.A:
+                    expr = ""
+                    if agg_func.name == "Aggregate_Sum":
+                        expr = "sum(" + agg_func.vars.n3() + ")"
+                    if agg_func.name == "Aggregate_Count":
+                        expr = "count(" + agg_func.vars.n3() + ")"
+                    if agg_func.name == "Aggregate_Min":
+                        expr = "min(" + agg_func.vars.n3() + ")"
+                    if agg_func.name == "Aggregate_Max":
+                        expr = "max(" + agg_func.vars.n3() + ")"
+                    if agg_func.name == "Aggregate_Avg":
+                        expr = "avg(" + agg_func.vars.n3() + ")"
+                    if agg_func.name == "Aggregate_Sample":
+                        expr = "sample(" + agg_func.vars.n3() + ")"
+                    replace("{inner_node}", expr, 2)
+
             # 18.2 Solution modifiers
             if node.name == "ToList":
                 pass
@@ -179,7 +212,7 @@ def to_sparql_query_text(query: str = None):
             if node.name.endswith('SUBSTR'):
                 expr = "substr(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
                 replace("{inner_node}", expr)
-                pass
+
 
     algebra.traverse(query_algebra.algebra, sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
@@ -193,8 +226,9 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q6)
 # to_sparql_query_text(q7)
 # to_sparql_query_text(q8)
-to_sparql_query_text(q9)
-
+# to_sparql_query_text(q9)
+# to_sparql_query_text(q10)
+to_sparql_query_text(q11)
 
 query = open("query.txt", "r").read()
 p = '{'

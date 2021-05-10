@@ -1,1 +1,1 @@
-select ?who ?g ?mbox {?g <http://purl.org/dc/elements/1.1/publisher> ?who.graph ?g {?x <http://xmlns.com/foaf/0.1/mbox> ?mbox.}}
+select ?sample ?count ?max ?min ?avg ?sum {?a <http://www.w3.org/1999/02/22-rdf-syntax-ns#value> ?val. BIND(sample(?val) as ?sample) BIND(count(?a) as ?count) BIND(max(?val) as ?max) BIND(min(?a) as ?min) BIND(avg(?val) as ?avg) BIND(sum(?a) as ?sum)}
