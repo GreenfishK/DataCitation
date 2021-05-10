@@ -123,50 +123,52 @@ def to_sparql_query_text(query: str = None):
         if isinstance(node, CompValue):
             # 18.2 Query Forms
             if node.name == "SelectQuery":
-                overwrite("{inner_node}")
+                if isinstance(node.p, CompValue):
+                    overwrite("Select {" + node.p.name + "} {{GraphPattern}}")
+                else:
+                    print("The node SelectQuery has an unexpected object type assigned to 'p' Check whether "
+                          "this case is just not covered or a real exception")
 
             # 18.2 Graph Pattern
             if node.name == "BGP":
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{inner_node}", triples)
+                replace("{GraphPattern}", triples)
             if node.name == "Join":
-                replace("{inner_node}", "{inner_node}{inner_node}")  # if there was an union already before
+                replace("{GraphPattern}", "{GraphPattern}{GraphPattern}")  # if there was an union already before
             if node.name == "LeftJoin":
-                replace("{inner_node}", "{inner_node}OPTIONAL{{inner_node}}")  # if there was an union already before
+                replace("{GraphPattern}", "{GraphPattern}OPTIONAL{{GraphPattern}}")  # if there was an union already before
             if node.name == "Filter":
-                replace("{inner_node}", "filter({inner_node}){inner_node}")
+                expr = ""
+                if isinstance(node.expr, Expr):
+                    expr = node.expr.name
+                else:
+                    print("Only filter expressions of type Expr are covered so far.")
+                replace("{GraphPattern}", "{GraphPattern} filter({" + expr + "})")
             if node.name == "Union":
-                replace("{inner_node}", "{{inner_node}}union{{inner_node}}")  # if there was an union already before
+                replace("{GraphPattern}", "{{GraphPattern}}union{{GraphPattern}}")  # if there was an union already before
             if node.name == "Graph":
-                expr = "graph " + node.term.n3() + " {{inner_node}}"
-                replace("{inner_node}", expr)
+                expr = "graph " + node.term.n3() + " {{GraphPattern}}"
+                replace("{GraphPattern}", expr)
             if node.name == "Extend":
-                expr = "{inner_node} BIND({inner_node} as " + node.var.n3() + ")"
-                replace("{inner_node}", expr)
+                expr = ""
+                if isinstance(node.expr, Expr):
+                    expr = "{GraphPattern} BIND({" + node.expr.name + "} as " + node.var.n3() + ")"
+                if isinstance(node.expr, Variable):
+                    expr = "{GraphPattern} BIND(" + node.expr.n3() + " as " + node.var.n3() + ")"
+                replace("{GraphPattern}", expr)
             if node.name == "Minus":
-                expr = "{inner_node} minus {{inner_node}}"
-                replace("{inner_node}", expr)
+                expr = "{GraphPattern} minus {{GraphPattern}}"
+                replace("{GraphPattern}", expr)
             if node.name == "Group":
                 pass
             if node.name == "Aggregation":
                 pass
             if node.name == "AggregateJoin":
                 for agg_func in node.A:
-                    expr = ""
-                    if agg_func.name == "Aggregate_Sum":
-                        expr = "sum(" + agg_func.vars.n3() + ")"
-                    if agg_func.name == "Aggregate_Count":
-                        expr = "count(" + agg_func.vars.n3() + ")"
-                    if agg_func.name == "Aggregate_Min":
-                        expr = "min(" + agg_func.vars.n3() + ")"
-                    if agg_func.name == "Aggregate_Max":
-                        expr = "max(" + agg_func.vars.n3() + ")"
-                    if agg_func.name == "Aggregate_Avg":
-                        expr = "avg(" + agg_func.vars.n3() + ")"
-                    if agg_func.name == "Aggregate_Sample":
-                        expr = "sample(" + agg_func.vars.n3() + ")"
-                    replace("{inner_node}", expr, 2)
+                    placeholder = agg_func.res
+                    agg_func_name = agg_func.name.split('_')[1]
+                    replace("{" + placeholder + "}", agg_func_name + "(" + agg_func.vars.n3() + ")", 1)
 
             # 18.2 Solution modifiers
             if node.name == "ToList":
@@ -175,7 +177,7 @@ def to_sparql_query_text(query: str = None):
                 pass
             if node.name == "Project":
                 PVs = " ".join(elem.n3() for elem in node.get('PV'))
-                replace("{inner_node}", "select {vars} {brackets}".format(vars=PVs, brackets="{{inner_node}}"))
+                replace("{Project}", PVs)
             if node.name == "Distinct":
                 pass
             if node.name == "Reduced":
@@ -183,7 +185,7 @@ def to_sparql_query_text(query: str = None):
             if node.name == "Slice":
                 pass
             if node.name == "ToMultiSet":
-                replace("{inner_node}", "{" + "{inner_node}" + "}")
+                replace("{GraphPattern}", "{" + "{GraphPattern}" + "}")
 
             # 18.2 Property Path
 
@@ -193,32 +195,32 @@ def to_sparql_query_text(query: str = None):
                 op = node.op
                 other = node.other.n3()
                 condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
-                print(condition)
-                replace("{inner_node}", condition)
+                replace("{RelationalExpression}", condition)
             if node.name == "ConditionalAndExpression":
-                inner_nodes = " && ".join(["{inner_node}" for expr in node.other if isinstance(expr, Expr)])
-                replace("{inner_node}", "{inner_node} && " + inner_nodes)
+                inner_nodes = " && ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
+                replace("{ConditionalAndExpression}", "{" + node.expr.name + "}" + " && " + inner_nodes)
             if node.name == "ConditionalOrExpression":
-                inner_nodes = " || ".join(["{inner_node}" for expr in node.other if isinstance(expr, Expr)])
-                replace("{inner_node}", "({inner_node} || " + inner_nodes + ")")
+                inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
+                print(inner_nodes)
+                replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
 
             # 17.4.3 Functions on Strings
             if node.name.endswith('CONCAT'):
                 expr = 'concat({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
-                replace("{inner_node}", expr)
+                replace("{Builtin_CONCAT}", expr)
             if node.name.endswith('REGEX'):
                 expr = "regex(" + node.text.n3() + ", " + node.pattern.n3() + ")"
-                replace("{inner_node}", expr)
+                replace("{Builtin_REGEX}", expr)
             if node.name.endswith('SUBSTR'):
                 expr = "substr(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
-                replace("{inner_node}", expr)
+                replace("{Builtin_SUBSTR}", expr)
 
 
     algebra.traverse(query_algebra.algebra, sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
 
 
-# to_sparql_query_text(q1)
+to_sparql_query_text(q1)
 # to_sparql_query_text(q2)
 # to_sparql_query_text(q3)
 # to_sparql_query_text(q4)
@@ -228,7 +230,7 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q8)
 # to_sparql_query_text(q9)
 # to_sparql_query_text(q10)
-to_sparql_query_text(q11)
+# to_sparql_query_text(q11)
 
 query = open("query.txt", "r").read()
 p = '{'

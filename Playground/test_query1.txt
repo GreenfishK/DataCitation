@@ -12,7 +12,7 @@ select ?document (?mention as ?men) (concat(?personLabel, "hi", "hi2") as ?perso
             ?party pub:hasValue ?value .
             ?value pub:preferredLabel ?party_label .
             {
-                Select * where {
+                Select ?person where {
                     ?mention publishing:hasInstance ?person .
 
                 }
