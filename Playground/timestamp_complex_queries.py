@@ -124,7 +124,8 @@ def to_sparql_query_text(query: str = None):
             # 18.2 Query Forms
             if node.name == "SelectQuery":
                 if isinstance(node.p, CompValue):
-                    overwrite("Select {" + node.p.name + "} {{GraphPattern}}")
+                    PVs = " ".join(elem.n3() for elem in node.PV)
+                    overwrite("Select " + PVs + " {{" + node.p.name + "}} ")
                 else:
                     print("The node SelectQuery has an unexpected object type assigned to 'p' Check whether "
                           "this case is just not covered or a real exception")
@@ -133,33 +134,38 @@ def to_sparql_query_text(query: str = None):
             if node.name == "BGP":
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{GraphPattern}", triples)
+                replace("{BGP}", triples)
             if node.name == "Join":
-                replace("{GraphPattern}", "{GraphPattern}{GraphPattern}")  # if there was an union already before
+                replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  # if there was an union already before
             if node.name == "LeftJoin":
-                replace("{GraphPattern}", "{GraphPattern}OPTIONAL{{GraphPattern}}")  # if there was an union already before
+                replace("{LeftJoin}", "{" + node.p1.name + "}OPTIONAL{{" + node.p2.name + "}}")  # if there was an union already before
             if node.name == "Filter":
                 expr = ""
                 if isinstance(node.expr, Expr):
                     expr = node.expr.name
                 else:
                     print("Only filter expressions of type Expr are covered so far.")
-                replace("{GraphPattern}", "{GraphPattern} filter({" + expr + "})")
+                replace("{Filter}", "{" + node.p.name + "} filter({" + expr + "})")
             if node.name == "Union":
-                replace("{GraphPattern}", "{{GraphPattern}}union{{GraphPattern}}")  # if there was an union already before
+                replace("{Union}", "{{" + node.p1.name + "}}union{{" + node.p2.name + "}}")
             if node.name == "Graph":
-                expr = "graph " + node.term.n3() + " {{GraphPattern}}"
-                replace("{GraphPattern}", expr)
+                expr = "graph " + node.term.n3() + " {{" + node.p.name + "}}"
+                replace("{Graph}", expr)
             if node.name == "Extend":
                 expr = ""
+                if isinstance(node.p, CompValue):
+                    node_name = node.p.name
+                else:
+                    node_name = node.p
                 if isinstance(node.expr, Expr):
-                    expr = "{GraphPattern} BIND({" + node.expr.name + "} as " + node.var.n3() + ")"
+                    expr = "{" + node_name + "} BIND({" + node.expr.name + "} as " + node.var.n3() + ")"
                 if isinstance(node.expr, Variable):
-                    expr = "{GraphPattern} BIND(" + node.expr.n3() + " as " + node.var.n3() + ")"
-                replace("{GraphPattern}", expr)
+                    expr = "{" + node_name + "} BIND(" + node.expr.n3() + " as " + node.var.n3() + ")"
+
+                replace("{Extend}", expr)
             if node.name == "Minus":
-                expr = "{GraphPattern} minus {{GraphPattern}}"
-                replace("{GraphPattern}", expr)
+                expr = "{" + node.p1.name + "} minus {{" + node.p2.name + "}}"
+                replace("{Minus}", expr)
             if node.name == "Group":
                 pass
             if node.name == "Aggregation":
@@ -176,8 +182,8 @@ def to_sparql_query_text(query: str = None):
             if node.name == "OrderBy":
                 pass
             if node.name == "Project":
-                PVs = " ".join(elem.n3() for elem in node.get('PV'))
-                replace("{Project}", PVs)
+                PVs = " ".join(elem.n3() for elem in node.PV)
+                replace("{Project}", "Select " + PVs + " {{" + node.p.name + "}} ")
             if node.name == "Distinct":
                 pass
             if node.name == "Reduced":
@@ -185,7 +191,7 @@ def to_sparql_query_text(query: str = None):
             if node.name == "Slice":
                 pass
             if node.name == "ToMultiSet":
-                replace("{GraphPattern}", "{" + "{GraphPattern}" + "}")
+                replace("{ToMultiSet}", "{" + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
 
@@ -220,9 +226,9 @@ def to_sparql_query_text(query: str = None):
     algebra.pprintAlgebra(query_algebra)
 
 
-to_sparql_query_text(q1)
+# to_sparql_query_text(q1)
 # to_sparql_query_text(q2)
-# to_sparql_query_text(q3)
+to_sparql_query_text(q3)
 # to_sparql_query_text(q4)
 # to_sparql_query_text(q5)
 # to_sparql_query_text(q6)
