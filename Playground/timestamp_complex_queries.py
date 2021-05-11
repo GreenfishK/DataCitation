@@ -269,7 +269,7 @@ def to_sparql_query_text(query: str = None):
                     row = []
                     for term in elem.values():
                         if isinstance(term, rdflib.term.Identifier):
-                            row.append(term.n3())
+                            row.append(term.n3())  # n3() is not part of Identifier class but every subclass has it
                         elif isinstance(term, str):
                             row.append(term)
                         else:
