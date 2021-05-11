@@ -1,1 +1,1 @@
-SELECT ?book ?title ?price {SELECT {values}}{?book <http://example.org/ns#price> ?price.?book <http://purl.org/dc/elements/1.1/title> ?title.} 
+SELECT ?book ?title ?price {?book <http://example.org/ns#price> ?price.?book <http://purl.org/dc/elements/1.1/title> ?title.{VALUES (?book ?title){(UNDEF "SPARQL Tutorial")(<http://example.org/book/book2> UNDEF)}}} 

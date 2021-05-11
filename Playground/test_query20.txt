@@ -1,0 +1,11 @@
+SELECT ?s ?p ?o
+{
+    ?s ?p ?o.
+    {
+        SELECT DISTINCT ?o
+        {
+            ?o ?p ?z.
+        }
+
+    }
+}

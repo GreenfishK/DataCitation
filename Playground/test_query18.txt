@@ -1,0 +1,18 @@
+# Prefixes
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+select ?document (?mention as ?men) (concat(?personLabel, "hi", "hi2") as ?personName) ?party_label {
+    select *  {
+        ?document publishing:containsMention ?mention .
+        ?person pub:memberOfPoliticalParty ?party .
+        ?person pub:preferredLabel ?personLabel .
+        ?party pub:hasValue ?value .
+        ?value pub:preferredLabel ?party_label .
+        {
+            Select ?person where {
+                ?mention publishing:hasInstance ?person .
+            }
+        }
+    }
+}

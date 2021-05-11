@@ -27,6 +27,9 @@ q14 = open("test_query14.txt", "r").read()
 q15 = open("test_query15.txt", "r").read()
 q16 = open("test_query16.txt", "r").read()
 q17 = open("test_query17.txt", "r").read()
+q18 = open("test_query18.txt", "r").read()
+q19 = open("test_query19.txt", "r").read()
+q20 = open("test_query20.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -138,7 +141,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "BGP":
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{BGP}", "{" + triples + "}")
+                replace("{BGP}", "" + triples + "")
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -159,11 +162,12 @@ def to_sparql_query_text(query: str = None):
                 replace("{Graph}", expr)
             elif node.name == "Extend":
                 if isinstance(node.expr, Expr):
-                    replace(node.var.n3(), "(" + node.expr.name + " as " + node.var.n3() + ")")
-                if isinstance(node.expr, Variable):
+                    replace(node.var.n3(), "({" + node.expr.name + "} as " + node.var.n3() + ")")
+                elif isinstance(node.expr, Variable):
                     replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
                 else:
-                    raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                    raise ExpressionNotCoveredException("This expression type {0} might "
+                                                        "not be covered yet.".format(type(node.expr)))
                 replace("{Extend}", "{" + node.p.name + "}")
             elif node.name == "Minus":
                 expr = "{" + node.p1.name + "} MINUS {{" + node.p2.name + "}}"
@@ -209,7 +213,7 @@ def to_sparql_query_text(query: str = None):
                         project_variables.append(var.n3())
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{Project}", " ".join(project_variables) + " {" + node.p.name + "} ")
+                replace("{Project}", " ".join(project_variables) + " {{" + node.p.name + "}} ")
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -218,7 +222,10 @@ def to_sparql_query_text(query: str = None):
                 slice = "OFFSET " + str(node.start) + " LIMIT " + str(node.length)
                 replace("{Slice}", "{" + node.p.name + "}" + slice)
             elif node.name == "ToMultiSet":
-                replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
+                if node.p.name == "values":
+                    replace("{ToMultiSet}", "{" + node.p.name + "}")
+                else:
+                    replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
 
@@ -249,10 +256,30 @@ def to_sparql_query_text(query: str = None):
 
             # Other
             elif node.name == 'values':
-                print("values")
+                columns = []
+                for key in node.res[0].keys():
+                    if isinstance(key, Variable):
+                        columns.append(key.n3())
+                    else:
+                        raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
+                values = "VALUES (" + " ".join(columns) +")"
+
+                rows = ""
+                for elem in node.res:
+                    row = []
+                    for term in elem.values():
+                        if isinstance(term, rdflib.term.Identifier):
+                            row.append(term.n3())
+                        elif isinstance(term, str):
+                            row.append(term)
+                        else:
+                            raise ExpressionNotCoveredException(
+                                "The expression {0} might not be covered yet.".format(key))
+                    rows += "(" + " ".join(row) + ")"
+
+                replace("values", values + "{" + rows + "}")
             elif node.name == 'Service':
                 print("service")
-
 
             else:
                 pass
@@ -279,6 +306,9 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q15)
 # to_sparql_query_text(q16)
 to_sparql_query_text(q17)
+# to_sparql_query_text(q18)
+# to_sparql_query_text(q19)
+# to_sparql_query_text(q20)
 
 query = open("query.txt", "r").read()
 p = '{'
