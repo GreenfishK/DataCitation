@@ -21,6 +21,12 @@ q8 = open("test_query8.txt", "r").read()
 q9 = open("test_query9.txt", "r").read()
 q10 = open("test_query10.txt", "r").read()
 q11 = open("test_query11.txt", "r").read()
+q12 = open("test_query12.txt", "r").read()
+q13 = open("test_query13.txt", "r").read()
+q14 = open("test_query14.txt", "r").read()
+q15 = open("test_query15.txt", "r").read()
+q16 = open("test_query16.txt", "r").read()
+q17 = open("test_query17.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -111,7 +117,6 @@ def to_sparql_query_text(query: str = None):
             return s
 
         filedata = nth_repl(filedata, old, new, on_match)
-        #filedata = filedata.replace(old, new, on_match)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
@@ -127,106 +132,131 @@ def to_sparql_query_text(query: str = None):
         if isinstance(node, CompValue):
             # 18.2 Query Forms
             if node.name == "SelectQuery":
-                if isinstance(node.p, CompValue):
-                    #PVs = " ".join(elem.n3() for elem in node.PV)
-                    #overwrite("Select " + PVs + " {{" + node.p.name + "}} ")
-                    overwrite("Select " + "{" + node.p.name + "}")
-                else:
-                    raise ExpressionNotCoveredException("This object type might not be covered yet.")
+                overwrite("SELECT " + "{" + node.p.name + "}")
 
-            # 18.2 Graph Pattern
-            if node.name == "BGP":
+            # 18.2 Graph Patterns
+            elif node.name == "BGP":
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
                 replace("{BGP}", "{" + triples + "}")
-            if node.name == "Join":
-                replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  # if there was an union already before
-            if node.name == "LeftJoin":
-                replace("{LeftJoin}", "{" + node.p1.name + "}OPTIONAL{{" + node.p2.name + "}}")  # if there was an union already before
-            if node.name == "Filter":
-                expr = ""
+            elif node.name == "Join":
+                replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
+            elif node.name == "LeftJoin":
+                replace("{LeftJoin}", "{" + node.p1.name + "}OPTIONAL{{" + node.p2.name + "}}")
+            elif node.name == "Filter":
                 if isinstance(node.expr, Expr):
                     expr = node.expr.name
                 else:
-                    raise ExpressionNotCoveredException("This object type might not be covered yet.")
-                replace("{Filter}", "{" + node.p.name + "} filter({" + expr + "})")
-            if node.name == "Union":
-                replace("{Union}", "{{" + node.p1.name + "}}union{{" + node.p2.name + "}}")
-            if node.name == "Graph":
-                expr = "graph " + node.term.n3() + " {{" + node.p.name + "}}"
+                    raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                if node.p.name == "AggregateJoin":
+                    replace("{Filter}", "{" + node.p.name + "} HAVING({" + expr + "})")
+                else:
+                    replace("{Filter}", "{" + node.p.name + "} FILTER({" + expr + "})")
+            elif node.name == "Union":
+                replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
+            elif node.name == "Graph":
+                expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
                 replace("{Graph}", expr)
-            if node.name == "Extend":
-                expr = ""
-
+            elif node.name == "Extend":
                 if isinstance(node.expr, Expr):
                     replace(node.var.n3(), "(" + node.expr.name + " as " + node.var.n3() + ")")
                 if isinstance(node.expr, Variable):
                     replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
                 else:
-                    raise ExpressionNotCoveredException("This object type might not be covered yet.")
-
+                    raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 replace("{Extend}", "{" + node.p.name + "}")
-            if node.name == "Minus":
-                expr = "{" + node.p1.name + "} minus {{" + node.p2.name + "}}"
+            elif node.name == "Minus":
+                expr = "{" + node.p1.name + "} MINUS {{" + node.p2.name + "}}"
                 replace("{Minus}", expr)
-            if node.name == "Group":
-                group_by_vars = " ".join(var.n3() for var in node.expr if isinstance(var, Variable))
-                replace("{Group}", "{" + node.p.name + "}" + "" + "group by " + group_by_vars)
-            if node.name == "Aggregation":
-                pass
-            if node.name == "AggregateJoin":
+            elif node.name == "Group":
+                group_by_vars = []
+                for var in node.expr:
+                    if isinstance(var, Variable):
+                        group_by_vars.append(var.n3())
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+            elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
                     if isinstance(agg_func.res, Variable):
                         placeholder = agg_func.res.n3()
                     else:
-                        raise ExpressionNotCoveredException("This object type might not be covered yet.")
+                        raise ExpressionNotCoveredException("This expressione might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
-                    replace(placeholder, agg_func_name + "(" + agg_func.vars.n3() + ")", 1)
+                    replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
 
             # 18.2 Solution modifiers
-            if node.name == "ToList":
-                pass
-            if node.name == "OrderBy":
-                pass
-            if node.name == "Project":
-                PVs = " ".join(elem.n3() for elem in node.PV)
-                replace("{Project}", PVs + " {" + node.p.name + "} ")
-            if node.name == "Distinct":
-                pass
-            if node.name == "Reduced":
-                pass
-            if node.name == "Slice":
-                pass
-            if node.name == "ToMultiSet":
-                replace("{ToMultiSet}", "{Select " + "{" + node.p.name + "}" + "}")
+            elif node.name == "ToList":
+                raise ExpressionNotCoveredException("This expression might not be covered yet.")
+            elif node.name == "OrderBy":
+                order_conditions = []
+                for c in node.expr:
+                    if isinstance(c.expr, Variable):
+                        var = c.expr.n3()
+                        if c.order is not None:
+                            cond = var + "(" + c.order + ")"
+                        else:
+                            cond = var
+                        order_conditions.append(cond)
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                replace("{OrderBy}", "{" + node.p.name + "}" + "ORDER BY " + " ".join(order_conditions))
+            elif node.name == "Project":
+                project_variables = []
+                for var in node.PV:
+                    if isinstance(var, Variable):
+                        project_variables.append(var.n3())
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                replace("{Project}", " ".join(project_variables) + " {" + node.p.name + "} ")
+            elif node.name == "Distinct":
+                replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
+            elif node.name == "Reduced":
+                replace("{Reduced}", "REDUCED {" + node.p.name + "}")
+            elif node.name == "Slice":
+                slice = "OFFSET " + str(node.start) + " LIMIT " + str(node.length)
+                replace("{Slice}", "{" + node.p.name + "}" + slice)
+            elif node.name == "ToMultiSet":
+                replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
 
             # 17.3 Operator Mapping
-            if node.name == "RelationalExpression":
+            elif node.name == "RelationalExpression":
                 expr = node.expr.n3()
                 op = node.op
                 other = node.other.n3()
                 condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
                 replace("{RelationalExpression}", condition)
-            if node.name == "ConditionalAndExpression":
+            elif node.name == "ConditionalAndExpression":
                 inner_nodes = " && ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
                 replace("{ConditionalAndExpression}", "{" + node.expr.name + "}" + " && " + inner_nodes)
-            if node.name == "ConditionalOrExpression":
+            elif node.name == "ConditionalOrExpression":
                 inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
                 replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
 
             # 17.4.3 Functions on Strings
-            if node.name.endswith('CONCAT'):
-                expr = 'concat({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
+            elif node.name.endswith('CONCAT'):
+                expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
                 replace("{Builtin_CONCAT}", expr)
-            if node.name.endswith('REGEX'):
-                expr = "regex(" + node.text.n3() + ", " + node.pattern.n3() + ")"
+            elif node.name.endswith('REGEX'):
+                expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
                 replace("{Builtin_REGEX}", expr)
-            if node.name.endswith('SUBSTR'):
-                expr = "substr(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
+            elif node.name.endswith('SUBSTR'):
+                expr = "SUBSTR(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
                 replace("{Builtin_SUBSTR}", expr)
+
+            # Other
+            elif node.name == 'values':
+                print("values")
+            elif node.name == 'Service':
+                print("service")
+
+
+            else:
+                pass
+                #raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
@@ -242,7 +272,13 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q8)
 # to_sparql_query_text(q9)
 # to_sparql_query_text(q10)
-to_sparql_query_text(q11)
+# to_sparql_query_text(q11)
+# to_sparql_query_text(q12)
+# to_sparql_query_text(q13)
+# to_sparql_query_text(q14)
+# to_sparql_query_text(q15)
+# to_sparql_query_text(q16)
+to_sparql_query_text(q17)
 
 query = open("query.txt", "r").read()
 p = '{'

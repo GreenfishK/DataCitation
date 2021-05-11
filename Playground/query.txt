@@ -1,1 +1,1 @@
-Select (Count(?val) as ?count) {?a <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?val.}group by ?a 
+SELECT ?book ?title ?price {SELECT {values}}{?book <http://example.org/ns#price> ?price.?book <http://purl.org/dc/elements/1.1/title> ?title.} 
