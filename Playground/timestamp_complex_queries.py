@@ -76,6 +76,10 @@ def query_triples(query, sparql_prefixes: str = None) -> dict:
     return n3_triple_sets
 
 
+class ExpressionNotCoveredException(Exception):
+    pass
+
+
 def to_sparql_query_text(query: str = None):
     p = parser
     query_tree = p.parseQuery(query)
@@ -124,17 +128,17 @@ def to_sparql_query_text(query: str = None):
             # 18.2 Query Forms
             if node.name == "SelectQuery":
                 if isinstance(node.p, CompValue):
-                    PVs = " ".join(elem.n3() for elem in node.PV)
-                    overwrite("Select " + PVs + " {{" + node.p.name + "}} ")
+                    #PVs = " ".join(elem.n3() for elem in node.PV)
+                    #overwrite("Select " + PVs + " {{" + node.p.name + "}} ")
+                    overwrite("Select " + "{" + node.p.name + "}")
                 else:
-                    print("The node SelectQuery has an unexpected object type assigned to 'p' Check whether "
-                          "this case is just not covered or a real exception")
+                    raise ExpressionNotCoveredException("This object type might not be covered yet.")
 
             # 18.2 Graph Pattern
             if node.name == "BGP":
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{BGP}", triples)
+                replace("{BGP}", "{" + triples + "}")
             if node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  # if there was an union already before
             if node.name == "LeftJoin":
@@ -144,7 +148,7 @@ def to_sparql_query_text(query: str = None):
                 if isinstance(node.expr, Expr):
                     expr = node.expr.name
                 else:
-                    print("Only filter expressions of type Expr are covered so far.")
+                    raise ExpressionNotCoveredException("This object type might not be covered yet.")
                 replace("{Filter}", "{" + node.p.name + "} filter({" + expr + "})")
             if node.name == "Union":
                 replace("{Union}", "{{" + node.p1.name + "}}union{{" + node.p2.name + "}}")
@@ -153,28 +157,32 @@ def to_sparql_query_text(query: str = None):
                 replace("{Graph}", expr)
             if node.name == "Extend":
                 expr = ""
-                if isinstance(node.p, CompValue):
-                    node_name = node.p.name
-                else:
-                    node_name = node.p
-                if isinstance(node.expr, Expr):
-                    expr = "{" + node_name + "} BIND({" + node.expr.name + "} as " + node.var.n3() + ")"
-                if isinstance(node.expr, Variable):
-                    expr = "{" + node_name + "} BIND(" + node.expr.n3() + " as " + node.var.n3() + ")"
 
-                replace("{Extend}", expr)
+                if isinstance(node.expr, Expr):
+                    replace(node.var.n3(), "(" + node.expr.name + " as " + node.var.n3() + ")")
+                if isinstance(node.expr, Variable):
+                    replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
+                else:
+                    raise ExpressionNotCoveredException("This object type might not be covered yet.")
+
+                replace("{Extend}", "{" + node.p.name + "}")
             if node.name == "Minus":
                 expr = "{" + node.p1.name + "} minus {{" + node.p2.name + "}}"
                 replace("{Minus}", expr)
             if node.name == "Group":
-                pass
+                group_by_vars = " ".join(var.n3() for var in node.expr if isinstance(var, Variable))
+                replace("{Group}", "{" + node.p.name + "}" + "" + "group by " + group_by_vars)
             if node.name == "Aggregation":
                 pass
             if node.name == "AggregateJoin":
+                replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
-                    placeholder = agg_func.res
+                    if isinstance(agg_func.res, Variable):
+                        placeholder = agg_func.res.n3()
+                    else:
+                        raise ExpressionNotCoveredException("This object type might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
-                    replace("{" + placeholder + "}", agg_func_name + "(" + agg_func.vars.n3() + ")", 1)
+                    replace(placeholder, agg_func_name + "(" + agg_func.vars.n3() + ")", 1)
 
             # 18.2 Solution modifiers
             if node.name == "ToList":
@@ -183,7 +191,7 @@ def to_sparql_query_text(query: str = None):
                 pass
             if node.name == "Project":
                 PVs = " ".join(elem.n3() for elem in node.PV)
-                replace("{Project}", "Select " + PVs + " {{" + node.p.name + "}} ")
+                replace("{Project}", PVs + " {" + node.p.name + "} ")
             if node.name == "Distinct":
                 pass
             if node.name == "Reduced":
@@ -191,7 +199,7 @@ def to_sparql_query_text(query: str = None):
             if node.name == "Slice":
                 pass
             if node.name == "ToMultiSet":
-                replace("{ToMultiSet}", "{" + "{" + node.p.name + "}" + "}")
+                replace("{ToMultiSet}", "{Select " + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
 
@@ -207,7 +215,6 @@ def to_sparql_query_text(query: str = None):
                 replace("{ConditionalAndExpression}", "{" + node.expr.name + "}" + " && " + inner_nodes)
             if node.name == "ConditionalOrExpression":
                 inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
-                print(inner_nodes)
                 replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
 
             # 17.4.3 Functions on Strings
@@ -221,14 +228,13 @@ def to_sparql_query_text(query: str = None):
                 expr = "substr(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
                 replace("{Builtin_SUBSTR}", expr)
 
-
     algebra.traverse(query_algebra.algebra, sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
 
 
 # to_sparql_query_text(q1)
 # to_sparql_query_text(q2)
-to_sparql_query_text(q3)
+# to_sparql_query_text(q3)
 # to_sparql_query_text(q4)
 # to_sparql_query_text(q5)
 # to_sparql_query_text(q6)
@@ -236,7 +242,7 @@ to_sparql_query_text(q3)
 # to_sparql_query_text(q8)
 # to_sparql_query_text(q9)
 # to_sparql_query_text(q10)
-# to_sparql_query_text(q11)
+to_sparql_query_text(q11)
 
 query = open("query.txt", "r").read()
 p = '{'

@@ -1,5 +1,4 @@
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT (sample(?val) AS ?sample) (COUNT(?a) AS ?count) (max(?val) AS ?max) (min(?a) AS ?min) (avg(?val) AS ?avg) (sum(?a) AS ?sum)
-WHERE {
-  ?a rdf:value ?val .
+SELECT (count(?val) AS ?count) {
+  ?a rdf:type ?val .
 } GROUP BY ?a
