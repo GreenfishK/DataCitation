@@ -40,6 +40,7 @@ q27 = open("test_query27.txt", "r").read()
 q28 = open("test_query28.txt", "r").read()
 q29 = open("test_query29.txt", "r").read()
 q30 = open("test_query30.txt", "r").read()
+q31 = open("test_query31.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -368,26 +369,44 @@ def to_sparql_query_text(query: str = None):
                 replace("{Builtin_STRUUID}", "STRUUID()")
 
             # # # 17.4.3 Functions on Strings
-            # # # # STRLEN
+            elif node.name.endswith('Builtin_STRLEN'):
+                replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('SUBSTR'):
                 expr = "SUBSTR(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
                 replace("{Builtin_SUBSTR}", expr)
-            # # # # UCASE
-            # # # # LCASE
-            # # # # STRSTARTS
-            # # # # STRENDS
-            # # # # CONTAINS
-            # # # # STRBEFORE
-            # # # # STRAFTER
-            # # # # ENCODE_FOR_URI
+            elif node.name.endswith('Builtin_UCASE'):
+                replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_LCASE'):
+                replace("{Builtin_LCASE}", "LCASE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_STRSTARTS'):
+                replace("{Builtin_STRSTARTS}", "STRSTARTS(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRENDS'):
+                replace("{Builtin_STRENDS}", "STRENDS(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_CONTAINS'):
+                replace("{Builtin_CONTAINS}", "CONTAINS(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRBEFORE'):
+                replace("{Builtin_STRBEFORE}", "STRBEFORE(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRAFTER'):
+                replace("{Builtin_STRAFTER}", "STRAFTER(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_ENCODE_FOR_URI'):
+                replace("{Builtin_ENCODE_FOR_URI}", "ENCODE_FOR_URI(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('CONCAT'):
                 expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
                 replace("{Builtin_CONCAT}", expr)
-            # # # # langMatches
+            elif node.name.endswith('Builtin_LANGMATCHES'):
+                replace("{Builtin_LANGMATCHES}", "LANGMATCHES(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
             elif node.name.endswith('REGEX'):
                 expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
                 replace("{Builtin_REGEX}", expr)
-            # # # # REPLACE
+            elif node.name.endswith('REPLACE'):
+                replace("{Builtin_REPLACE}", "REPLACE(" + convert_node_arg(node.arg)
+                        + ", " + convert_node_arg(node.pattern) + ", " + convert_node_arg(node.replacement) + ")")
 
             # # # 17.4.4 Functions on Numerics
             # # # # abs
@@ -476,7 +495,8 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q27)
 # to_sparql_query_text(q28)
 # to_sparql_query_text(q29)
-to_sparql_query_text(q30)
+# to_sparql_query_text(q30)
+to_sparql_query_text(q31)
 
 query = open("query.txt", "r").read()
 p = '{'

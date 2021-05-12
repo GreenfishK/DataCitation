@@ -1,7 +1,8 @@
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
 PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 
-select ?personLabel ?party_label ?document ?mention (uuid() as ?uuid) (STRUUID() as ?struuid) (STRDT("iiii", <http://example/romanNumeral>) as ?strdt) (STRLANG("chat", "en") as ?strlang) where {
+select ?personLabel ?party_label ?document ?mention (uuid() as ?uuid) (STRUUID() as ?struuid) (STRDT("iiii", <http://example/romanNumeral>) as ?strdt) (STRLANG("chat", "en") as ?strlang) (strlen("chat") as ?chatlen)
+ (strStarts("foobar", "foo") as ?strstarts)  (strends("foobar", "foo") as ?strends) where {
     ?mention publishing:hasInstance ?person .
     ?document publishing:containsMention ?mention .
     ?person pub:memberOfPoliticalParty ?party .
