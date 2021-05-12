@@ -38,6 +38,8 @@ q25 = open("test_query25.txt", "r").read()
 q26 = open("test_query26.txt", "r").read()
 q27 = open("test_query27.txt", "r").read()
 q28 = open("test_query28.txt", "r").read()
+q29 = open("test_query29.txt", "r").read()
+q30 = open("test_query30.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -270,7 +272,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "RelationalExpression":
                 expr = convert_node_arg(node.expr)
                 op = node.op
-                if len(node.other) > 1:
+                if isinstance(list, type(node.other)):
                     other = "(" + ", ".join(convert_node_arg(expr) for expr in node.other) + ")"
                 else:
                     other = convert_node_arg(node.other)
@@ -336,18 +338,34 @@ def to_sparql_query_text(query: str = None):
             # Covered in RelationalExpression
 
             # # # 17.4.2 Functions on RDF Terms
-            # # # # isIRI
-            # # # # isBlank
-            # # # # isLiteral
-            # # # # isNumeric
-            # # # # str
-            # # # # lang
-            # # # # datatype
-            # # # # BNODE
-            # # # # STRDT
-            # # # # STRLANG
-            # # # # UUID
-            # # # # STRUUID
+            elif node.name.endswith('Builtin_isIRI'):
+                replace("{Builtin_isIRI}", "isIRI(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_isBLANK'):
+                replace("{Builtin_isBLANK}", "isBLANK(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_isLITERAL'):
+                replace("{Builtin_isLITERAL}", "isLITERAL(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_isNUMERIC'):
+                replace("{Builtin_isNUMERIC}", "isNUMERIC(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_STR'):
+                replace("{Builtin_STR}", "STR(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_LANG'):
+                replace("{Builtin_LANG}", "LANG(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_DATATYPE'):
+                replace("{Builtin_DATATYPE}", "DATATYPE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_IRI'):
+                replace("{Builtin_IRI}", "IRI(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_BNODE'):
+                replace("{Builtin_BNODE}", "BNODE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('STRDT'):
+                replace("{Builtin_STRDT}", "STRDT(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRLANG'):
+                replace("{Builtin_STRLANG}", "STRLANG(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_UUID'):
+                replace("{Builtin_UUID}", "UUID()")
+            elif node.name.endswith('Builtin_STRUUID'):
+                replace("{Builtin_STRUUID}", "STRUUID()")
 
             # # # 17.4.3 Functions on Strings
             # # # # STRLEN
@@ -456,7 +474,9 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q25)
 # to_sparql_query_text(q26)
 # to_sparql_query_text(q27)
-to_sparql_query_text(q28)
+# to_sparql_query_text(q28)
+# to_sparql_query_text(q29)
+to_sparql_query_text(q30)
 
 query = open("query.txt", "r").read()
 p = '{'
