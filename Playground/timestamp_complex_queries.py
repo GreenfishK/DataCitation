@@ -37,6 +37,7 @@ q24 = open("test_query24.txt", "r").read()
 q25 = open("test_query25.txt", "r").read()
 q26 = open("test_query26.txt", "r").read()
 q27 = open("test_query27.txt", "r").read()
+q28 = open("test_query28.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -211,19 +212,19 @@ def to_sparql_query_text(query: str = None):
                     replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
             elif node.name == 'ServiceGraphPattern':
                 replace("{ServiceGraphPattern}", node.service_string)
-            elif node.name == 'GroupGraphPatternSub':
-                # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
-                # see test_query27.txt
-                patterns = ""
-                for pattern in node.part:
-                    if isinstance(pattern, CompValue):
-                        patterns += "{" + pattern.name + "}"
-                replace("{GroupGraphPatternSub}", patterns)
-            elif node.name == 'TriplesBlock':
-                triples = ""
-                for triple in node.triples:
-                    triples += " ".join(elem.n3() for elem in triple) + "."
-                replace("{TriplesBlock}", "{" + triples + "}")
+            # elif node.name == 'GroupGraphPatternSub':
+            #     # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
+            #     # see test_query27.txt
+            #     patterns = ""
+            #     for pattern in node.part:
+            #         if isinstance(pattern, CompValue):
+            #             patterns += "{" + pattern.name + "}"
+            #     replace("{GroupGraphPatternSub}", patterns)
+            # elif node.name == 'TriplesBlock':
+            #     triples = ""
+            #     for triple in node.triples:
+            #         triples += " ".join(elem.n3() for elem in triple) + "."
+            #     replace("{TriplesBlock}", "{" + triples + "}")
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -269,7 +270,10 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "RelationalExpression":
                 expr = convert_node_arg(node.expr)
                 op = node.op
-                other = node.other.n3()
+                if len(node.other) > 1:
+                    other = "(" + ", ".join(convert_node_arg(expr) for expr in node.other) + ")"
+                else:
+                    other = convert_node_arg(node.other)
                 condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
                 replace("{RelationalExpression}", condition)
             elif node.name == "ConditionalAndExpression":
@@ -306,23 +310,30 @@ def to_sparql_query_text(query: str = None):
                 replace("{Builtin_IF}", if_expression)
             elif node.name.endswith('COALESCE'):
                 replace("{Builtin_COALESCE}", "COALESCE(" + ", ".join(convert_node_arg(arg) for arg in node.arg) + ")")
-            elif node.name.endswith('EXISTS'):
+            elif node.name.endswith('Builtin_EXISTS'):
                 #  node.graph.name returns "Join" instead of GroupGraphPatternSub
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
                 # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
                 # GroupGraphPatternSub
-                replace("{Builtin_EXISTS}", "EXISTS " + "{GroupGraphPatternSub}")
-            elif node.name.endswith('NOTEXISTS'):
+                replace("{Builtin_EXISTS}", "EXISTS " + "{{" + node.graph.name + "}}")
+                algebra.traverse(node.graph, visitPre=sparql_query_text)
+            elif node.name.endswith('Builtin_NOTEXISTS'):
                 #  node.graph.name returns "Join" instead of GroupGraphPatternSub
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
                 # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
                 # GroupGraphPatternSub
-                replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{GroupGraphPatternSub}")
+                replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
+                algebra.traverse(node.graph, visitPre=sparql_query_text)
+
+                return node.graph
+
             elif node.name.endswith('sameTerm'):
                 replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
                         + ", " + convert_node_arg(node.arg2) + ")")
             # # # # IN
+            # Covered in RelationalExpression
             # # # # NOT IN
+            # Covered in RelationalExpression
 
             # # # 17.4.2 Functions on RDF Terms
             # # # # isIRI
@@ -414,7 +425,7 @@ def to_sparql_query_text(query: str = None):
                 pass
                 #raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
-    algebra.traverse(query_algebra.algebra, sparql_query_text)
+    algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
 
 
@@ -444,7 +455,8 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q24)
 # to_sparql_query_text(q25)
 # to_sparql_query_text(q26)
-to_sparql_query_text(q27)
+# to_sparql_query_text(q27)
+to_sparql_query_text(q28)
 
 query = open("query.txt", "r").read()
 p = '{'
