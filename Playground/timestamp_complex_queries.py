@@ -3,8 +3,8 @@ from src.rdf_data_citation._helper import template_path
 from datetime import datetime
 import rdflib
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
-from rdflib.term import Variable
-from rdflib.paths import SequencePath
+from rdflib.term import Identifier
+from rdflib.paths import Path
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
@@ -30,6 +30,11 @@ q17 = open("test_query17.txt", "r").read()
 q18 = open("test_query18.txt", "r").read()
 q19 = open("test_query19.txt", "r").read()
 q20 = open("test_query20.txt", "r").read()
+q21 = open("test_query21.txt", "r").read()
+q22 = open("test_query22.txt", "r").read()
+q23 = open("test_query23.txt", "r").read()
+q24 = open("test_query24.txt", "r").read()
+q25 = open("test_query25.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -58,7 +63,7 @@ def query_triples(query, sparql_prefixes: str = None) -> dict:
             triple_set = []
 
             for triple in node.get('triples'):
-                if isinstance(triple[1], SequencePath):
+                if isinstance(triple[1], Path):
                     sequences = triple[1].args
                     for i, ref in enumerate(sequences, start=1):
                         if i == 1:
@@ -125,6 +130,17 @@ def to_sparql_query_text(query: str = None):
         with open('query.txt', 'w') as file:
             file.write(filedata)
 
+    def convert_node_arg(node_arg):
+        if isinstance(node_arg, Identifier):
+            return node_arg.n3()
+        elif isinstance(node_arg, CompValue):
+            return "{" + node_arg.name + "}"
+        elif isinstance(node_arg, Expr):
+            return "{" + node_arg.name + "}"
+        else:
+            raise ExpressionNotCoveredException(
+                "The expression {0} might not be covered yet.".format(node_arg))
+
     def sparql_query_text(node):
         """
          https://www.w3.org/TR/sparql11-query/#sparqlSyntax
@@ -132,6 +148,7 @@ def to_sparql_query_text(query: str = None):
         :param node:
         :return:
         """
+
         if isinstance(node, CompValue):
             # 18.2 Query Forms
             if node.name == "SelectQuery":
@@ -139,6 +156,7 @@ def to_sparql_query_text(query: str = None):
 
             # 18.2 Graph Patterns
             elif node.name == "BGP":
+                # Identifiers or Paths
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
                 replace("{BGP}", "" + triples + "")
@@ -147,7 +165,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "LeftJoin":
                 replace("{LeftJoin}", "{" + node.p1.name + "}OPTIONAL{{" + node.p2.name + "}}")
             elif node.name == "Filter":
-                if isinstance(node.expr, Expr):
+                if isinstance(node.expr, CompValue):
                     expr = node.expr.name
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
@@ -163,7 +181,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "Extend":
                 if isinstance(node.expr, Expr):
                     replace(node.var.n3(), "({" + node.expr.name + "} as " + node.var.n3() + ")")
-                elif isinstance(node.expr, Variable):
+                elif isinstance(node.expr, Identifier):
                     replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
                 else:
                     raise ExpressionNotCoveredException("This expression type {0} might "
@@ -175,7 +193,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "Group":
                 group_by_vars = []
                 for var in node.expr:
-                    if isinstance(var, Variable):
+                    if isinstance(var, Identifier):
                         group_by_vars.append(var.n3())
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
@@ -183,12 +201,14 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
-                    if isinstance(agg_func.res, Variable):
+                    if isinstance(agg_func.res, Identifier):
                         placeholder = agg_func.res.n3()
                     else:
                         raise ExpressionNotCoveredException("This expressione might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
                     replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
+            elif node.name == 'ServiceGraphPattern':
+                replace("{ServiceGraphPattern", node.service_string)
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -196,7 +216,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "OrderBy":
                 order_conditions = []
                 for c in node.expr:
-                    if isinstance(c.expr, Variable):
+                    if isinstance(c.expr, Identifier):
                         var = c.expr.n3()
                         if c.order is not None:
                             cond = var + "(" + c.order + ")"
@@ -209,7 +229,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:
-                    if isinstance(var, Variable):
+                    if isinstance(var, Identifier):
                         project_variables.append(var.n3())
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
@@ -229,9 +249,10 @@ def to_sparql_query_text(query: str = None):
 
             # 18.2 Property Path
 
+            # 17 Expressions and Testing Values
             # 17.3 Operator Mapping
             elif node.name == "RelationalExpression":
-                expr = node.expr.n3()
+                expr = convert_node_arg(node.expr)
                 op = node.op
                 other = node.other.n3()
                 condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
@@ -242,6 +263,34 @@ def to_sparql_query_text(query: str = None):
             elif node.name == "ConditionalOrExpression":
                 inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
                 replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
+            elif node.name == "MultiplicativeExpression":
+                left_side = convert_node_arg(node.expr)
+                multiplication = left_side
+                for i, operator in enumerate(node.op):
+                    multiplication += operator + " " + convert_node_arg(node.other[i]) + " "
+                replace("{MultiplicativeExpression}", multiplication)
+            elif node.name == "AdditiveExpression":
+                left_side = convert_node_arg(node.expr)
+                addition = left_side
+                for i, operator in enumerate(node.op):
+                    addition += operator + " " + convert_node_arg(node.other[i]) + " "
+                replace("{AdditiveExpression}", addition)
+
+            # 17.4 Function Definitions
+            # 17.4.1 Functional Forms
+            elif node.name.endswith('BOUND'):
+                bound_var = convert_node_arg(node.arg)
+                replace("{Builtin_BOUND}", "bound(" + bound_var + ")")
+            elif node.name.endswith('IF'):
+                arg2 = convert_node_arg(node.arg2)
+                arg3 = convert_node_arg(node.arg3)
+
+                if_expression = "IF(" + "{" + node.arg1.name + "}, " + arg2 + ", " + arg3 + ")"
+                replace("{Builtin_IF}", if_expression)
+            elif node.name.endswith('COALESCE'):
+                replace("{Builtin_COALESCE}", "COALESCE(" + ", ".join(convert_node_arg(arg) for arg in node.arg) + ")")
+            elif node.name.endswith('EXISTS'):
+                raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
             # 17.4.3 Functions on Strings
             elif node.name.endswith('CONCAT'):
@@ -258,7 +307,7 @@ def to_sparql_query_text(query: str = None):
             elif node.name == 'values':
                 columns = []
                 for key in node.res[0].keys():
-                    if isinstance(key, Variable):
+                    if isinstance(key, Identifier):
                         columns.append(key.n3())
                     else:
                         raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
@@ -268,18 +317,16 @@ def to_sparql_query_text(query: str = None):
                 for elem in node.res:
                     row = []
                     for term in elem.values():
-                        if isinstance(term, rdflib.term.Identifier):
+                        if isinstance(term, Identifier):
                             row.append(term.n3())  # n3() is not part of Identifier class but every subclass has it
                         elif isinstance(term, str):
                             row.append(term)
                         else:
                             raise ExpressionNotCoveredException(
-                                "The expression {0} might not be covered yet.".format(key))
+                                "The expression {0} might not be covered yet.".format(term))
                     rows += "(" + " ".join(row) + ")"
 
                 replace("values", values + "{" + rows + "}")
-            elif node.name == 'Service':
-                print("service")
 
             else:
                 pass
@@ -305,10 +352,15 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q14)
 # to_sparql_query_text(q15)
 # to_sparql_query_text(q16)
-to_sparql_query_text(q17)
+# to_sparql_query_text(q17)
 # to_sparql_query_text(q18)
 # to_sparql_query_text(q19)
 # to_sparql_query_text(q20)
+# to_sparql_query_text(q21)
+# to_sparql_query_text(q22)
+# to_sparql_query_text(q23)
+# to_sparql_query_text(q24)
+to_sparql_query_text(q25)
 
 query = open("query.txt", "r").read()
 p = '{'
