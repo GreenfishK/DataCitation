@@ -35,6 +35,8 @@ q22 = open("test_query22.txt", "r").read()
 q23 = open("test_query23.txt", "r").read()
 q24 = open("test_query24.txt", "r").read()
 q25 = open("test_query25.txt", "r").read()
+q26 = open("test_query26.txt", "r").read()
+q27 = open("test_query27.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -204,11 +206,24 @@ def to_sparql_query_text(query: str = None):
                     if isinstance(agg_func.res, Identifier):
                         placeholder = agg_func.res.n3()
                     else:
-                        raise ExpressionNotCoveredException("This expressione might not be covered yet.")
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
                     replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
             elif node.name == 'ServiceGraphPattern':
-                replace("{ServiceGraphPattern", node.service_string)
+                replace("{ServiceGraphPattern}", node.service_string)
+            elif node.name == 'GroupGraphPatternSub':
+                # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
+                # see test_query27.txt
+                patterns = ""
+                for pattern in node.part:
+                    if isinstance(pattern, CompValue):
+                        patterns += "{" + pattern.name + "}"
+                replace("{GroupGraphPatternSub}", patterns)
+            elif node.name == 'TriplesBlock':
+                triples = ""
+                for triple in node.triples:
+                    triples += " ".join(elem.n3() for elem in triple) + "."
+                replace("{TriplesBlock}", "{" + triples + "}")
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -250,7 +265,7 @@ def to_sparql_query_text(query: str = None):
             # 18.2 Property Path
 
             # 17 Expressions and Testing Values
-            # 17.3 Operator Mapping
+            # # 17.3 Operator Mapping
             elif node.name == "RelationalExpression":
                 expr = convert_node_arg(node.expr)
                 op = node.op
@@ -275,9 +290,11 @@ def to_sparql_query_text(query: str = None):
                 for i, operator in enumerate(node.op):
                     addition += operator + " " + convert_node_arg(node.other[i]) + " "
                 replace("{AdditiveExpression}", addition)
+            elif node.name == "UnaryNot":
+                replace("{UnaryNot}", "!" + convert_node_arg(node.expr))
 
-            # 17.4 Function Definitions
-            # 17.4.1 Functional Forms
+            # # 17.4 Function Definitions
+            # # # 17.4.1 Functional Forms
             elif node.name.endswith('BOUND'):
                 bound_var = convert_node_arg(node.arg)
                 replace("{Builtin_BOUND}", "bound(" + bound_var + ")")
@@ -290,18 +307,83 @@ def to_sparql_query_text(query: str = None):
             elif node.name.endswith('COALESCE'):
                 replace("{Builtin_COALESCE}", "COALESCE(" + ", ".join(convert_node_arg(arg) for arg in node.arg) + ")")
             elif node.name.endswith('EXISTS'):
-                raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
+                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
+                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
+                # GroupGraphPatternSub
+                replace("{Builtin_EXISTS}", "EXISTS " + "{GroupGraphPatternSub}")
+            elif node.name.endswith('NOTEXISTS'):
+                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
+                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
+                # GroupGraphPatternSub
+                replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{GroupGraphPatternSub}")
+            elif node.name.endswith('sameTerm'):
+                replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            # # # # IN
+            # # # # NOT IN
 
-            # 17.4.3 Functions on Strings
-            elif node.name.endswith('CONCAT'):
-                expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
-                replace("{Builtin_CONCAT}", expr)
-            elif node.name.endswith('REGEX'):
-                expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
-                replace("{Builtin_REGEX}", expr)
+            # # # 17.4.2 Functions on RDF Terms
+            # # # # isIRI
+            # # # # isBlank
+            # # # # isLiteral
+            # # # # isNumeric
+            # # # # str
+            # # # # lang
+            # # # # datatype
+            # # # # BNODE
+            # # # # STRDT
+            # # # # STRLANG
+            # # # # UUID
+            # # # # STRUUID
+
+            # # # 17.4.3 Functions on Strings
+            # # # # STRLEN
             elif node.name.endswith('SUBSTR'):
                 expr = "SUBSTR(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
                 replace("{Builtin_SUBSTR}", expr)
+            # # # # UCASE
+            # # # # LCASE
+            # # # # STRSTARTS
+            # # # # STRENDS
+            # # # # CONTAINS
+            # # # # STRBEFORE
+            # # # # STRAFTER
+            # # # # ENCODE_FOR_URI
+            elif node.name.endswith('CONCAT'):
+                expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
+                replace("{Builtin_CONCAT}", expr)
+            # # # # langMatches
+            elif node.name.endswith('REGEX'):
+                expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
+                replace("{Builtin_REGEX}", expr)
+            # # # # REPLACE
+
+            # # # 17.4.4 Functions on Numerics
+            # # # # abs
+            # # # # round
+            # # # # ceil
+            # # # # floor
+            # # # # RAND
+
+            # # # 17.4.5 Functions on Dates and Times
+            # # # # now
+            # # # # year
+            # # # # month
+            # # # # day
+            # # # # hours
+            # # # # minutes
+            # # # # seconds
+            # # # # timezone
+            # # # # tz
+
+            # # # 17.4.6 Hash functions
+            # # # # MD5
+            # # # # SHA1
+            # # # # SHA256
+            # # # # SHA384
+            # # # # SHA512
 
             # Other
             elif node.name == 'values':
@@ -360,7 +442,9 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q22)
 # to_sparql_query_text(q23)
 # to_sparql_query_text(q24)
-to_sparql_query_text(q25)
+# to_sparql_query_text(q25)
+# to_sparql_query_text(q26)
+to_sparql_query_text(q27)
 
 query = open("query.txt", "r").read()
 p = '{'
