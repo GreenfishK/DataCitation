@@ -1,3 +1,5 @@
+import os
+
 from src.rdf_data_citation._helper import template_path
 
 from datetime import datetime
@@ -41,6 +43,7 @@ q28 = open("test_query28.txt", "r").read()
 q29 = open("test_query29.txt", "r").read()
 q30 = open("test_query30.txt", "r").read()
 q31 = open("test_query31.txt", "r").read()
+q32 = open("test_query32.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -213,8 +216,6 @@ def to_sparql_query_text(query: str = None):
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
                     replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
-            elif node.name == 'ServiceGraphPattern':
-                replace("{ServiceGraphPattern}", node.service_string)
             # elif node.name == 'GroupGraphPatternSub':
             #     # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
             #     # see test_query27.txt
@@ -324,6 +325,7 @@ def to_sparql_query_text(query: str = None):
                 # GroupGraphPatternSub
                 replace("{Builtin_EXISTS}", "EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
+                return node.graph
             elif node.name.endswith('Builtin_NOTEXISTS'):
                 #  node.graph.name returns "Join" instead of GroupGraphPatternSub
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
@@ -331,8 +333,10 @@ def to_sparql_query_text(query: str = None):
                 # GroupGraphPatternSub
                 replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
-
                 return node.graph
+            # # # # 17.4.1.5 logical-or: Covered in "RelationalExpression"
+            # # # # 17.4.1.6 logical-and: Covered in "RelationalExpression"
+            # # # # 17.4.1.7 RDFterm-equal: Covered in "RelationalExpression"
 
             elif node.name.endswith('sameTerm'):
                 replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
@@ -445,7 +449,7 @@ def to_sparql_query_text(query: str = None):
                         columns.append(key.n3())
                     else:
                         raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
-                values = "VALUES (" + " ".join(columns) +")"
+                values = "VALUES (" + " ".join(columns) + ")"
 
                 rows = ""
                 for elem in node.res:
@@ -461,13 +465,17 @@ def to_sparql_query_text(query: str = None):
                     rows += "(" + " ".join(row) + ")"
 
                 replace("values", values + "{" + rows + "}")
-
+            elif node.name == 'ServiceGraphPattern':
+                replace("{ServiceGraphPattern}", node.service_string)
             else:
-                pass
-                #raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
+                raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
+    query_from_algebra = open("query.txt", "r").read()
+    os.remove("query.txt")
+
+    return query_from_algebra
 
 
 to_sparql_query_text(q1)
@@ -501,6 +509,7 @@ to_sparql_query_text(q1)
 # to_sparql_query_text(q29)
 # to_sparql_query_text(q30)
 # to_sparql_query_text(q31)
+to_sparql_query_text(q32)
 
 query = open("query.txt", "r").read()
 p = '{'
