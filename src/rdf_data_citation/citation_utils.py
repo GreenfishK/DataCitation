@@ -380,8 +380,11 @@ def _to_sparql_query_text(query: str = None):
             # # # 17.4.3 Functions on Strings
             elif node.name.endswith('Builtin_STRLEN'):
                 replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
-            elif node.name.endswith('SUBSTR'):
-                expr = "SUBSTR(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
+            elif node.name.endswith('Builtin_SUBSTR'):
+                args = [node.arg.n3(), node.start]
+                if node.length:
+                    args.append(node.length)
+                expr = "SUBSTR(" + ", ".join(args) + ")"
                 replace("{Builtin_SUBSTR}", expr)
             elif node.name.endswith('Builtin_UCASE'):
                 replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
@@ -404,14 +407,15 @@ def _to_sparql_query_text(query: str = None):
                         + ", " + convert_node_arg(node.arg2) + ")")
             elif node.name.endswith('Builtin_ENCODE_FOR_URI'):
                 replace("{Builtin_ENCODE_FOR_URI}", "ENCODE_FOR_URI(" + convert_node_arg(node.arg) + ")")
-            elif node.name.endswith('CONCAT'):
+            elif node.name.endswith('Builtin_CONCAT'):
                 expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
                 replace("{Builtin_CONCAT}", expr)
             elif node.name.endswith('Builtin_LANGMATCHES'):
                 replace("{Builtin_LANGMATCHES}", "LANGMATCHES(" + convert_node_arg(node.arg1)
                         + ", " + convert_node_arg(node.arg2) + ")")
             elif node.name.endswith('REGEX'):
-                expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
+                args = [convert_node_arg(node.text), convert_node_arg(node.pattern)]
+                expr = "REGEX(" + ", ".join(args) + ")"
                 replace("{Builtin_REGEX}", expr)
             elif node.name.endswith('REPLACE'):
                 replace("{Builtin_REPLACE}", "REPLACE(" + convert_node_arg(node.arg)

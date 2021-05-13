@@ -1,7 +1,7 @@
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX dc:   <http://purl.org/dc/elements/1.1/>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
-SELECT ?givenName (if(?givenName = "Obama", "yes", "no") as ?givenNameObama) (COALESCE(1/0 *3 *4 +5 + 6, ?x) as ?col)
+SELECT (IF(?givenName = "Obama", if(?givenName = "Obama", "yes", "no"), "no") as ?givenName2) (COALESCE(1/0 *3 *4 +5 + 6, ?x) as ?col)
 WHERE {
     ?x foaf:givenName  ?givenName .
     OPTIONAL {
