@@ -1,7 +1,7 @@
 from tests.test_base import Test, TestExecution, format_text
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation import rdf_star
-from src.rdf_data_citation.citation_utils import _to_sparql_query_text
+from src.rdf_data_citation.citation_utils import _to_sparql_query_text, _pprint_query
 import logging
 
 
@@ -30,6 +30,7 @@ class TestAlgebraToTest(TestExecution):
                                                      self.test_config.get('RDFSTORE', 'post'))
         self.query_from_algebra = _to_sparql_query_text(self.query_text)
         self.query_from_query_from_algebra = _to_sparql_query_text(self.query_from_algebra)
+        _pprint_query(self.query_from_query_from_algebra)
 
     def test_functions__functional_forms(self):
         test = Test(test_number=1,
@@ -66,6 +67,38 @@ class TestAlgebraToTest(TestExecution):
     def test_functions__functions_on_strings(self):
         test = Test(test_number=3,
                     tc_desc='Test if functions on strings are properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception:
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_functions__functions_on_numerics(self):
+        test = Test(test_number=4,
+                    tc_desc='Test if functions on numerics are properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception:
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_functions__hash_functions(self):
+        test = Test(test_number=5,
+                    tc_desc='Test if hash functions are properly translated into the query text. '
                             'The query must also be executable and shall not violate any SPARQL query syntax.',
                     expected_result=self.query_from_algebra,
                     actual_result=self.query_from_query_from_algebra)

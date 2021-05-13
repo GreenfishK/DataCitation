@@ -41,6 +41,28 @@ def _query_algebra(query: str, sparql_prefixes: str) -> rdflib.plugins.sparql.al
     return query_algebra
 
 
+def _pprint_query(query: str):
+    p = '{'
+    q = "}"
+    i = 0
+    f = 1
+
+    for e in query:
+        if e in p:
+            f or print()
+            print(' ' * i + e)
+            i += 4
+            f = 1
+        elif e in q:
+            f or print()
+            i -= 4
+            f = 1
+            print(' ' * i + e)
+        else:
+            not f or print(' ' * i, end='')
+            f = print(e, end='')
+
+
 def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') -> list:
     """
     The query must be a valid query including prefixes.
@@ -338,14 +360,11 @@ def _to_sparql_query_text(query: str = None):
             # # # # 17.4.1.5 logical-or: Covered in "RelationalExpression"
             # # # # 17.4.1.6 logical-and: Covered in "RelationalExpression"
             # # # # 17.4.1.7 RDFterm-equal: Covered in "RelationalExpression"
-
             elif node.name.endswith('sameTerm'):
                 replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
                         + ", " + convert_node_arg(node.arg2) + ")")
-            # # # # IN
-            # Covered in RelationalExpression
-            # # # # NOT IN
-            # Covered in RelationalExpression
+            # # # # IN: Covered in "RelationalExpression"
+            # # # # NOT IN: Covered in "RelationalExpression"
 
             # # # 17.4.2 Functions on RDF Terms
             elif node.name.endswith('Builtin_isIRI'):
@@ -422,11 +441,16 @@ def _to_sparql_query_text(query: str = None):
                         + ", " + convert_node_arg(node.pattern) + ", " + convert_node_arg(node.replacement) + ")")
 
             # # # 17.4.4 Functions on Numerics
-            # # # # abs
-            # # # # round
-            # # # # ceil
-            # # # # floor
-            # # # # RAND
+            elif node.name == 'Builtin_ABS':
+                replace("{Builtin_ABS}", "ABS(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_ROUND':
+                replace("{Builtin_ROUND}", "ROUND(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_CEIL':
+                replace("{Builtin_CEIL}", "CEIL(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_FLOOR':
+                replace("{Builtin_FLOOR}", "FLOOR(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_RAND':
+                replace("{Builtin_RAND}", "RAND()")
 
             # # # 17.4.5 Functions on Dates and Times
             # # # # now
@@ -440,11 +464,16 @@ def _to_sparql_query_text(query: str = None):
             # # # # tz
 
             # # # 17.4.6 Hash functions
-            # # # # MD5
-            # # # # SHA1
-            # # # # SHA256
-            # # # # SHA384
-            # # # # SHA512
+            elif node.name == 'Builtin_MD5':
+                replace("{Builtin_MD5}", "MD5(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA1':
+                replace("{Builtin_SHA1}", "SHA1(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA256':
+                replace("{Builtin_SHA256}", "SHA256(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA384':
+                replace("{Builtin_SHA384}", "SHA384(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA512':
+                replace("{Builtin_SHA512}", "SHA512(" + convert_node_arg(node.arg) + ")")
 
             # Other
             elif node.name == 'values':
