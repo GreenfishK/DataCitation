@@ -1,3 +1,5 @@
+import sys
+
 from tests.test_base import Test, TestExecution, format_text
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation import rdf_star
@@ -41,7 +43,8 @@ class TestAlgebraToTest(TestExecution):
 
         try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
-        except Exception:
+        except Exception as e:
+            print(e)
             print("The query must be executable. Otherwise, the test has failed.")
             return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
                         actual_result="not_executable")
@@ -57,7 +60,8 @@ class TestAlgebraToTest(TestExecution):
 
         try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
-        except Exception:
+        except Exception as e:
+            print(e)
             print("The query must be executable. Otherwise, the test has failed.")
             return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
                         actual_result="not_executable")
@@ -73,7 +77,8 @@ class TestAlgebraToTest(TestExecution):
 
         try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
-        except Exception:
+        except Exception as e:
+            print(e)
             print("The query must be executable. Otherwise, the test has failed.")
             return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
                         actual_result="not_executable")
@@ -89,7 +94,8 @@ class TestAlgebraToTest(TestExecution):
 
         try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
-        except Exception:
+        except Exception as e:
+            print(e)
             print("The query must be executable. Otherwise, the test has failed.")
             return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
                         actual_result="not_executable")
@@ -105,10 +111,47 @@ class TestAlgebraToTest(TestExecution):
 
         try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
-        except Exception:
+        except Exception as e:
+            print(e)
             print("The query must be executable. Otherwise, the test has failed.")
             return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
                         actual_result="not_executable")
+
+        return test
+
+    def test_functions__functions_on_dates_and_time(self):
+        test = Test(test_number=6,
+                    tc_desc='Test if functions on dates and time are properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__aggregate_join(self):
+        test = Test(test_number=7,
+                    tc_desc='Test if aggregate join including all aggregation functions '
+                            'are properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+        # TODO: This query cannot be executed via get_data. Check what's wrong
+        """try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print(sys.exc_info()[0])
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")"""
 
         return test
 

@@ -12,38 +12,6 @@ import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import re
 
-q1 = open("test_query1.txt", "r").read()
-q2 = open("test_query2.txt", "r").read()
-q3 = open("test_query3.txt", "r").read()
-q4 = open("test_query4.txt", "r").read()
-q5 = open("test_query5.txt", "r").read()
-q6 = open("test_query6.txt", "r").read()
-q7 = open("test_query7.txt", "r").read()
-q8 = open("test_query8.txt", "r").read()
-q9 = open("test_query9.txt", "r").read()
-q10 = open("test_query10.txt", "r").read()
-q11 = open("test_query11.txt", "r").read()
-q12 = open("test_query12.txt", "r").read()
-q13 = open("test_query13.txt", "r").read()
-q14 = open("test_query14.txt", "r").read()
-q15 = open("test_query15.txt", "r").read()
-q16 = open("test_query16.txt", "r").read()
-q17 = open("test_query17.txt", "r").read()
-q18 = open("test_query18.txt", "r").read()
-q19 = open("test_query19.txt", "r").read()
-q20 = open("test_query20.txt", "r").read()
-q21 = open("test_query21.txt", "r").read()
-q22 = open("test_query22.txt", "r").read()
-q23 = open("test_query23.txt", "r").read()
-q24 = open("test_query24.txt", "r").read()
-q25 = open("test_query25.txt", "r").read()
-q26 = open("test_query26.txt", "r").read()
-q27 = open("test_query27.txt", "r").read()
-q28 = open("test_query28.txt", "r").read()
-q29 = open("test_query29.txt", "r").read()
-q30 = open("test_query30.txt", "r").read()
-q31 = open("test_query31.txt", "r").read()
-q32 = open("test_query32.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -201,12 +169,17 @@ def to_sparql_query_text(query: str = None):
                 replace("{Minus}", expr)
             elif node.name == "Group":
                 group_by_vars = []
-                for var in node.expr:
-                    if isinstance(var, Identifier):
-                        group_by_vars.append(var.n3())
-                    else:
-                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+
+                if node.expr:
+                    for var in node.expr:
+                        if isinstance(var, Identifier):
+                            group_by_vars.append(var.n3())
+                        else:
+                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                    replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+                else:
+                    replace("{Group}", "{" + node.p.name + "}")
+
             elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
@@ -467,49 +440,16 @@ def to_sparql_query_text(query: str = None):
                 replace("values", values + "{" + rows + "}")
             elif node.name == 'ServiceGraphPattern':
                 replace("{ServiceGraphPattern}", node.service_string)
-            else:
-                raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
     query_from_algebra = open("query.txt", "r").read()
-    os.remove("query.txt")
 
     return query_from_algebra
 
 
+q1 = open("test_query.txt", "r").read()
 to_sparql_query_text(q1)
-# to_sparql_query_text(q2)
-# to_sparql_query_text(q3)
-# to_sparql_query_text(q4)
-# to_sparql_query_text(q5)
-# to_sparql_query_text(q6)
-# to_sparql_query_text(q7)
-# to_sparql_query_text(q8)
-# to_sparql_query_text(q9)
-# to_sparql_query_text(q10)
-# to_sparql_query_text(q11)
-# to_sparql_query_text(q12)
-# to_sparql_query_text(q13)
-# to_sparql_query_text(q14)
-# to_sparql_query_text(q15)
-# to_sparql_query_text(q16)
-# to_sparql_query_text(q17)
-# to_sparql_query_text(q18)
-# to_sparql_query_text(q19)
-# to_sparql_query_text(q20)
-# to_sparql_query_text(q21)
-# to_sparql_query_text(q22)
-# to_sparql_query_text(q23)
-# to_sparql_query_text(q24)
-# to_sparql_query_text(q25)
-# to_sparql_query_text(q26)
-# to_sparql_query_text(q27)
-# to_sparql_query_text(q28)
-# to_sparql_query_text(q29)
-# to_sparql_query_text(q30)
-# to_sparql_query_text(q31)
-to_sparql_query_text(q32)
 
 query = open("query.txt", "r").read()
 p = '{'

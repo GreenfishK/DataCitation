@@ -224,34 +224,32 @@ def _to_sparql_query_text(query: str = None):
                 replace("{Minus}", expr)
             elif node.name == "Group":
                 group_by_vars = []
-                for var in node.expr:
-                    if isinstance(var, Identifier):
-                        group_by_vars.append(var.n3())
-                    else:
-                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+                if node.expr:
+                    for var in node.expr:
+                        if isinstance(var, Identifier):
+                            group_by_vars.append(var.n3())
+                        else:
+                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                    replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+                else:
+                    replace("{Group}", "{" + node.p.name + "}")
             elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
                     if isinstance(agg_func.res, Identifier):
-                        placeholder = agg_func.res.n3()
+                        identifier = agg_func.res.n3()
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
-                    replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
-            # elif node.name == 'GroupGraphPatternSub':
-            #     # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
-            #     # see test_query27.txt
-            #     patterns = ""
-            #     for pattern in node.part:
-            #         if isinstance(pattern, CompValue):
-            #             patterns += "{" + pattern.name + "}"
-            #     replace("{GroupGraphPatternSub}", patterns)
-            # elif node.name == 'TriplesBlock':
-            #     triples = ""
-            #     for triple in node.triples:
-            #         triples += " ".join(elem.n3() for elem in triple) + "."
-            #     replace("{TriplesBlock}", "{" + triples + "}")
+                    distinct = ""
+                    if agg_func.distinct:
+                        distinct = agg_func.distinct
+                    if agg_func_name == 'GroupConcat':
+                        replace(identifier, "GROUP_CONCAT" + "(" + distinct + " "
+                                + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")", 1)
+                    else:
+                        replace(identifier, agg_func_name.upper() + "(" + distinct + " "
+                                + agg_func.vars.n3() + ")", 1)
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -342,18 +340,18 @@ def _to_sparql_query_text(query: str = None):
             elif node.name.endswith('COALESCE'):
                 replace("{Builtin_COALESCE}", "COALESCE(" + ", ".join(convert_node_arg(arg) for arg in node.arg) + ")")
             elif node.name.endswith('Builtin_EXISTS'):
-                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
-                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
-                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
-                # GroupGraphPatternSub
+                # The node's name which we get with node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rExistsFunc
+                # ExistsFunc can only have a GroupGraphPattern as parameter. However, when we print the query algebra
+                # we get a GroupGraphPatternSub
                 replace("{Builtin_EXISTS}", "EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
                 return node.graph
             elif node.name.endswith('Builtin_NOTEXISTS'):
-                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # The node's name which we get with node.graph.name returns "Join" instead of GroupGraphPatternSub
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
-                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
-                # GroupGraphPatternSub
+                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, when we print the query algebra
+                # we get a GroupGraphPatternSub
                 replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
                 return node.graph
@@ -453,15 +451,24 @@ def _to_sparql_query_text(query: str = None):
                 replace("{Builtin_RAND}", "RAND()")
 
             # # # 17.4.5 Functions on Dates and Times
-            # # # # now
-            # # # # year
-            # # # # month
-            # # # # day
-            # # # # hours
-            # # # # minutes
-            # # # # seconds
-            # # # # timezone
-            # # # # tz
+            elif node.name == 'Builtin_NOW':
+                replace("{Builtin_NOW}", "NOW()")
+            elif node.name == 'Builtin_YEAR':
+                replace("{Builtin_YEAR}", "YEAR(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_MONTH':
+                replace("{Builtin_MONTH}", "MONTH(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_DAY':
+                replace("{Builtin_DAY}", "DAY(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_HOURS':
+                replace("{Builtin_HOURS}", "HOURS(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_MINUTES':
+                replace("{Builtin_MINUTES}", "MINUTES(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SECONDS':
+                replace("{Builtin_SECONDS}", "SECONDS(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_TIMEZONE':
+                replace("{Builtin_TIMEZONE}", "TIMEZONE(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_TZ':
+                replace("{Builtin_TZ}", "TZ(" + convert_node_arg(node.arg) + ")")
 
             # # # 17.4.6 Hash functions
             elif node.name == 'Builtin_MD5':

@@ -1,4 +1,0 @@
-PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-SELECT ?name ?x
-WHERE { ?x foaf:name ?name }
-ORDER BY asc(?x) ?name

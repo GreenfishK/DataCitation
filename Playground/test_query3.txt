@@ -1,3 +1,0 @@
-select * where { 
-	[] ?p ?o .
-} limit 100

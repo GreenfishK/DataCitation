@@ -1,4 +1,0 @@
-select * where { 
-	?s ?p ?o .
-    filter(?s < 5)
-} limit 100 

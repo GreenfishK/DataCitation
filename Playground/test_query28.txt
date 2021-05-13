@@ -1,6 +1,0 @@
-SELECT ?person
-{
-    ?person ?p ?o .
-    FILTER ( lang(?person) NOT IN ('en', 'de') )
-
-}
