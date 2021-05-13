@@ -36,3 +36,8 @@ class QueryExistsError(Exception):
 
 class NoQueryString(Exception):
     pass
+
+
+class ExpressionNotCoveredException(Exception):
+    pass
+

@@ -165,7 +165,7 @@ def to_sparql_query_text(query: str = None):
                 # Identifiers or Paths
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{BGP}", "" + triples + "")
+                replace("{BGP}", triples)
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -176,11 +176,11 @@ def to_sparql_query_text(query: str = None):
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 if node.p.name == "AggregateJoin":
-                    replace("{Filter}", "{" + node.p.name + "} HAVING({" + expr + "})")
+                    replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
                 else:
-                    replace("{Filter}", "{" + node.p.name + "} FILTER({" + expr + "})")
+                    replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
             elif node.name == "Union":
-                replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
+                replace("{Union}", "{" + node.p1.name + "}UNION{" + node.p2.name + "}")
             elif node.name == "Graph":
                 expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
                 replace("{Graph}", expr)
@@ -194,7 +194,7 @@ def to_sparql_query_text(query: str = None):
                                                         "not be covered yet.".format(type(node.expr)))
                 replace("{Extend}", "{" + node.p.name + "}")
             elif node.name == "Minus":
-                expr = "{" + node.p1.name + "} MINUS {{" + node.p2.name + "}}"
+                expr = "{" + node.p1.name + "}MINUS{{" + node.p2.name + "}}"
                 replace("{Minus}", expr)
             elif node.name == "Group":
                 group_by_vars = []
@@ -244,7 +244,8 @@ def to_sparql_query_text(query: str = None):
                         order_conditions.append(cond)
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{OrderBy}", "{" + node.p.name + "}" + "ORDER BY " + " ".join(order_conditions))
+                replace("{OrderBy}", "{" + node.p.name + "}")
+                replace("{OrderConditions}", " ".join(order_conditions))
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:
@@ -252,7 +253,10 @@ def to_sparql_query_text(query: str = None):
                         project_variables.append(var.n3())
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{Project}", " ".join(project_variables) + " {{" + node.p.name + "}} ")
+                order_by_pattern = ""
+                if node.p.name == "OrderBy":
+                    order_by_pattern = "ORDER BY {OrderConditions}"
+                replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}" + order_by_pattern)
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -262,7 +266,7 @@ def to_sparql_query_text(query: str = None):
                 replace("{Slice}", "{" + node.p.name + "}" + slice)
             elif node.name == "ToMultiSet":
                 if node.p.name == "values":
-                    replace("{ToMultiSet}", "{" + node.p.name + "}")
+                    replace("{ToMultiSet}", "{{" + node.p.name + "}}")
                 else:
                     replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
 
@@ -466,7 +470,7 @@ def to_sparql_query_text(query: str = None):
     algebra.pprintAlgebra(query_algebra)
 
 
-# to_sparql_query_text(q1)
+to_sparql_query_text(q1)
 # to_sparql_query_text(q2)
 # to_sparql_query_text(q3)
 # to_sparql_query_text(q4)
@@ -496,7 +500,7 @@ def to_sparql_query_text(query: str = None):
 # to_sparql_query_text(q28)
 # to_sparql_query_text(q29)
 # to_sparql_query_text(q30)
-to_sparql_query_text(q31)
+# to_sparql_query_text(q31)
 
 query = open("query.txt", "r").read()
 p = '{'

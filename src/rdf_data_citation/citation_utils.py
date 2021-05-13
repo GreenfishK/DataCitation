@@ -6,9 +6,9 @@ import rdflib.plugins.sparql.parser
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
-    MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString
-from rdflib.plugins.sparql.parserutils import CompValue
-from rdflib.term import Variable
+    MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException
+from rdflib.plugins.sparql.parserutils import CompValue, Expr
+from rdflib.term import Variable, Identifier
 from rdflib.paths import SequencePath
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
@@ -101,6 +101,378 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
         algebra.traverse(query_algebra.algebra, retrieve_order_by_variables)
 
     return variables
+
+
+def _to_sparql_query_text(query: str = None):
+    p = parser
+    query_tree = p.parseQuery(query)
+    query_algebra = algebra.translateQuery(query_tree)
+
+    def overwrite(text):
+        file = open("query.txt", "w+")
+        file.write(text)
+        file.close()
+
+    def replace(old, new, on_match: int = 1):
+        # Read in the file
+        with open('query.txt', 'r') as file:
+            filedata = file.read()
+
+        # Replace the target string
+        def nth_repl(s, sub, repl, n):
+            find = s.find(sub)
+            # If find is not -1 we have found at least one match for the substring
+            i = find != -1
+            # loop util we find the nth or we find no match
+            while find != -1 and i != n:
+                # find + 1 means we start searching from after the last match
+                find = s.find(sub, find + 1)
+                i += 1
+            # If i is equal to n we found nth match so replace
+            if i == n:
+                return s[:find] + repl + s[find + len(sub):]
+            return s
+
+        filedata = nth_repl(filedata, old, new, on_match)
+
+        # Write the file out again
+        with open('query.txt', 'w') as file:
+            file.write(filedata)
+
+    def convert_node_arg(node_arg):
+        if isinstance(node_arg, Identifier):
+            return node_arg.n3()
+        elif isinstance(node_arg, CompValue):
+            return "{" + node_arg.name + "}"
+        elif isinstance(node_arg, Expr):
+            return "{" + node_arg.name + "}"
+        else:
+            raise ExpressionNotCoveredException(
+                "The expression {0} might not be covered yet.".format(node_arg))
+
+    def sparql_query_text(node):
+        """
+         https://www.w3.org/TR/sparql11-query/#sparqlSyntax
+
+        :param node:
+        :return:
+        """
+
+        if isinstance(node, CompValue):
+            # 18.2 Query Forms
+            if node.name == "SelectQuery":
+                overwrite("SELECT " + "{" + node.p.name + "}")
+
+            # 18.2 Graph Patterns
+            elif node.name == "BGP":
+                # Identifiers or Paths
+                triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
+                                  for triple in node.triples)
+                replace("{BGP}", triples)
+            elif node.name == "Join":
+                replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
+            elif node.name == "LeftJoin":
+                replace("{LeftJoin}", "{" + node.p1.name + "}OPTIONAL{{" + node.p2.name + "}}")
+            elif node.name == "Filter":
+                if isinstance(node.expr, CompValue):
+                    expr = node.expr.name
+                else:
+                    raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                if node.p.name == "AggregateJoin":
+                    replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                else:
+                    replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
+            elif node.name == "Union":
+                replace("{Union}", "{" + node.p1.name + "}UNION{" + node.p2.name + "}")
+            elif node.name == "Graph":
+                expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
+                replace("{Graph}", expr)
+            elif node.name == "Extend":
+                if isinstance(node.expr, Expr):
+                    replace(node.var.n3(), "({" + node.expr.name + "} as " + node.var.n3() + ")")
+                elif isinstance(node.expr, Identifier):
+                    replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
+                else:
+                    raise ExpressionNotCoveredException("This expression type {0} might "
+                                                        "not be covered yet.".format(type(node.expr)))
+                replace("{Extend}", "{" + node.p.name + "}")
+            elif node.name == "Minus":
+                expr = "{" + node.p1.name + "}MINUS{{" + node.p2.name + "}}"
+                replace("{Minus}", expr)
+            elif node.name == "Group":
+                group_by_vars = []
+                for var in node.expr:
+                    if isinstance(var, Identifier):
+                        group_by_vars.append(var.n3())
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+            elif node.name == "AggregateJoin":
+                replace("{AggregateJoin}", "{" + node.p.name + "}")
+                for agg_func in node.A:
+                    if isinstance(agg_func.res, Identifier):
+                        placeholder = agg_func.res.n3()
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                    agg_func_name = agg_func.name.split('_')[1]
+                    replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
+            elif node.name == 'ServiceGraphPattern':
+                replace("{ServiceGraphPattern}", node.service_string)
+            # elif node.name == 'GroupGraphPatternSub':
+            #     # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
+            #     # see test_query27.txt
+            #     patterns = ""
+            #     for pattern in node.part:
+            #         if isinstance(pattern, CompValue):
+            #             patterns += "{" + pattern.name + "}"
+            #     replace("{GroupGraphPatternSub}", patterns)
+            # elif node.name == 'TriplesBlock':
+            #     triples = ""
+            #     for triple in node.triples:
+            #         triples += " ".join(elem.n3() for elem in triple) + "."
+            #     replace("{TriplesBlock}", "{" + triples + "}")
+
+            # 18.2 Solution modifiers
+            elif node.name == "ToList":
+                raise ExpressionNotCoveredException("This expression might not be covered yet.")
+            elif node.name == "OrderBy":
+                order_conditions = []
+                for c in node.expr:
+                    if isinstance(c.expr, Identifier):
+                        var = c.expr.n3()
+                        if c.order is not None:
+                            cond = var + "(" + c.order + ")"
+                        else:
+                            cond = var
+                        order_conditions.append(cond)
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                replace("{OrderBy}", "{" + node.p.name + "}")
+                replace("{OrderConditions}", " ".join(order_conditions))
+            elif node.name == "Project":
+                project_variables = []
+                for var in node.PV:
+                    if isinstance(var, Identifier):
+                        project_variables.append(var.n3())
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                order_by_pattern = ""
+                if node.p.name == "OrderBy":
+                    order_by_pattern = "ORDER BY {OrderConditions}"
+                replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}" + order_by_pattern)
+            elif node.name == "Distinct":
+                replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
+            elif node.name == "Reduced":
+                replace("{Reduced}", "REDUCED {" + node.p.name + "}")
+            elif node.name == "Slice":
+                slice = "OFFSET " + str(node.start) + " LIMIT " + str(node.length)
+                replace("{Slice}", "{" + node.p.name + "}" + slice)
+            elif node.name == "ToMultiSet":
+                if node.p.name == "values":
+                    replace("{ToMultiSet}", "{{" + node.p.name + "}}")
+                else:
+                    replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
+
+            # 18.2 Property Path
+
+            # 17 Expressions and Testing Values
+            # # 17.3 Operator Mapping
+            elif node.name == "RelationalExpression":
+                expr = convert_node_arg(node.expr)
+                op = node.op
+                if isinstance(list, type(node.other)):
+                    other = "(" + ", ".join(convert_node_arg(expr) for expr in node.other) + ")"
+                else:
+                    other = convert_node_arg(node.other)
+                condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
+                replace("{RelationalExpression}", condition)
+            elif node.name == "ConditionalAndExpression":
+                inner_nodes = " && ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
+                replace("{ConditionalAndExpression}", "{" + node.expr.name + "}" + " && " + inner_nodes)
+            elif node.name == "ConditionalOrExpression":
+                inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
+                replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
+            elif node.name == "MultiplicativeExpression":
+                left_side = convert_node_arg(node.expr)
+                multiplication = left_side
+                for i, operator in enumerate(node.op):
+                    multiplication += operator + " " + convert_node_arg(node.other[i]) + " "
+                replace("{MultiplicativeExpression}", multiplication)
+            elif node.name == "AdditiveExpression":
+                left_side = convert_node_arg(node.expr)
+                addition = left_side
+                for i, operator in enumerate(node.op):
+                    addition += operator + " " + convert_node_arg(node.other[i]) + " "
+                replace("{AdditiveExpression}", addition)
+            elif node.name == "UnaryNot":
+                replace("{UnaryNot}", "!" + convert_node_arg(node.expr))
+
+            # # 17.4 Function Definitions
+            # # # 17.4.1 Functional Forms
+            elif node.name.endswith('BOUND'):
+                bound_var = convert_node_arg(node.arg)
+                replace("{Builtin_BOUND}", "bound(" + bound_var + ")")
+            elif node.name.endswith('IF'):
+                arg2 = convert_node_arg(node.arg2)
+                arg3 = convert_node_arg(node.arg3)
+
+                if_expression = "IF(" + "{" + node.arg1.name + "}, " + arg2 + ", " + arg3 + ")"
+                replace("{Builtin_IF}", if_expression)
+            elif node.name.endswith('COALESCE'):
+                replace("{Builtin_COALESCE}", "COALESCE(" + ", ".join(convert_node_arg(arg) for arg in node.arg) + ")")
+            elif node.name.endswith('Builtin_EXISTS'):
+                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
+                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
+                # GroupGraphPatternSub
+                replace("{Builtin_EXISTS}", "EXISTS " + "{{" + node.graph.name + "}}")
+                algebra.traverse(node.graph, visitPre=sparql_query_text)
+            elif node.name.endswith('Builtin_NOTEXISTS'):
+                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
+                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
+                # GroupGraphPatternSub
+                replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
+                algebra.traverse(node.graph, visitPre=sparql_query_text)
+
+                return node.graph
+
+            elif node.name.endswith('sameTerm'):
+                replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            # # # # IN
+            # Covered in RelationalExpression
+            # # # # NOT IN
+            # Covered in RelationalExpression
+
+            # # # 17.4.2 Functions on RDF Terms
+            elif node.name.endswith('Builtin_isIRI'):
+                replace("{Builtin_isIRI}", "isIRI(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_isBLANK'):
+                replace("{Builtin_isBLANK}", "isBLANK(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_isLITERAL'):
+                replace("{Builtin_isLITERAL}", "isLITERAL(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_isNUMERIC'):
+                replace("{Builtin_isNUMERIC}", "isNUMERIC(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_STR'):
+                replace("{Builtin_STR}", "STR(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_LANG'):
+                replace("{Builtin_LANG}", "LANG(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_DATATYPE'):
+                replace("{Builtin_DATATYPE}", "DATATYPE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_IRI'):
+                replace("{Builtin_IRI}", "IRI(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_BNODE'):
+                replace("{Builtin_BNODE}", "BNODE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('STRDT'):
+                replace("{Builtin_STRDT}", "STRDT(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRLANG'):
+                replace("{Builtin_STRLANG}", "STRLANG(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_UUID'):
+                replace("{Builtin_UUID}", "UUID()")
+            elif node.name.endswith('Builtin_STRUUID'):
+                replace("{Builtin_STRUUID}", "STRUUID()")
+
+            # # # 17.4.3 Functions on Strings
+            elif node.name.endswith('Builtin_STRLEN'):
+                replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('SUBSTR'):
+                expr = "SUBSTR(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
+                replace("{Builtin_SUBSTR}", expr)
+            elif node.name.endswith('Builtin_UCASE'):
+                replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_LCASE'):
+                replace("{Builtin_LCASE}", "LCASE(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('Builtin_STRSTARTS'):
+                replace("{Builtin_STRSTARTS}", "STRSTARTS(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRENDS'):
+                replace("{Builtin_STRENDS}", "STRENDS(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_CONTAINS'):
+                replace("{Builtin_CONTAINS}", "CONTAINS(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRBEFORE'):
+                replace("{Builtin_STRBEFORE}", "STRBEFORE(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_STRAFTER'):
+                replace("{Builtin_STRAFTER}", "STRAFTER(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('Builtin_ENCODE_FOR_URI'):
+                replace("{Builtin_ENCODE_FOR_URI}", "ENCODE_FOR_URI(" + convert_node_arg(node.arg) + ")")
+            elif node.name.endswith('CONCAT'):
+                expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
+                replace("{Builtin_CONCAT}", expr)
+            elif node.name.endswith('Builtin_LANGMATCHES'):
+                replace("{Builtin_LANGMATCHES}", "LANGMATCHES(" + convert_node_arg(node.arg1)
+                        + ", " + convert_node_arg(node.arg2) + ")")
+            elif node.name.endswith('REGEX'):
+                expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
+                replace("{Builtin_REGEX}", expr)
+            elif node.name.endswith('REPLACE'):
+                replace("{Builtin_REPLACE}", "REPLACE(" + convert_node_arg(node.arg)
+                        + ", " + convert_node_arg(node.pattern) + ", " + convert_node_arg(node.replacement) + ")")
+
+            # # # 17.4.4 Functions on Numerics
+            # # # # abs
+            # # # # round
+            # # # # ceil
+            # # # # floor
+            # # # # RAND
+
+            # # # 17.4.5 Functions on Dates and Times
+            # # # # now
+            # # # # year
+            # # # # month
+            # # # # day
+            # # # # hours
+            # # # # minutes
+            # # # # seconds
+            # # # # timezone
+            # # # # tz
+
+            # # # 17.4.6 Hash functions
+            # # # # MD5
+            # # # # SHA1
+            # # # # SHA256
+            # # # # SHA384
+            # # # # SHA512
+
+            # Other
+            elif node.name == 'values':
+                columns = []
+                for key in node.res[0].keys():
+                    if isinstance(key, Identifier):
+                        columns.append(key.n3())
+                    else:
+                        raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
+                values = "VALUES (" + " ".join(columns) +")"
+
+                rows = ""
+                for elem in node.res:
+                    row = []
+                    for term in elem.values():
+                        if isinstance(term, Identifier):
+                            row.append(term.n3())  # n3() is not part of Identifier class but every subclass has it
+                        elif isinstance(term, str):
+                            row.append(term)
+                        else:
+                            raise ExpressionNotCoveredException(
+                                "The expression {0} might not be covered yet.".format(term))
+                    rows += "(" + " ".join(row) + ")"
+
+                replace("values", values + "{" + rows + "}")
+
+            else:
+                pass
+                #raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
+
+    algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
+    algebra.pprintAlgebra(query_algebra)
+
+    return query_algebra
 
 
 class QueryUtils:
