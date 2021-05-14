@@ -308,6 +308,23 @@ class TestAlgebraToTest(TestExecution):
 
         return test
 
+    def test_other__values(self):
+        test = Test(test_number=23,
+                    tc_desc='Test if "values" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
 
 t = TestAlgebraToTest(annotated_tests=False)
 t.run_tests()
