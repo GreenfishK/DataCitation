@@ -1,1 +1,1 @@
-SELECT (SUM(?s) as ?sum){?s ?p ?o.}OFFSET 0 LIMIT 1
+SELECT ?title (REPLACE("abcd", "b", "Z") as ?replace) {?x <http://purl.org/dc/elements/1.1/title> "That Seventies Show"@en.?x <http://purl.org/dc/elements/1.1/title> ?title. FILTER(LANGMATCHES(LANG(?title), "FR"))} 

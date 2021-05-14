@@ -40,8 +40,11 @@ def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
     values = []
     for r in results["results"]["bindings"]:
         row = []
-        for var in results["head"]["vars"]:
-            result_value = format_value(r[var])
+        for col in results["head"]["vars"]:
+            if col in r:
+                result_value = format_value(r[col])
+            else:
+                result_value = None
             row.append(result_value)
         values.append(row)
     df = df.append(pd.DataFrame(values, columns=df.columns))
@@ -221,7 +224,6 @@ class TripleStoreEngine:
             self.sparql_get.setQuery(select_statement)
         result = self.sparql_get.query()
         df = _to_df(result)
-
         return df
 
     def update(self, select_statement, new_value):

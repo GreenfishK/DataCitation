@@ -144,14 +144,13 @@ class TestAlgebraToTest(TestExecution):
                     expected_result=self.query_from_algebra,
                     actual_result=self.query_from_query_from_algebra)
         # TODO: This query cannot be executed via get_data. Check what's wrong
-        """try:
+        try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
         except Exception as e:
             print(e)
-            print(sys.exc_info()[0])
             print("The query must be executable. Otherwise, the test has failed.")
             return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
-                        actual_result="not_executable")"""
+                        actual_result="not_executable")
 
         return test
 

@@ -1,5 +1,3 @@
-import os
-
 from src.rdf_data_citation._helper import template_path
 
 from datetime import datetime
@@ -12,6 +10,37 @@ import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import re
 
+q1 = open("test_query1.txt", "r").read()
+q2 = open("test_query2.txt", "r").read()
+q3 = open("test_query3.txt", "r").read()
+q4 = open("test_query4.txt", "r").read()
+q5 = open("test_query5.txt", "r").read()
+q6 = open("test_query6.txt", "r").read()
+q7 = open("test_query7.txt", "r").read()
+q8 = open("test_query8.txt", "r").read()
+q9 = open("test_query9.txt", "r").read()
+q10 = open("test_query10.txt", "r").read()
+q11 = open("test_query11.txt", "r").read()
+q12 = open("test_query12.txt", "r").read()
+q13 = open("test_query13.txt", "r").read()
+q14 = open("test_query14.txt", "r").read()
+q15 = open("test_query15.txt", "r").read()
+q16 = open("test_query16.txt", "r").read()
+q17 = open("test_query17.txt", "r").read()
+q18 = open("test_query18.txt", "r").read()
+q19 = open("test_query19.txt", "r").read()
+q20 = open("test_query20.txt", "r").read()
+q21 = open("test_query21.txt", "r").read()
+q22 = open("test_query22.txt", "r").read()
+q23 = open("test_query23.txt", "r").read()
+q24 = open("test_query24.txt", "r").read()
+q25 = open("test_query25.txt", "r").read()
+q26 = open("test_query26.txt", "r").read()
+q27 = open("test_query27.txt", "r").read()
+q28 = open("test_query28.txt", "r").read()
+q29 = open("test_query29.txt", "r").read()
+q30 = open("test_query30.txt", "r").read()
+q31 = open("test_query31.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -136,7 +165,7 @@ def to_sparql_query_text(query: str = None):
                 # Identifiers or Paths
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{BGP}", triples)
+                replace("{BGP}", "" + triples + "")
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -147,11 +176,11 @@ def to_sparql_query_text(query: str = None):
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 if node.p.name == "AggregateJoin":
-                    replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                    replace("{Filter}", "{" + node.p.name + "} HAVING({" + expr + "})")
                 else:
-                    replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
+                    replace("{Filter}", "{" + node.p.name + "} FILTER({" + expr + "})")
             elif node.name == "Union":
-                replace("{Union}", "{" + node.p1.name + "}UNION{" + node.p2.name + "}")
+                replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
             elif node.name == "Graph":
                 expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
                 replace("{Graph}", expr)
@@ -165,21 +194,16 @@ def to_sparql_query_text(query: str = None):
                                                         "not be covered yet.".format(type(node.expr)))
                 replace("{Extend}", "{" + node.p.name + "}")
             elif node.name == "Minus":
-                expr = "{" + node.p1.name + "}MINUS{{" + node.p2.name + "}}"
+                expr = "{" + node.p1.name + "} MINUS {{" + node.p2.name + "}}"
                 replace("{Minus}", expr)
             elif node.name == "Group":
                 group_by_vars = []
-
-                if node.expr:
-                    for var in node.expr:
-                        if isinstance(var, Identifier):
-                            group_by_vars.append(var.n3())
-                        else:
-                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                    replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
-                else:
-                    replace("{Group}", "{" + node.p.name + "}")
-
+                for var in node.expr:
+                    if isinstance(var, Identifier):
+                        group_by_vars.append(var.n3())
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
             elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
@@ -189,6 +213,8 @@ def to_sparql_query_text(query: str = None):
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
                     replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
+            elif node.name == 'ServiceGraphPattern':
+                replace("{ServiceGraphPattern}", node.service_string)
             # elif node.name == 'GroupGraphPatternSub':
             #     # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
             #     # see test_query27.txt
@@ -218,8 +244,7 @@ def to_sparql_query_text(query: str = None):
                         order_conditions.append(cond)
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{OrderBy}", "{" + node.p.name + "}")
-                replace("{OrderConditions}", " ".join(order_conditions))
+                replace("{OrderBy}", "{" + node.p.name + "}" + "ORDER BY " + " ".join(order_conditions))
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:
@@ -227,10 +252,7 @@ def to_sparql_query_text(query: str = None):
                         project_variables.append(var.n3())
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                order_by_pattern = ""
-                if node.p.name == "OrderBy":
-                    order_by_pattern = "ORDER BY {OrderConditions}"
-                replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}" + order_by_pattern)
+                replace("{Project}", " ".join(project_variables) + " {{" + node.p.name + "}} ")
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -240,7 +262,7 @@ def to_sparql_query_text(query: str = None):
                 replace("{Slice}", "{" + node.p.name + "}" + slice)
             elif node.name == "ToMultiSet":
                 if node.p.name == "values":
-                    replace("{ToMultiSet}", "{{" + node.p.name + "}}")
+                    replace("{ToMultiSet}", "{" + node.p.name + "}")
                 else:
                     replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
 
@@ -298,7 +320,6 @@ def to_sparql_query_text(query: str = None):
                 # GroupGraphPatternSub
                 replace("{Builtin_EXISTS}", "EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
-                return node.graph
             elif node.name.endswith('Builtin_NOTEXISTS'):
                 #  node.graph.name returns "Join" instead of GroupGraphPatternSub
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
@@ -306,10 +327,8 @@ def to_sparql_query_text(query: str = None):
                 # GroupGraphPatternSub
                 replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
+
                 return node.graph
-            # # # # 17.4.1.5 logical-or: Covered in "RelationalExpression"
-            # # # # 17.4.1.6 logical-and: Covered in "RelationalExpression"
-            # # # # 17.4.1.7 RDFterm-equal: Covered in "RelationalExpression"
 
             elif node.name.endswith('sameTerm'):
                 replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
@@ -422,7 +441,7 @@ def to_sparql_query_text(query: str = None):
                         columns.append(key.n3())
                     else:
                         raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
-                values = "VALUES (" + " ".join(columns) + ")"
+                values = "VALUES (" + " ".join(columns) +")"
 
                 rows = ""
                 for elem in node.res:
@@ -438,18 +457,46 @@ def to_sparql_query_text(query: str = None):
                     rows += "(" + " ".join(row) + ")"
 
                 replace("values", values + "{" + rows + "}")
-            elif node.name == 'ServiceGraphPattern':
-                replace("{ServiceGraphPattern}", node.service_string)
+
+            else:
+                pass
+                #raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
-    query_from_algebra = open("query.txt", "r").read()
-
-    return query_from_algebra
 
 
-q1 = open("test_query.txt", "r").read()
-to_sparql_query_text(q1)
+# to_sparql_query_text(q1)
+# to_sparql_query_text(q2)
+# to_sparql_query_text(q3)
+# to_sparql_query_text(q4)
+# to_sparql_query_text(q5)
+# to_sparql_query_text(q6)
+# to_sparql_query_text(q7)
+# to_sparql_query_text(q8)
+# to_sparql_query_text(q9)
+# to_sparql_query_text(q10)
+# to_sparql_query_text(q11)
+# to_sparql_query_text(q12)
+# to_sparql_query_text(q13)
+# to_sparql_query_text(q14)
+# to_sparql_query_text(q15)
+# to_sparql_query_text(q16)
+# to_sparql_query_text(q17)
+# to_sparql_query_text(q18)
+# to_sparql_query_text(q19)
+# to_sparql_query_text(q20)
+# to_sparql_query_text(q21)
+# to_sparql_query_text(q22)
+# to_sparql_query_text(q23)
+# to_sparql_query_text(q24)
+# to_sparql_query_text(q25)
+# to_sparql_query_text(q26)
+# to_sparql_query_text(q27)
+# to_sparql_query_text(q28)
+# to_sparql_query_text(q29)
+# to_sparql_query_text(q30)
+to_sparql_query_text(q31)
 
 query = open("query.txt", "r").read()
 p = '{'
