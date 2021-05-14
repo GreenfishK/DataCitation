@@ -1,1 +1,1 @@
-SELECT ?y ?minName{<http://people.example/alice> <http://people.example/knows> ?y.{SELECT ?y (MIN(?name) as ?minName){?y <http://people.example/name> ?name.}GROUP BY ?y }}
+SELECT ?title ?author{?s <http://purl.org/dc/elements/1.0/p1> ?v1.OPTIONAL{?s <http://purl.org/dc/elements/1.0/p2> ?v2.}OPTIONAL{?s <http://purl.org/dc/elements/1.0/p3> ?v3.}}

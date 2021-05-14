@@ -1,11 +1,11 @@
 PREFIX ex: <http://people.example/>
-SELECT ?y ?minName
+SELECT ?select ?minName
 WHERE {
-    ex:alice ex:knows ?y .
+    ex:alice ex:knows ?select .
     {
-        SELECT ?y (MIN(?name) AS ?minName)
+        SELECT (MIN(?name) AS ?minName) ?select
         WHERE {
-            ?y ex:name ?name .
-        } GROUP BY ?y
+            ?select ex:name ?name .
+        } GROUP BY ?select
     }
 }

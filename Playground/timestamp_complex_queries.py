@@ -125,7 +125,7 @@ def to_sparql_query_text(query: str = None):
         if isinstance(node, CompValue):
             # 18.2 Query Forms
             if node.name == "SelectQuery":
-                overwrite("SELECT " + "{" + node.p.name + "}")
+                overwrite("-*-SELECT-*- " + "{" + node.p.name + "}")
 
             # 18.2 Graph Patterns
             elif node.name == "BGP":
@@ -133,6 +133,9 @@ def to_sparql_query_text(query: str = None):
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
                 replace("{BGP}", triples)
+                # The dummy -*-SELECT-*- is placed during a SelectQuery or Multiset pattern in order to be able
+                # to match extended variables in a specific Select-clause (see "Extend" below)
+                replace("-*-SELECT-*-", "SELECT")
                 # If there is no "Group By" clause the placeholder will simply be deleted. Otherwise there will be
                 # no matching {GroupBy} placeholder because it has already been replaced by "group by variables"
                 replace("{GroupBy}", "")
@@ -150,15 +153,15 @@ def to_sparql_query_text(query: str = None):
                 else:
                     replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
             elif node.name == "Union":
-                replace("{Union}", "{" + node.p1.name + "}UNION{" + node.p2.name + "}")
+                replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
             elif node.name == "Graph":
                 expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
                 replace("{Graph}", expr)
             elif node.name == "Extend":
                 query_string = open('query.txt', 'r').read().lower()
-                select_occurrences = query_string.count('select')
+                select_occurrences = query_string.count('-*-select-*-')
                 replace(node.var.n3(), "(" + convert_node_arg(node.expr) + " as " + node.var.n3() + ")",
-                        search_from_match='select', search_from_match_occurrence=select_occurrences)
+                        search_from_match='-*-select-*-', search_from_match_occurrence=select_occurrences)
                 replace("{Extend}", "{" + node.p.name + "}")
             elif node.name == "Minus":
                 expr = "{" + node.p1.name + "}MINUS{{" + node.p2.name + "}}"
@@ -238,7 +241,7 @@ def to_sparql_query_text(query: str = None):
                 if node.p.name == "values":
                     replace("{ToMultiSet}", "{{" + node.p.name + "}}")
                 else:
-                    replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
+                    replace("{ToMultiSet}", "{-*-SELECT-*- " + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
 
