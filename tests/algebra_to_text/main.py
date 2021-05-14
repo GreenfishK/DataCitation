@@ -3,7 +3,7 @@ import sys
 from tests.test_base import Test, TestExecution, format_text
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation import rdf_star
-from src.rdf_data_citation.citation_utils import _to_sparql_query_text, _pprint_query
+from src.rdf_data_citation.citation_utils import _translate_algebra, _pprint_query
 import logging
 
 
@@ -30,8 +30,8 @@ class TestAlgebraToTest(TestExecution):
         self.query_text = open("test_data/{0}.txt".format(test_name), "r").read()
         self.rdf_engine = rdf_star.TripleStoreEngine(self.test_config.get('RDFSTORE', 'get'),
                                                      self.test_config.get('RDFSTORE', 'post'))
-        self.query_from_algebra = _to_sparql_query_text(self.query_text)
-        self.query_from_query_from_algebra = _to_sparql_query_text(self.query_from_algebra)
+        self.query_from_algebra = _translate_algebra(self.query_text)
+        self.query_from_query_from_algebra = _translate_algebra(self.query_from_algebra)
         _pprint_query(self.query_from_query_from_algebra)
 
     def test_functions__functional_forms(self):
@@ -143,7 +143,161 @@ class TestAlgebraToTest(TestExecution):
                             'The query must also be executable and shall not violate any SPARQL query syntax.',
                     expected_result=self.query_from_algebra,
                     actual_result=self.query_from_query_from_algebra)
-        # TODO: This query cannot be executed via get_data. Check what's wrong
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__bgp(self):
+        test = Test(test_number=8,
+                    tc_desc='Test if basic graph patterns are properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__extend(self):
+        test = Test(test_number=9,
+                    tc_desc='Test if "extend" (=Bind explicitly or implicitly in projection) '
+                            'gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__filter(self):
+        test = Test(test_number=10,
+                    tc_desc='Test if filter gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__graph(self):
+        test = Test(test_number=11,
+                    tc_desc='Test if "graph" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__group(self):
+        test = Test(test_number=12,
+                    tc_desc='Test if "group" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__join(self):
+        test = Test(test_number=13,
+                    tc_desc='Test if "join" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__left_join(self):
+        test = Test(test_number=14,
+                    tc_desc='Test if "left join" gets properly translated into "OPTIONAL {...}" in the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__minus(self):
+        test = Test(test_number=15,
+                    tc_desc='Test if "minus" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_graph_patterns__union(self):
+        test = Test(test_number=16,
+                    tc_desc='Test if "union" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
         try:
             self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
         except Exception as e:

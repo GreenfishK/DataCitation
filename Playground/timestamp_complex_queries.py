@@ -1,5 +1,7 @@
-from src.rdf_data_citation._helper import template_path
+from typing import List
 
+from src.rdf_data_citation._helper import template_path
+from typing import NewType
 from datetime import datetime
 import rdflib
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
@@ -9,38 +11,6 @@ import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
 import re
-
-q1 = open("test_query1.txt", "r").read()
-q2 = open("test_query2.txt", "r").read()
-q3 = open("test_query3.txt", "r").read()
-q4 = open("test_query4.txt", "r").read()
-q5 = open("test_query5.txt", "r").read()
-q6 = open("test_query6.txt", "r").read()
-q7 = open("test_query7.txt", "r").read()
-q8 = open("test_query8.txt", "r").read()
-q9 = open("test_query9.txt", "r").read()
-q10 = open("test_query10.txt", "r").read()
-q11 = open("test_query11.txt", "r").read()
-q12 = open("test_query12.txt", "r").read()
-q13 = open("test_query13.txt", "r").read()
-q14 = open("test_query14.txt", "r").read()
-q15 = open("test_query15.txt", "r").read()
-q16 = open("test_query16.txt", "r").read()
-q17 = open("test_query17.txt", "r").read()
-q18 = open("test_query18.txt", "r").read()
-q19 = open("test_query19.txt", "r").read()
-q20 = open("test_query20.txt", "r").read()
-q21 = open("test_query21.txt", "r").read()
-q22 = open("test_query22.txt", "r").read()
-q23 = open("test_query23.txt", "r").read()
-q24 = open("test_query24.txt", "r").read()
-q25 = open("test_query25.txt", "r").read()
-q26 = open("test_query26.txt", "r").read()
-q27 = open("test_query27.txt", "r").read()
-q28 = open("test_query28.txt", "r").read()
-q29 = open("test_query29.txt", "r").read()
-q30 = open("test_query30.txt", "r").read()
-q31 = open("test_query31.txt", "r").read()
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
@@ -101,8 +71,7 @@ class ExpressionNotCoveredException(Exception):
 
 
 def to_sparql_query_text(query: str = None):
-    p = parser
-    query_tree = p.parseQuery(query)
+    query_tree = parser.parseQuery(query)
     query_algebra = algebra.translateQuery(query_tree)
 
     def overwrite(text):
@@ -110,27 +79,25 @@ def to_sparql_query_text(query: str = None):
         file.write(text)
         file.close()
 
-    def replace(old, new, on_match: int = 1):
+    def replace(old, new, search_from_match: str = None, search_from_match_occurrence: int = None):
         # Read in the file
         with open('query.txt', 'r') as file:
             filedata = file.read()
 
-        # Replace the target string
-        def nth_repl(s, sub, repl, n):
-            find = s.find(sub)
-            # If find is not -1 we have found at least one match for the substring
-            i = find != -1
-            # loop util we find the nth or we find no match
-            while find != -1 and i != n:
-                # find + 1 means we start searching from after the last match
-                find = s.find(sub, find + 1)
-                i += 1
-            # If i is equal to n we found nth match so replace
-            if i == n:
-                return s[:find] + repl + s[find + len(sub):]
-            return s
+        def find_nth(haystack, needle, n):
+            start = haystack.lower().find(needle)
+            while start >= 0 and n > 1:
+                start = haystack.lower().find(needle, start + len(needle))
+                n -= 1
+            return start
 
-        filedata = nth_repl(filedata, old, new, on_match)
+        if search_from_match and search_from_match_occurrence:
+            position = find_nth(filedata, search_from_match, search_from_match_occurrence)
+            filedata_pre = filedata[:position]
+            filedata_post = filedata[position:].replace(old, new, 1)
+            filedata = filedata_pre + filedata_post
+        else:
+            filedata = filedata.replace(old, new, 1)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
@@ -165,7 +132,10 @@ def to_sparql_query_text(query: str = None):
                 # Identifiers or Paths
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
-                replace("{BGP}", "" + triples + "")
+                replace("{BGP}", triples)
+                # If there is no "Group By" clause the placeholder will simply be deleted. Otherwise there will be
+                # no matching {GroupBy} placeholder because it has already been replaced by "group by variables"
+                replace("{GroupBy}", "")
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -176,58 +146,57 @@ def to_sparql_query_text(query: str = None):
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 if node.p.name == "AggregateJoin":
-                    replace("{Filter}", "{" + node.p.name + "} HAVING({" + expr + "})")
+                    replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
                 else:
-                    replace("{Filter}", "{" + node.p.name + "} FILTER({" + expr + "})")
+                    replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
             elif node.name == "Union":
-                replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
+                replace("{Union}", "{" + node.p1.name + "}UNION{" + node.p2.name + "}")
             elif node.name == "Graph":
                 expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
                 replace("{Graph}", expr)
             elif node.name == "Extend":
-                if isinstance(node.expr, Expr):
-                    replace(node.var.n3(), "({" + node.expr.name + "} as " + node.var.n3() + ")")
-                elif isinstance(node.expr, Identifier):
-                    replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
-                else:
-                    raise ExpressionNotCoveredException("This expression type {0} might "
-                                                        "not be covered yet.".format(type(node.expr)))
+                query_string = open('query.txt', 'r').read().lower()
+                select_occurrences = query_string.count('select')
+                replace(node.var.n3(), "(" + convert_node_arg(node.expr) + " as " + node.var.n3() + ")",
+                        search_from_match='select', search_from_match_occurrence=select_occurrences)
                 replace("{Extend}", "{" + node.p.name + "}")
             elif node.name == "Minus":
-                expr = "{" + node.p1.name + "} MINUS {{" + node.p2.name + "}}"
+                expr = "{" + node.p1.name + "}MINUS{{" + node.p2.name + "}}"
                 replace("{Minus}", expr)
             elif node.name == "Group":
                 group_by_vars = []
-                for var in node.expr:
-                    if isinstance(var, Identifier):
-                        group_by_vars.append(var.n3())
-                    else:
-                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+                if node.expr:
+                    for var in node.expr:
+                        if isinstance(var, Identifier):
+                            group_by_vars.append(var.n3())
+                        else:
+                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                    replace("{Group}", "{" + node.p.name + "}")
+                    replace("{GroupBy}", "GROUP BY " + " ".join(group_by_vars) + " ")
+                else:
+                    replace("{Group}", "{" + node.p.name + "}")
             elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
                     if isinstance(agg_func.res, Identifier):
-                        placeholder = agg_func.res.n3()
+                        identifier = agg_func.res.n3()
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
-                    replace(placeholder, agg_func_name.upper() + "(" + agg_func.vars.n3() + ")", 1)
-            elif node.name == 'ServiceGraphPattern':
-                replace("{ServiceGraphPattern}", node.service_string)
-            # elif node.name == 'GroupGraphPatternSub':
-            #     # Only captures TriplesBlock but not other possible patterns of a subgraph like 'filter'
-            #     # see test_query27.txt
-            #     patterns = ""
-            #     for pattern in node.part:
-            #         if isinstance(pattern, CompValue):
-            #             patterns += "{" + pattern.name + "}"
-            #     replace("{GroupGraphPatternSub}", patterns)
-            # elif node.name == 'TriplesBlock':
-            #     triples = ""
-            #     for triple in node.triples:
-            #         triples += " ".join(elem.n3() for elem in triple) + "."
-            #     replace("{TriplesBlock}", "{" + triples + "}")
+                    distinct = ""
+                    if agg_func.distinct:
+                        distinct = agg_func.distinct + " "
+                    if agg_func_name == 'GroupConcat':
+                        replace(identifier, "GROUP_CONCAT" + "(" + distinct
+                                + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")")
+                    else:
+                        replace(identifier, agg_func_name.upper() + "(" + distinct + agg_func.vars.n3() + ")")
+                    # For non-aggregated variables the aggregation function "sample" is automatically assigned.
+                    # However, we do not want to have "sample" wrapped around non-aggregated variables. That is
+                    # why we replace it. If "sample" is used on purpose it will not be replaced as the alias
+                    # must be different from the variable in this case.
+                    replace("(SAMPLE({0}) as {0})".format(convert_node_arg(agg_func.vars)),
+                            convert_node_arg(agg_func.vars))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -244,7 +213,8 @@ def to_sparql_query_text(query: str = None):
                         order_conditions.append(cond)
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{OrderBy}", "{" + node.p.name + "}" + "ORDER BY " + " ".join(order_conditions))
+                replace("{OrderBy}", "{" + node.p.name + "}")
+                replace("{OrderConditions}", " ".join(order_conditions))
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:
@@ -252,7 +222,11 @@ def to_sparql_query_text(query: str = None):
                         project_variables.append(var.n3())
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                replace("{Project}", " ".join(project_variables) + " {{" + node.p.name + "}} ")
+                order_by_pattern = ""
+                if node.p.name == "OrderBy":
+                    order_by_pattern = "ORDER BY {OrderConditions}"
+                replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}"
+                        + "{GroupBy}" + order_by_pattern)
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -262,7 +236,7 @@ def to_sparql_query_text(query: str = None):
                 replace("{Slice}", "{" + node.p.name + "}" + slice)
             elif node.name == "ToMultiSet":
                 if node.p.name == "values":
-                    replace("{ToMultiSet}", "{" + node.p.name + "}")
+                    replace("{ToMultiSet}", "{{" + node.p.name + "}}")
                 else:
                     replace("{ToMultiSet}", "{SELECT " + "{" + node.p.name + "}" + "}")
 
@@ -314,29 +288,29 @@ def to_sparql_query_text(query: str = None):
             elif node.name.endswith('COALESCE'):
                 replace("{Builtin_COALESCE}", "COALESCE(" + ", ".join(convert_node_arg(arg) for arg in node.arg) + ")")
             elif node.name.endswith('Builtin_EXISTS'):
-                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
-                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
-                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
-                # GroupGraphPatternSub
+                # The node's name which we get with node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rExistsFunc
+                # ExistsFunc can only have a GroupGraphPattern as parameter. However, when we print the query algebra
+                # we get a GroupGraphPatternSub
                 replace("{Builtin_EXISTS}", "EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
+                return node.graph
             elif node.name.endswith('Builtin_NOTEXISTS'):
-                #  node.graph.name returns "Join" instead of GroupGraphPatternSub
+                # The node's name which we get with node.graph.name returns "Join" instead of GroupGraphPatternSub
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
-                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, here we get a
-                # GroupGraphPatternSub
+                # NotExistsFunc can only have a GroupGraphPattern as parameter. However, when we print the query algebra
+                # we get a GroupGraphPatternSub
                 replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
-
                 return node.graph
-
+            # # # # 17.4.1.5 logical-or: Covered in "RelationalExpression"
+            # # # # 17.4.1.6 logical-and: Covered in "RelationalExpression"
+            # # # # 17.4.1.7 RDFterm-equal: Covered in "RelationalExpression"
             elif node.name.endswith('sameTerm'):
                 replace("{Builtin_sameTerm}", "SAMETERM(" + convert_node_arg(node.arg1)
                         + ", " + convert_node_arg(node.arg2) + ")")
-            # # # # IN
-            # Covered in RelationalExpression
-            # # # # NOT IN
-            # Covered in RelationalExpression
+            # # # # IN: Covered in "RelationalExpression"
+            # # # # NOT IN: Covered in "RelationalExpression"
 
             # # # 17.4.2 Functions on RDF Terms
             elif node.name.endswith('Builtin_isIRI'):
@@ -371,8 +345,11 @@ def to_sparql_query_text(query: str = None):
             # # # 17.4.3 Functions on Strings
             elif node.name.endswith('Builtin_STRLEN'):
                 replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
-            elif node.name.endswith('SUBSTR'):
-                expr = "SUBSTR(" + node.arg.n3() + ", " + node.start + ", " + node.length + ")"
+            elif node.name.endswith('Builtin_SUBSTR'):
+                args = [node.arg.n3(), node.start]
+                if node.length:
+                    args.append(node.length)
+                expr = "SUBSTR(" + ", ".join(args) + ")"
                 replace("{Builtin_SUBSTR}", expr)
             elif node.name.endswith('Builtin_UCASE'):
                 replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
@@ -395,43 +372,63 @@ def to_sparql_query_text(query: str = None):
                         + ", " + convert_node_arg(node.arg2) + ")")
             elif node.name.endswith('Builtin_ENCODE_FOR_URI'):
                 replace("{Builtin_ENCODE_FOR_URI}", "ENCODE_FOR_URI(" + convert_node_arg(node.arg) + ")")
-            elif node.name.endswith('CONCAT'):
+            elif node.name.endswith('Builtin_CONCAT'):
                 expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
                 replace("{Builtin_CONCAT}", expr)
             elif node.name.endswith('Builtin_LANGMATCHES'):
                 replace("{Builtin_LANGMATCHES}", "LANGMATCHES(" + convert_node_arg(node.arg1)
                         + ", " + convert_node_arg(node.arg2) + ")")
             elif node.name.endswith('REGEX'):
-                expr = "REGEX(" + node.text.n3() + ", " + node.pattern.n3() + ")"
+                args = [convert_node_arg(node.text), convert_node_arg(node.pattern)]
+                expr = "REGEX(" + ", ".join(args) + ")"
                 replace("{Builtin_REGEX}", expr)
             elif node.name.endswith('REPLACE'):
                 replace("{Builtin_REPLACE}", "REPLACE(" + convert_node_arg(node.arg)
                         + ", " + convert_node_arg(node.pattern) + ", " + convert_node_arg(node.replacement) + ")")
 
             # # # 17.4.4 Functions on Numerics
-            # # # # abs
-            # # # # round
-            # # # # ceil
-            # # # # floor
-            # # # # RAND
+            elif node.name == 'Builtin_ABS':
+                replace("{Builtin_ABS}", "ABS(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_ROUND':
+                replace("{Builtin_ROUND}", "ROUND(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_CEIL':
+                replace("{Builtin_CEIL}", "CEIL(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_FLOOR':
+                replace("{Builtin_FLOOR}", "FLOOR(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_RAND':
+                replace("{Builtin_RAND}", "RAND()")
 
             # # # 17.4.5 Functions on Dates and Times
-            # # # # now
-            # # # # year
-            # # # # month
-            # # # # day
-            # # # # hours
-            # # # # minutes
-            # # # # seconds
-            # # # # timezone
-            # # # # tz
+            elif node.name == 'Builtin_NOW':
+                replace("{Builtin_NOW}", "NOW()")
+            elif node.name == 'Builtin_YEAR':
+                replace("{Builtin_YEAR}", "YEAR(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_MONTH':
+                replace("{Builtin_MONTH}", "MONTH(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_DAY':
+                replace("{Builtin_DAY}", "DAY(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_HOURS':
+                replace("{Builtin_HOURS}", "HOURS(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_MINUTES':
+                replace("{Builtin_MINUTES}", "MINUTES(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SECONDS':
+                replace("{Builtin_SECONDS}", "SECONDS(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_TIMEZONE':
+                replace("{Builtin_TIMEZONE}", "TIMEZONE(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_TZ':
+                replace("{Builtin_TZ}", "TZ(" + convert_node_arg(node.arg) + ")")
 
             # # # 17.4.6 Hash functions
-            # # # # MD5
-            # # # # SHA1
-            # # # # SHA256
-            # # # # SHA384
-            # # # # SHA512
+            elif node.name == 'Builtin_MD5':
+                replace("{Builtin_MD5}", "MD5(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA1':
+                replace("{Builtin_SHA1}", "SHA1(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA256':
+                replace("{Builtin_SHA256}", "SHA256(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA384':
+                replace("{Builtin_SHA384}", "SHA384(" + convert_node_arg(node.arg) + ")")
+            elif node.name == 'Builtin_SHA512':
+                replace("{Builtin_SHA512}", "SHA512(" + convert_node_arg(node.arg) + ")")
 
             # Other
             elif node.name == 'values':
@@ -457,46 +454,17 @@ def to_sparql_query_text(query: str = None):
                     rows += "(" + " ".join(row) + ")"
 
                 replace("values", values + "{" + rows + "}")
-
-            else:
-                pass
-                #raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
+            elif node.name == 'ServiceGraphPattern':
+                replace("{ServiceGraphPattern}", node.service_string)
+            # else:
+            #     raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
     algebra.pprintAlgebra(query_algebra)
 
 
-# to_sparql_query_text(q1)
-# to_sparql_query_text(q2)
-# to_sparql_query_text(q3)
-# to_sparql_query_text(q4)
-# to_sparql_query_text(q5)
-# to_sparql_query_text(q6)
-# to_sparql_query_text(q7)
-# to_sparql_query_text(q8)
-# to_sparql_query_text(q9)
-# to_sparql_query_text(q10)
-# to_sparql_query_text(q11)
-# to_sparql_query_text(q12)
-# to_sparql_query_text(q13)
-# to_sparql_query_text(q14)
-# to_sparql_query_text(q15)
-# to_sparql_query_text(q16)
-# to_sparql_query_text(q17)
-# to_sparql_query_text(q18)
-# to_sparql_query_text(q19)
-# to_sparql_query_text(q20)
-# to_sparql_query_text(q21)
-# to_sparql_query_text(q22)
-# to_sparql_query_text(q23)
-# to_sparql_query_text(q24)
-# to_sparql_query_text(q25)
-# to_sparql_query_text(q26)
-# to_sparql_query_text(q27)
-# to_sparql_query_text(q28)
-# to_sparql_query_text(q29)
-# to_sparql_query_text(q30)
-to_sparql_query_text(q31)
+q1 = open("test_query.txt", "r").read()
+to_sparql_query_text(q1)
 
 query = open("query.txt", "r").read()
 p = '{'

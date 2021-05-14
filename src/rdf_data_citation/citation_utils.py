@@ -1,9 +1,7 @@
 import copy
 import logging
 import os
-
 import rdflib.plugins.sparql.parser
-
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
@@ -126,9 +124,13 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
     return variables
 
 
-def _to_sparql_query_text(query: str = None):
-    p = parser
-    query_tree = p.parseQuery(query)
+def _translate_algebra(query: str = None):
+    """
+
+    :param query:
+    :return:
+    """
+    query_tree = parser.parseQuery(query)
     query_algebra = algebra.translateQuery(query_tree)
 
     def overwrite(text):
@@ -136,27 +138,25 @@ def _to_sparql_query_text(query: str = None):
         file.write(text)
         file.close()
 
-    def replace(old, new, on_match: int = 1):
+    def replace(old, new, search_from_match: str = None, search_from_match_occurrence: int = None):
         # Read in the file
         with open('query.txt', 'r') as file:
             filedata = file.read()
 
-        # Replace the target string
-        def nth_repl(s, sub, repl, n):
-            find = s.find(sub)
-            # If find is not -1 we have found at least one match for the substring
-            i = find != -1
-            # loop util we find the nth or we find no match
-            while find != -1 and i != n:
-                # find + 1 means we start searching from after the last match
-                find = s.find(sub, find + 1)
-                i += 1
-            # If i is equal to n we found nth match so replace
-            if i == n:
-                return s[:find] + repl + s[find + len(sub):]
-            return s
+        def find_nth(haystack, needle, n):
+            start = haystack.lower().find(needle)
+            while start >= 0 and n > 1:
+                start = haystack.lower().find(needle, start + len(needle))
+                n -= 1
+            return start
 
-        filedata = nth_repl(filedata, old, new, on_match)
+        if search_from_match and search_from_match_occurrence:
+            position = find_nth(filedata, search_from_match, search_from_match_occurrence)
+            filedata_pre = filedata[:position]
+            filedata_post = filedata[position:].replace(old, new, 1)
+            filedata = filedata_pre + filedata_post
+        else:
+            filedata = filedata.replace(old, new, 1)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
@@ -192,6 +192,9 @@ def _to_sparql_query_text(query: str = None):
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
                 replace("{BGP}", triples)
+                # If there is no "Group By" clause the placeholder will simply be deleted. Otherwise there will be
+                # no matching {GroupBy} placeholder because it has already been replaced by "group by variables"
+                replace("{GroupBy}", "")
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -211,13 +214,10 @@ def _to_sparql_query_text(query: str = None):
                 expr = "GRAPH " + node.term.n3() + " {{" + node.p.name + "}}"
                 replace("{Graph}", expr)
             elif node.name == "Extend":
-                if isinstance(node.expr, Expr):
-                    replace(node.var.n3(), "({" + node.expr.name + "} as " + node.var.n3() + ")")
-                elif isinstance(node.expr, Identifier):
-                    replace(node.var.n3(), "(" + node.expr.n3() + " as " + node.var.n3() + ")")
-                else:
-                    raise ExpressionNotCoveredException("This expression type {0} might "
-                                                        "not be covered yet.".format(type(node.expr)))
+                query_string = open('query.txt', 'r').read().lower()
+                select_occurrences = query_string.count('select')
+                replace(node.var.n3(), "(" + convert_node_arg(node.expr) + " as " + node.var.n3() + ")",
+                        search_from_match='select', search_from_match_occurrence=select_occurrences)
                 replace("{Extend}", "{" + node.p.name + "}")
             elif node.name == "Minus":
                 expr = "{" + node.p1.name + "}MINUS{{" + node.p2.name + "}}"
@@ -230,7 +230,8 @@ def _to_sparql_query_text(query: str = None):
                             group_by_vars.append(var.n3())
                         else:
                             raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                    replace("{Group}", "{" + node.p.name + "}" + "" + "GROUP BY " + " ".join(group_by_vars))
+                    replace("{Group}", "{" + node.p.name + "}")
+                    replace("{GroupBy}", "GROUP BY " + " ".join(group_by_vars) + " ")
                 else:
                     replace("{Group}", "{" + node.p.name + "}")
             elif node.name == "AggregateJoin":
@@ -243,13 +244,18 @@ def _to_sparql_query_text(query: str = None):
                     agg_func_name = agg_func.name.split('_')[1]
                     distinct = ""
                     if agg_func.distinct:
-                        distinct = agg_func.distinct
+                        distinct = agg_func.distinct + " "
                     if agg_func_name == 'GroupConcat':
-                        replace(identifier, "GROUP_CONCAT" + "(" + distinct + " "
-                                + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")", 1)
+                        replace(identifier, "GROUP_CONCAT" + "(" + distinct
+                                + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")")
                     else:
-                        replace(identifier, agg_func_name.upper() + "(" + distinct + " "
-                                + agg_func.vars.n3() + ")", 1)
+                        replace(identifier, agg_func_name.upper() + "(" + distinct + agg_func.vars.n3() + ")")
+                    # For non-aggregated variables the aggregation function "sample" is automatically assigned.
+                    # However, we do not want to have "sample" wrapped around non-aggregated variables. That is
+                    # why we replace it. If "sample" is used on purpose it will not be replaced as the alias
+                    # must be different from the variable in this case.
+                    replace("(SAMPLE({0}) as {0})".format(convert_node_arg(agg_func.vars)),
+                            convert_node_arg(agg_func.vars))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -278,7 +284,8 @@ def _to_sparql_query_text(query: str = None):
                 order_by_pattern = ""
                 if node.p.name == "OrderBy":
                     order_by_pattern = "ORDER BY {OrderConditions}"
-                replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}" + order_by_pattern)
+                replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}"
+                        + "{GroupBy}" + order_by_pattern)
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -512,7 +519,6 @@ def _to_sparql_query_text(query: str = None):
             #     raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
-
     query_from_algebra = open("query.txt", "r").read()
     os.remove("query.txt")
 
