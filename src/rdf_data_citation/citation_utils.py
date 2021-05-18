@@ -127,8 +127,9 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
 def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None):
     """
 
-    :param query:
-    :return:
+    :param query_algebra: An algebra returned by the function call algebra.translateQuery(parse_tree)
+    from the rdflib library.
+    :return: The query form of the algebra.
     """
 
     def overwrite(text):
@@ -283,7 +284,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 replace("{OrderBy}", "{" + node.p.name + "}")
-                replace("{OrderConditions}", " ".join(order_conditions))
+                replace("{OrderConditions}", " ".join(order_conditions) + " ")
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:

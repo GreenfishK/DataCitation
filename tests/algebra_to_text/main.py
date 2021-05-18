@@ -626,7 +626,7 @@ class TestAlgebraToTest(TestExecution):
         except Exception as e:
             print(e)
             return Test(test_number=23, tc_desc=tc_desc, expected_result="0",
-                        actual_result="Not executable. Error returned from parseQuery")
+                        actual_result="Not executable. Error returned from parseQuery().")
         query_algebra = algebra.translateQuery(query_tree)
         self.query_from_algebra = _translate_algebra(query_algebra)
 
@@ -664,6 +664,324 @@ class TestAlgebraToTest(TestExecution):
 
         test = Test(test_number=24,
                     tc_desc='Test if "values" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__alternative_path(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=25,
+                    tc_desc='Test if an alternative path gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__inverse_path(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=26,
+                    tc_desc='Test if an inverse path gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__negated_property_set(self):
+        tc_desc = 'Test if a negated property set gets properly translated into the query text. ' \
+                  'The query must also be executable and shall not violate any SPARQL query syntax.'
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        try:
+            self.query_from_algebra = _translate_algebra(query_algebra)
+        except TypeError as e:
+            print(e)
+            return Test(test_number=27, tc_desc=tc_desc, expected_result="0",
+                        actual_result="Not executable. n3() method of NegatedPath class should be fixed. ")
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=27,
+                    tc_desc=tc_desc,
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__one_or_more_path(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=28,
+                    tc_desc='Test if a oneOrMore path gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__sequence_path(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=29,
+                    tc_desc='Test if a sequence path gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__zero_or_more_path(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=30,
+                    tc_desc='Test if a zeroOrMore path gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_property_path__zero_or_one_path(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=31,
+                    tc_desc='Test if a zeroOrOne path gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_solution_modifiers__distinct(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=32,
+                    tc_desc='Test if "distinct" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_solution_modifiers__order_by(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=33,
+                    tc_desc='Test if "order by" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_solution_modifiers__reduced(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=34,
+                    tc_desc='Test if "reduced" gets properly translated into the query text. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_solution_modifiers__slice(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=35,
+                    tc_desc='Test if slice get properly translated into the limit and offset. '
+                            'The query must also be executable and shall not violate any SPARQL query syntax.',
+                    expected_result=self.query_from_algebra,
+                    actual_result=self.query_from_query_from_algebra)
+
+        try:
+            self.rdf_engine.get_data(self.query_from_query_from_algebra, yn_timestamp_query=False)
+        except Exception as e:
+            print(e)
+            print("The query must be executable. Otherwise, the test has failed.")
+            return Test(test_number=test.test_number, tc_desc=test.tc_desc, expected_result="0",
+                        actual_result="not_executable")
+
+        return test
+
+    def test_solution_modifiers__to_multiset(self):
+        query_tree = parser.parseQuery(self.query_text)
+        query_algebra = algebra.translateQuery(query_tree)
+        self.query_from_algebra = _translate_algebra(query_algebra)
+
+        query_tree_2 = parser.parseQuery(self.query_from_algebra)
+        query_algebra_2 = algebra.translateQuery(query_tree_2)
+        self.query_from_query_from_algebra = _translate_algebra(query_algebra_2)
+        _pprint_query(self.query_from_query_from_algebra)
+
+        test = Test(test_number=36,
+                    tc_desc='Test if subqueries get properly translated into the query text. '
                             'The query must also be executable and shall not violate any SPARQL query syntax.',
                     expected_result=self.query_from_algebra,
                     actual_result=self.query_from_query_from_algebra)

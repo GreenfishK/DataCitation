@@ -128,6 +128,7 @@ def to_sparql_query_text(query_algebra):
             # 18.2 Graph Patterns
             elif node.name == "BGP":
                 # Identifiers or Paths
+                # Negated path throws a type error. Probably n3() method of negated paths should be fixed
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
                 replace("{BGP}", triples)
@@ -225,7 +226,7 @@ def to_sparql_query_text(query_algebra):
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 replace("{OrderBy}", "{" + node.p.name + "}")
-                replace("{OrderConditions}", " ".join(order_conditions))
+                replace("{OrderConditions}", " ".join(order_conditions) + " ")
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:
