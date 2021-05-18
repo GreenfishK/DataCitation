@@ -124,14 +124,12 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
     return variables
 
 
-def _translate_algebra(query: str = None):
+def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None):
     """
 
     :param query:
     :return:
     """
-    query_tree = parser.parseQuery(query)
-    query_algebra = algebra.translateQuery(query_tree)
 
     def overwrite(text):
         file = open("query.txt", "w+")
@@ -169,8 +167,6 @@ def _translate_algebra(query: str = None):
             return "{" + node_arg.name + "}"
         elif isinstance(node_arg, Expr):
             return "{" + node_arg.name + "}"
-        elif isinstance(node_arg, str):
-            return node_arg
         else:
             raise ExpressionNotCoveredException(
                 "The expression {0} might not be covered yet.".format(node_arg))
@@ -205,10 +201,18 @@ def _translate_algebra(query: str = None):
             elif node.name == "LeftJoin":
                 replace("{LeftJoin}", "{" + node.p1.name + "}OPTIONAL{{" + node.p2.name + "}}")
             elif node.name == "Filter":
-                if node.p.name == "AggregateJoin":
-                    replace("{Filter}", "{" + node.p.name + "}HAVING(" + convert_node_arg(node.expr) + ")")
+                if isinstance(node.expr, CompValue):
+                    expr = node.expr.name
                 else:
-                    replace("{Filter}", "{" + node.p.name + "}FILTER(" + convert_node_arg(node.expr) + ")")
+                    raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                if node.p:
+                    if node.p.name == "AggregateJoin":
+                        replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                    else:
+                        replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
+                else:
+                    replace("{Filter}", "FILTER({" + expr + "})")
+
             elif node.name == "Union":
                 replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
             elif node.name == "Graph":
@@ -227,7 +231,10 @@ def _translate_algebra(query: str = None):
                 group_by_vars = []
                 if node.expr:
                     for var in node.expr:
-                        group_by_vars.append(convert_node_arg(var))
+                        if isinstance(var, Identifier):
+                            group_by_vars.append(var.n3())
+                        else:
+                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     replace("{Group}", "{" + node.p.name + "}")
                     replace("{GroupBy}", "GROUP BY " + " ".join(group_by_vars) + " ")
                 else:
@@ -235,7 +242,10 @@ def _translate_algebra(query: str = None):
             elif node.name == "AggregateJoin":
                 replace("{AggregateJoin}", "{" + node.p.name + "}")
                 for agg_func in node.A:
-                    identifier = convert_node_arg(agg_func.res)
+                    if isinstance(agg_func.res, Identifier):
+                        identifier = agg_func.res.n3()
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
                     agg_func_name = agg_func.name.split('_')[1]
                     distinct = ""
                     if agg_func.distinct:
@@ -251,6 +261,11 @@ def _translate_algebra(query: str = None):
                     # must be different from the variable in this case.
                     replace("(SAMPLE({0}) as {0})".format(convert_node_arg(agg_func.vars)),
                             convert_node_arg(agg_func.vars))
+            elif node.name == "GroupGraphPatternSub":
+                replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
+            elif node.name == "TriplesBlock":
+                replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
+                                                   for triple in node.triples))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -258,18 +273,24 @@ def _translate_algebra(query: str = None):
             elif node.name == "OrderBy":
                 order_conditions = []
                 for c in node.expr:
-                    var = convert_node_arg(c.expr)
-                    if c.order is not None:
-                        cond = var + "(" + c.order + ")"
+                    if isinstance(c.expr, Identifier):
+                        var = c.expr.n3()
+                        if c.order is not None:
+                            cond = var + "(" + c.order + ")"
+                        else:
+                            cond = var
+                        order_conditions.append(cond)
                     else:
-                        cond = var
-                    order_conditions.append(cond)
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 replace("{OrderBy}", "{" + node.p.name + "}")
                 replace("{OrderConditions}", " ".join(order_conditions))
             elif node.name == "Project":
                 project_variables = []
                 for var in node.PV:
-                    project_variables.append(convert_node_arg(var))
+                    if isinstance(var, Identifier):
+                        project_variables.append(var.n3())
+                    else:
+                        raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 order_by_pattern = ""
                 if node.p.name == "OrderBy":
                     order_by_pattern = "ORDER BY {OrderConditions}"
@@ -302,11 +323,11 @@ def _translate_algebra(query: str = None):
                 condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
                 replace("{RelationalExpression}", condition)
             elif node.name == "ConditionalAndExpression":
-                inner_nodes = " && ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
-                replace("{ConditionalAndExpression}", "{" + node.expr.name + "}" + " && " + inner_nodes)
+                inner_nodes = " && ".join([convert_node_arg(expr) for expr in node.other])
+                replace("{ConditionalAndExpression}", convert_node_arg(node.expr) + " && " + inner_nodes)
             elif node.name == "ConditionalOrExpression":
-                inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
-                replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
+                inner_nodes = " || ".join([convert_node_arg(expr) for expr in node.other])
+                replace("{ConditionalOrExpression}", "(" + convert_node_arg(node.expr) + " || " + inner_nodes + ")")
             elif node.name == "MultiplicativeExpression":
                 left_side = convert_node_arg(node.expr)
                 multiplication = left_side
@@ -482,19 +503,31 @@ def _translate_algebra(query: str = None):
             elif node.name == 'values':
                 columns = []
                 for key in node.res[0].keys():
-                    columns.append(convert_node_arg(key))
+                    if isinstance(key, Identifier):
+                        columns.append(key.n3())
+                    else:
+                        raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
                 values = "VALUES (" + " ".join(columns) +")"
 
                 rows = ""
                 for elem in node.res:
                     row = []
                     for term in elem.values():
-                        row.append(convert_node_arg(term))
+                        if isinstance(term, Identifier):
+                            row.append(term.n3())  # n3() is not part of Identifier class but every subclass has it
+                        elif isinstance(term, str):
+                            row.append(term)
+                        else:
+                            raise ExpressionNotCoveredException(
+                                "The expression {0} might not be covered yet.".format(term))
                     rows += "(" + " ".join(row) + ")"
 
                 replace("values", values + "{" + rows + "}")
             elif node.name == 'ServiceGraphPattern':
-                replace("{ServiceGraphPattern}", node.service_string)
+                replace("{ServiceGraphPattern}", "SERVICE " + convert_node_arg(node.term)
+                        + "{" + node.graph.name + "}")
+                algebra.traverse(node.graph, visitPre=sparql_query_text)
+                return node.graph
             # else:
             #     raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 

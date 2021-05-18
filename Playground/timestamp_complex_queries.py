@@ -70,9 +70,7 @@ class ExpressionNotCoveredException(Exception):
     pass
 
 
-def to_sparql_query_text(query: str = None):
-    query_tree = parser.parseQuery(query)
-    query_algebra = algebra.translateQuery(query_tree)
+def to_sparql_query_text(query_algebra):
 
     def overwrite(text):
         file = open("query.txt", "w+")
@@ -148,10 +146,15 @@ def to_sparql_query_text(query: str = None):
                     expr = node.expr.name
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                if node.p.name == "AggregateJoin":
-                    replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                print(node)
+                if node.p:
+                    if node.p.name == "AggregateJoin":
+                        replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                    else:
+                        replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
                 else:
-                    replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
+                    replace("{Filter}", "FILTER({" + expr + "})")
+
             elif node.name == "Union":
                 replace("{Union}", "{{" + node.p1.name + "}}UNION{{" + node.p2.name + "}}")
             elif node.name == "Graph":
@@ -200,6 +203,11 @@ def to_sparql_query_text(query: str = None):
                     # must be different from the variable in this case.
                     replace("(SAMPLE({0}) as {0})".format(convert_node_arg(agg_func.vars)),
                             convert_node_arg(agg_func.vars))
+            elif node.name == "GroupGraphPatternSub":
+                replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
+            elif node.name == "TriplesBlock":
+                replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
+                                                   for triple in node.triples))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -257,11 +265,11 @@ def to_sparql_query_text(query: str = None):
                 condition = "{left} {operator} {right}".format(left=expr, operator=op, right=other)
                 replace("{RelationalExpression}", condition)
             elif node.name == "ConditionalAndExpression":
-                inner_nodes = " && ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
-                replace("{ConditionalAndExpression}", "{" + node.expr.name + "}" + " && " + inner_nodes)
+                inner_nodes = " && ".join([convert_node_arg(expr) for expr in node.other])
+                replace("{ConditionalAndExpression}", convert_node_arg(node.expr) + " && " + inner_nodes)
             elif node.name == "ConditionalOrExpression":
-                inner_nodes = " || ".join(["{" + expr.name + "}" for expr in node.other if isinstance(expr, Expr)])
-                replace("{ConditionalOrExpression}", "(" + "{" + node.expr.name + "}" + " || " + inner_nodes + ")")
+                inner_nodes = " || ".join([convert_node_arg(expr) for expr in node.other])
+                replace("{ConditionalOrExpression}", "(" + convert_node_arg(node.expr) + " || " + inner_nodes + ")")
             elif node.name == "MultiplicativeExpression":
                 left_side = convert_node_arg(node.expr)
                 multiplication = left_side
@@ -458,16 +466,22 @@ def to_sparql_query_text(query: str = None):
 
                 replace("values", values + "{" + rows + "}")
             elif node.name == 'ServiceGraphPattern':
-                replace("{ServiceGraphPattern}", node.service_string)
+                replace("{ServiceGraphPattern}", "SERVICE " + convert_node_arg(node.term)
+                        + "{" + node.graph.name + "}")
+                algebra.traverse(node.graph, visitPre=sparql_query_text)
+                return node.graph
+
             # else:
             #     raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
-    algebra.pprintAlgebra(query_algebra)
 
 
 q1 = open("test_query.txt", "r").read()
-to_sparql_query_text(q1)
+query_tree = parser.parseQuery(q1)
+query_algebra = algebra.translateQuery(query_tree)
+to_sparql_query_text(query_algebra)
+algebra.pprintAlgebra(query_algebra)
 
 query = open("query.txt", "r").read()
 p = '{'
