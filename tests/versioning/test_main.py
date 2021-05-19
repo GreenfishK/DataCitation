@@ -580,11 +580,8 @@ class TestVersioning(TestExecution):
 
         self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
         self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
-        logging.debug("after insert")
         dataset_before_insert = self.rdf_engine.get_data(dataset_query, timestamp_before_insert)
-        logging.debug("after dataset_before_insert")
         dataset_after_insert = self.rdf_engine.get_data(dataset_query)
-        logging.debug("after dataset_after_insert")
 
         test = Test(test_number=18,
                     tc_desc='Make two consecutive inserts and retrieve the dataset as it was before, between '

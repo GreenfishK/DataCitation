@@ -566,7 +566,6 @@ class QueryUtils:
                 execution_timestamp = citation_timestamp_format(execution_datetime)
                 self.citation_timestamp = execution_timestamp
             self.timestamped_query = self.timestamp_query()
-            self.timestamped_query_2 = self.timestamp_query_2()
             self.pid = self.generate_query_pid()
         else:
             self.query = None
@@ -816,7 +815,7 @@ class QueryUtils:
             dummy_triple = rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)).n3() + " " \
                            + rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)).n3() + " " \
                            + rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier)).n3() + "."
-            ver_block += "bind(" + timestamp + "^^xsd:dateTime as ?TimeOfCiting)"
+            ver_block += 'bind("' + timestamp + '"^^xsd:dateTime as ?TimeOfCiting)'
             query_vers_out = query_vers_out.replace(dummy_triple, ver_block)
 
         query_vers_out = citation_prefixes("") + "\n" + query_vers_out

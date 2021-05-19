@@ -221,6 +221,7 @@ class TripleStoreEngine:
                 query_utils = QueryUtils(query=select_statement, citation_timestamp=timestamp)
 
             query = query_utils.timestamped_query
+            logging.debug(query)
             self.sparql_get.setQuery(query)
         else:
             self.sparql_get.setQuery(select_statement)
