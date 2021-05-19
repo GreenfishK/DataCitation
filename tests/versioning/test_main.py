@@ -1,8 +1,7 @@
-import logging
-
 from src.rdf_data_citation.rdf_star import TripleStoreEngine, VersioningMode
-from datetime import timezone, timedelta, datetime
 from tests.test_base import Test, TestExecution, format_text
+from datetime import timezone, timedelta, datetime
+import logging
 
 
 class TestVersioning(TestExecution):
@@ -543,7 +542,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def x_test_versioning_injection__query_with_union(self):
+    def test_versioning_injection__query_with_union(self):
         test = Test(test_number=16,
                     tc_desc='Test if a query that has two select blocks which are conjoined with the '
                             '"union" keyword has "timestamp extensions" for each block separately.',
@@ -552,7 +551,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def x_test_versioning_injection__nested_select(self):
+    def test_versioning_injection__nested_select(self):
         test = Test(test_number=17,
                     tc_desc='Test if the extensions for versioning_modes/timestamping a query are injected into every select '
                             'block with a basic graph pattern (BGP). For each triple statement inside a block one '
@@ -562,7 +561,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def test_insert__two_consecutive_inserts(self):
+    def x_test_insert__two_consecutive_inserts(self):
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
 
@@ -573,8 +572,7 @@ class TestVersioning(TestExecution):
         vieTZObject = timezone(timedelta(hours=2))
         timestamp_before_insert = datetime.now(vieTZObject)
 
-        # First insert
-        mention = "<hhttp://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
+        mention = "<http://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
         hasInstance = "publishing:hasInstance"
         person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
         document = "<http://www.reuters.com/article/2014/10/10/us-usa-california-mountains-idUSKCN0HZ0U720141010>"
@@ -582,9 +580,11 @@ class TestVersioning(TestExecution):
 
         self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
         self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
-
+        logging.debug("after insert")
         dataset_before_insert = self.rdf_engine.get_data(dataset_query, timestamp_before_insert)
+        logging.debug("after dataset_before_insert")
         dataset_after_insert = self.rdf_engine.get_data(dataset_query)
+        logging.debug("after dataset_after_insert")
 
         test = Test(test_number=18,
                     tc_desc='Make two consecutive inserts and retrieve the dataset as it was before, between '
@@ -636,6 +636,6 @@ class TestVersioning(TestExecution):
         return test
 
 
-t = TestVersioning(annotated_tests=False)
+t = TestVersioning(annotated_tests=True)
 t.run_tests()
 t.print_test_results()

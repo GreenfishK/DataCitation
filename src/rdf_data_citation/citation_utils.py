@@ -566,6 +566,7 @@ class QueryUtils:
                 execution_timestamp = citation_timestamp_format(execution_datetime)
                 self.citation_timestamp = execution_timestamp
             self.timestamped_query = self.timestamp_query()
+            self.timestamped_query_2 = self.timestamp_query_2()
             self.pid = self.generate_query_pid()
         else:
             self.query = None
@@ -754,8 +755,7 @@ class QueryUtils:
 
         return q_algebra
 
-    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None,
-                        sort_variables: tuple = None, colored: bool = False):
+    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):
         """
         R7 - Query timestamping
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
@@ -765,7 +765,74 @@ class QueryUtils:
 
         :param query:
         :param citation_timestamp:
-        :param sort_variables:
+        :param colored: f colored is true, the injected strings within the statement template will be colored.
+        Use this parameter only for presentation purpose as the code for color encoding will make the SPARQL
+        query erroneous!
+        :return: A query string extended with the given timestamp
+        """
+        if query is None:
+            if self.query is not None and self.sparql_prefixes is not None:
+                prefixes = self.sparql_prefixes
+                query = self.query
+            else:
+                raise NoQueryString("Query could not be normalized because the query string is not set.")
+        else:
+            prefixes, query = split_prefixes_query(query)
+        query_vers = prefixes + "\n" + query
+
+        if citation_timestamp is not None:
+            timestamp = citation_timestamp_format(citation_timestamp)
+        else:
+            timestamp = self.citation_timestamp
+
+        bgp_triples = {}
+
+        def inject_versioning_extensions(node):
+            if isinstance(node, CompValue):
+                if node.name == "BGP":
+                    bgp_identifier = "BGP_" + str(len(bgp_triples))
+                    bgp_triples[bgp_identifier] = node.triples.copy()
+                    node.triples.append((rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)),
+                                         rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)),
+                                         rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier))))
+
+        query_tree = parser.parseQuery(query_vers)
+        query_algebra = algebra.translateQuery(query_tree)
+        algebra.traverse(query_algebra.algebra, visitPre=inject_versioning_extensions)
+        query_vers_out = _translate_algebra(query_algebra)
+
+        for bgp_identifier, triples in bgp_triples.items():
+            ver_block_template = \
+                open(template_path("templates/query_utils/versioning_query_extensions.txt"), "r").read()
+
+            ver_block = ""
+            for i, triple in enumerate(triples):
+                v = ver_block_template
+                triple_n3 = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
+                ver_block += v.format(triple_n3,
+                                      "?triple_statement_{0}_valid_from".format(str(i)),
+                                      "?triple_statement_{0}_valid_until".format(str(i)))
+
+            dummy_triple = rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)).n3() + " " \
+                           + rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)).n3() + " " \
+                           + rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier)).n3() + "."
+            ver_block += "bind(" + timestamp + "^^xsd:dateTime as ?TimeOfCiting)"
+            query_vers_out = query_vers_out.replace(dummy_triple, ver_block)
+
+        query_vers_out = citation_prefixes("") + "\n" + query_vers_out
+
+        return query_vers_out
+
+    def timestamp_query_old(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):
+        """
+        R7 - Query timestamping
+        Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
+        the query with a code snippet that ensures that a snapshot of the data as of citation
+        time gets returned when the query is executed. Optionally, but recommended, the order by clause
+        is attached to the query to ensure a unique sort of the data.
+
+        :param query:
+        :param citation_timestamp:
         :param colored: f colored is true, the injected strings within the statement template will be colored.
         Use this parameter only for presentation purpose as the code for color encoding will make the SPARQL
         query erroneous!
@@ -792,10 +859,9 @@ class QueryUtils:
                 prefixes = self.sparql_prefixes
                 query = self.query
             else:
-                return "Query could not be normalized because the query string was not set."
+                raise NoQueryString("Query could not be normalized because the query string was not set.")
         else:
             prefixes, query = split_prefixes_query(query)
-
         final_prefixes = citation_prefixes(prefixes)
 
         # Variables from the original query's select clause

@@ -1,7 +1,7 @@
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from src.rdf_data_citation.exceptions import NoVersioningMode
+from src.rdf_data_citation.exceptions import NoVersioningMode, RDFStarNotSupported, NoConnectionToRDFStore
 from urllib.error import URLError
 from enum import Enum
 import logging
@@ -48,6 +48,7 @@ def _to_df(result: Wrapper.QueryResult) -> pd.DataFrame:
             row.append(result_value)
         values.append(row)
     df = df.append(pd.DataFrame(values, columns=df.columns))
+
     return df
 
 
@@ -113,9 +114,9 @@ class TripleStoreEngine:
             self.sparql_post.setQuery(delete_statement)
             self.sparql_post.query()
 
-        except URLError as e:
-            print("No connection to the RDF* store could be established. Check whether your RDF* store is running.")
-            raise
+        except URLError:
+            raise NoConnectionToRDFStore("No connection to the RDF* store could be established. "
+                                         "Check whether your RDF* store is running.")
 
         try:
             test_prefixes = citation_prefixes("")
@@ -137,9 +138,8 @@ class TripleStoreEngine:
             self.sparql_post.setQuery(delete_statement)
             self.sparql_post.query()
 
-        except Exception as e:
-            print("Your RDF store might not support the 'star' extension. Make sure that it is a RDF* store.")
-            raise
+        except Exception:
+            raise RDFStarNotSupported("Your RDF store might not support the 'star' extension. Make sure that it is a RDF* store.")
 
         print("Connection to RDF query and update endpoints "
               "{0} and {1} established".format(query_endpoint, update_endpoint))
@@ -155,6 +155,7 @@ class TripleStoreEngine:
         delete_statement = template.format(citation_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
+
         print("All annotations have been removed.")
 
     def version_all_rows(self, initial_timestamp: datetime, versioning_mode: VersioningMode = VersioningMode.SAVE_MEM):
@@ -197,6 +198,7 @@ class TripleStoreEngine:
 
         self.sparql_post.setQuery(update_statement)
         self.sparql_post.query()
+
         print("All rows have been annotated with an artificial end date.")
 
     def get_data(self, select_statement, timestamp: datetime = None, yn_timestamp_query: bool = True) -> pd.DataFrame:
@@ -224,6 +226,7 @@ class TripleStoreEngine:
             self.sparql_get.setQuery(select_statement)
         result = self.sparql_get.query()
         df = _to_df(result)
+
         return df
 
     def update(self, select_statement, new_value):
@@ -311,6 +314,8 @@ class TripleStoreEngine:
         statement = statement.format(sparql_prefixes, s, p, o)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
+        print("Triple {0} successfully inserted: ".format(triple))
+
         return result
 
     def outdate_triples(self, select_statement):
@@ -380,4 +385,5 @@ class TripleStoreEngine:
         statement = statement.format(s, p, o)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
+
         return result

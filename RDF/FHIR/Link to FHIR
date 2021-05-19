@@ -1,1 +1,4 @@
-https://www.hl7.org/fhir/rdf.html
+https://www.hl7.org/fhir/downloads.html --> RDF --> Definitions
+* fhir.ttl (classes and predicates)
+* rim.ttl (Resource information model)
+* w5.ttl (classes and predicates)

@@ -41,3 +41,10 @@ class NoQueryString(Exception):
 class ExpressionNotCoveredException(Exception):
     pass
 
+
+class RDFStarNotSupported(Exception):
+    pass
+
+
+class NoConnectionToRDFStore(Exception):
+    pass
