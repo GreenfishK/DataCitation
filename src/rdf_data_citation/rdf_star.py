@@ -216,8 +216,10 @@ class TripleStoreEngine:
 
         if yn_timestamp_query:
             if timestamp is None:
+                logging.debug("QueryUtils called")
                 query_utils = QueryUtils(query=select_statement)
             else:
+                logging.debug("QueryUtils called")
                 query_utils = QueryUtils(query=select_statement, citation_timestamp=timestamp)
 
             query = query_utils.timestamped_query

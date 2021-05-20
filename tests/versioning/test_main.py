@@ -542,26 +542,28 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def test_versioning_injection__query_with_union(self):
+    def test_get_data__query_with_union(self):
         test = Test(test_number=16,
-                    tc_desc='Test if a query that has two select blocks which are conjoined with the '
-                            '"union" keyword has "timestamp extensions" for each block separately.',
+                    tc_desc='Test if a query with a "union" will yield correct results after it has been '
+                            'extended with versioning extensions and executed to retrieve live data.',
                     expected_result='',
                     actual_result='')
 
         return test
 
-    def test_versioning_injection__nested_select(self):
+    def x_test_get_data__nested_select(self):
+        dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
+        df = self.rdf_engine.get_data(dataset_query)
+
         test = Test(test_number=17,
-                    tc_desc='Test if the extensions for versioning_modes/timestamping a query are injected into every select '
-                            'block with a basic graph pattern (BGP). For each triple statement inside a block one '
-                            'extension must be injected.',
-                    expected_result='',
-                    actual_result='')
+                    tc_desc='Test if a query with a subselect will yield correct results after it has been '
+                            'extended with versioning extensions and executed to retrieve live data.',
+                    expected_result='10',
+                    actual_result=str(len(df.index)))
 
         return test
 
-    def x_test_insert__two_consecutive_inserts(self):
+    def test_insert__two_consecutive_inserts(self):
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
 

@@ -137,7 +137,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
         file.write(text)
         file.close()
 
-    def replace(old, new, search_from_match: str = None, search_from_match_occurrence: int = None):
+    def replace(old, new, search_from_match: str = None, search_from_match_occurrence: int = None, count: int = 1):
         # Read in the file
         with open('query.txt', 'r') as file:
             filedata = file.read()
@@ -152,10 +152,10 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
         if search_from_match and search_from_match_occurrence:
             position = find_nth(filedata, search_from_match, search_from_match_occurrence)
             filedata_pre = filedata[:position]
-            filedata_post = filedata[position:].replace(old, new, 1)
+            filedata_post = filedata[position:].replace(old, new, count)
             filedata = filedata_pre + filedata_post
         else:
-            filedata = filedata.replace(old, new, 1)
+            filedata = filedata.replace(old, new, count)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
@@ -168,6 +168,8 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
             return "{" + node_arg.name + "}"
         elif isinstance(node_arg, Expr):
             return "{" + node_arg.name + "}"
+        elif isinstance(node_arg, str):
+            return node_arg
         else:
             raise ExpressionNotCoveredException(
                 "The expression {0} might not be covered yet.".format(node_arg))
@@ -188,15 +190,16 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
             # 18.2 Graph Patterns
             elif node.name == "BGP":
                 # Identifiers or Paths
+                # Negated path throws a type error. Probably n3() method of negated paths should be fixed
                 triples = "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                   for triple in node.triples)
                 replace("{BGP}", triples)
                 # The dummy -*-SELECT-*- is placed during a SelectQuery or Multiset pattern in order to be able
                 # to match extended variables in a specific Select-clause (see "Extend" below)
-                replace("-*-SELECT-*-", "SELECT")
+                replace("-*-SELECT-*-", "SELECT", count=-1)
                 # If there is no "Group By" clause the placeholder will simply be deleted. Otherwise there will be
                 # no matching {GroupBy} placeholder because it has already been replaced by "group by variables"
-                replace("{GroupBy}", "")
+                replace("{GroupBy}", "", count=-1)
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -206,6 +209,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     expr = node.expr.name
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                print(node)
                 if node.p:
                     if node.p.name == "AggregateJoin":
                         replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
@@ -255,7 +259,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                         replace(identifier, "GROUP_CONCAT" + "(" + distinct
                                 + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")")
                     else:
-                        replace(identifier, agg_func_name.upper() + "(" + distinct + agg_func.vars.n3() + ")")
+                        replace(identifier, agg_func_name.upper() + "(" + distinct + convert_node_arg(agg_func.vars) + ")")
                     # For non-aggregated variables the aggregation function "sample" is automatically assigned.
                     # However, we do not want to have "sample" wrapped around non-aggregated variables. That is
                     # why we replace it. If "sample" is used on purpose it will not be replaced as the alias
@@ -311,6 +315,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     replace("{ToMultiSet}", "{-*-SELECT-*- " + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
+            # Does not need to be explicitly covered as paths are translated into SPARQL language with the n3() function
 
             # 17 Expressions and Testing Values
             # # 17.3 Operator Mapping
@@ -769,6 +774,7 @@ class QueryUtils:
         query erroneous!
         :return: A query string extended with the given timestamp
         """
+
         if query is None:
             if self.query is not None and self.sparql_prefixes is not None:
                 prefixes = self.sparql_prefixes
