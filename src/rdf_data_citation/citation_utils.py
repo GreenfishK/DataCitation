@@ -8,7 +8,8 @@ from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesIn
     MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Variable, Identifier
-from rdflib.paths import SequencePath
+from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne,\
+    ZeroOrMore, OneOrMore
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 from nested_lookup import nested_lookup
@@ -209,7 +210,6 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     expr = node.expr.name
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                print(node)
                 if node.p:
                     if node.p.name == "AggregateJoin":
                         replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
@@ -270,7 +270,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                 replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
             elif node.name == "TriplesBlock":
                 replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
-                                                   for triple in node.triples))
+                                                  for triple in node.triples))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -544,6 +544,42 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
     return query_from_algebra
 
 
+def _resolve_paths(node: CompValue):
+    if isinstance(node, CompValue):
+        if node.name == "BGP":
+            resolved_triples = []
+            for k, triple in enumerate(node.triples):
+                if isinstance(triple[1], SequencePath):
+                    sequences = triple[1].args
+                    for i, ref in enumerate(sequences, start=1):
+                        if i == 1:
+                            t = (triple[0], ref, Variable("?dummy{0}".format(str(i))))
+                        elif i == len(sequences):
+                            t = (Variable("?dummy{0}".format(len(sequences) - 1)), ref, triple[2])
+                        else:
+                            t = (Variable("?dummy{0}".format(str(i - 1))), ref, Variable("?dummy{0}".format(str(i))))
+                        resolved_triples.append(t)
+                    node.triples.pop(k)
+                if isinstance(triple[1], NegatedPath):
+                    raise ExpressionNotCoveredException("This expression has not be covered yet.")
+                if isinstance(triple[1], AlternativePath):
+                    raise ExpressionNotCoveredException("This expression has not be covered yet.")
+                if isinstance(triple[1], InvPath):
+                    raise ExpressionNotCoveredException("This expression has not be covered yet.")
+                if isinstance(triple[1], MulPath):
+                    if triple[1].mod == ZeroOrOne:
+                        raise ExpressionNotCoveredException("This expression has not be covered yet.")
+                    if triple[1].mod == ZeroOrMore:
+                        raise ExpressionNotCoveredException("This expression has not be covered yet.")
+                    if triple[1].mod == OneOrMore:
+                        raise ExpressionNotCoveredException("This expression has not be covered yet.")
+            node.triples.extend(resolved_triples)
+
+        elif node.name == "TriplesBlock":
+            raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
+                                                "No versioning extensions will be injected.")
+
+
 class QueryUtils:
 
     def __init__(self, query: str = None, citation_timestamp: datetime = None):
@@ -669,14 +705,15 @@ class QueryUtils:
         Sequence paths can reduce the number of triplets in the query statement and are commonly used. They can be
         resolved to 'normal' triple statements.
         """
-        pattern = "\\s*(" + re_subject + ")" \
+        """pattern = "\\s*(" + re_subject + ")" \
                   "\\s*(" + re_predicate + ")" \
                   "\\s*[/]"
         dummy_cnt = 1
         while re.findall(pattern, query, re.MULTILINE):
             query = re.sub(pattern, r"\1 \2 ?dummy{0} . ?dummy{0} ".format(str(dummy_cnt)), query)
-            dummy_cnt += 1
+            dummy_cnt += 1"""
         q_algebra = _query_algebra(query, prefixes)
+        algebra.traverse(q_algebra, _resolve_paths)
 
         """
         #11
@@ -800,9 +837,13 @@ class QueryUtils:
                     node.triples.append((rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)),
                                          rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)),
                                          rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier))))
+                elif node.name == "TriplesBlock":
+                    raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
+                                                        "No versioning extensions will be injected.")
 
         query_tree = parser.parseQuery(query_vers)
         query_algebra = algebra.translateQuery(query_tree)
+        algebra.traverse(query_algebra.algebra, visitPre=_resolve_paths)
         algebra.traverse(query_algebra.algebra, visitPre=inject_versioning_extensions)
         query_vers_out = _translate_algebra(query_algebra)
 

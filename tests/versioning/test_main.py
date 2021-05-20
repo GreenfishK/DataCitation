@@ -554,11 +554,12 @@ class TestVersioning(TestExecution):
     def x_test_get_data__nested_select(self):
         dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
-
+        # The number of rows can be different if another test dataset is used!
+        dateset_rows_before_versioning = 4
         test = Test(test_number=17,
                     tc_desc='Test if a query with a subselect will yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
-                    expected_result='10',
+                    expected_result=str(dateset_rows_before_versioning),
                     actual_result=str(len(df.index)))
 
         return test

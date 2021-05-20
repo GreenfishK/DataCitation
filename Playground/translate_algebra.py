@@ -1,5 +1,7 @@
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Identifier
+from rdflib.paths import Path, SequencePath, NegatedPath, AlternativePath, MulPath, ZeroOrOne, ZeroOrMore, OneOrMore, \
+    InvPath
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 
@@ -59,6 +61,40 @@ def to_sparql_query_text(query_algebra):
         :param node:
         :return:
         """
+        if isinstance(node, Path):
+
+            def resolve_path(path: Path):
+                """
+                Resolves the paths to explicit triple statements.
+
+                :param path:
+                :return:
+                """
+                if isinstance(path, SequencePath):
+                    print("Sequence Path")
+                    resolved_path_triples = []
+                    for arg in node.args:
+                        if isinstance(arg, Path):
+                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
+                        else:
+                            print(arg)
+                            print(type(arg))
+
+                if isinstance(path, NegatedPath):
+                    print("Negated Path")
+                if isinstance(path, AlternativePath):
+                    print("Alternative Path")
+                if isinstance(path, InvPath):
+                    print("Inverse Path")
+                if isinstance(path, MulPath):
+                    if path.mod == ZeroOrOne:
+                        print("ZeroOrOne")
+                    if path.mod == ZeroOrMore:
+                        print("ZeroOrMore")
+                    if path.mod == OneOrMore:
+                        print("OneOrMore")
+
+            resolve_path(node)
 
         if isinstance(node, CompValue):
             # 18.2 Query Forms
@@ -87,7 +123,6 @@ def to_sparql_query_text(query_algebra):
                     expr = node.expr.name
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                print(node)
                 if node.p:
                     if node.p.name == "AggregateJoin":
                         replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
@@ -418,7 +453,14 @@ def to_sparql_query_text(query_algebra):
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
 
 
-q1 = open("test_query.txt", "r").read()
+# q1 = open("test_property_path__alternative_path.txt", "r").read()
+# q1 = open("test_property_path__inverse_path.txt", "r").read()
+# q1 = open("test_property_path__negated_property_set.txt", "r").read()
+q1 = open("test_property_path__sequence_path.txt", "r").read()
+# q1 = open("test_property_path__one_or_more_path.txt", "r").read()
+# q1 = open("test_property_path__zero_or_more_path.txt", "r").read()
+# q1 = open("test_property_path__zero_or_one_path.txt", "r").read()
+
 query_tree = parser.parseQuery(q1)
 query_algebra = algebra.translateQuery(query_tree)
 to_sparql_query_text(query_algebra)
