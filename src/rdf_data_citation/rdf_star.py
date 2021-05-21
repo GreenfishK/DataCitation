@@ -85,15 +85,23 @@ class TripleStoreEngine:
         :param credentials: The user name and password for the remote RDF store
         """
 
-        self.sparql_get = SPARQLWrapper(query_endpoint)
-        self.sparql_post = SPARQLWrapper(update_endpoint)
+
         self.credentials = credentials
         self._template_location = template_path("templates/rdf_star_store")
-        self.sparql_post.setHTTPAuth(DIGEST)
-        self.sparql_post.setMethod(POST)
+
+        self.sparql_get = SPARQLWrapper(query_endpoint)
         self.sparql_get.setHTTPAuth(DIGEST)
         self.sparql_get.setMethod(GET)
         self.sparql_get.setReturnFormat(JSON)
+
+        self.sparql_get_with_post = SPARQLWrapper(query_endpoint)
+        self.sparql_get_with_post.setHTTPAuth(DIGEST)
+        self.sparql_get_with_post.setMethod(POST)
+        self.sparql_get_with_post.setReturnFormat(JSON)
+
+        self.sparql_post = SPARQLWrapper(update_endpoint)
+        self.sparql_post.setHTTPAuth(DIGEST)
+        self.sparql_post.setMethod(POST)
 
         if self.credentials is not None:
             self.sparql_post.setCredentials(credentials.user_name, credentials.pw)
@@ -224,10 +232,10 @@ class TripleStoreEngine:
 
             query = query_utils.timestamped_query
             logging.debug(query)
-            self.sparql_get.setQuery(query)
+            self.sparql_get_with_post.setQuery(query)
         else:
-            self.sparql_get.setQuery(select_statement)
-        result = self.sparql_get.query()
+            self.sparql_get_with_post.setQuery(select_statement)
+        result = self.sparql_get_with_post.query()
         df = _to_df(result)
 
         return df

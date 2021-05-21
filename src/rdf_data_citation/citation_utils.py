@@ -549,30 +549,40 @@ def _resolve_paths(node: CompValue):
         if node.name == "BGP":
             resolved_triples = []
             for k, triple in enumerate(node.triples):
-                if isinstance(triple[1], SequencePath):
-                    sequences = triple[1].args
-                    for i, ref in enumerate(sequences, start=1):
-                        if i == 1:
-                            t = (triple[0], ref, Variable("?dummy{0}".format(str(i))))
-                        elif i == len(sequences):
-                            t = (Variable("?dummy{0}".format(len(sequences) - 1)), ref, triple[2])
-                        else:
-                            t = (Variable("?dummy{0}".format(str(i - 1))), ref, Variable("?dummy{0}".format(str(i))))
-                        resolved_triples.append(t)
-                    node.triples.pop(k)
-                if isinstance(triple[1], NegatedPath):
-                    raise ExpressionNotCoveredException("This expression has not be covered yet.")
-                if isinstance(triple[1], AlternativePath):
-                    raise ExpressionNotCoveredException("This expression has not be covered yet.")
-                if isinstance(triple[1], InvPath):
-                    raise ExpressionNotCoveredException("This expression has not be covered yet.")
-                if isinstance(triple[1], MulPath):
-                    if triple[1].mod == ZeroOrOne:
-                        raise ExpressionNotCoveredException("This expression has not be covered yet.")
-                    if triple[1].mod == ZeroOrMore:
-                        raise ExpressionNotCoveredException("This expression has not be covered yet.")
-                    if triple[1].mod == OneOrMore:
-                        raise ExpressionNotCoveredException("This expression has not be covered yet.")
+
+                def resolve(path: Path, subj, obj):
+                    if isinstance(path, SequencePath):
+                        sequences = path.args
+                        for i, ref in enumerate(sequences, start=1):
+                            if isinstance(ref, Path):
+                                # Should be recursively called but the solution for other Paths is not implemented yet
+                                # Ther could e.g. be an alternative path nested within a sequence path
+                                resolve(ref, subj, obj)
+                            else:
+                                if i == 1:
+                                    t = (subj, ref, Variable("?dummy{0}".format(str(i))))
+                                elif i == len(sequences):
+                                    t = (Variable("?dummy{0}".format(len(sequences) - 1)), ref, obj)
+                                else:
+                                    t = (Variable("?dummy{0}".format(str(i - 1))), ref, Variable("?dummy{0}".format(str(i))))
+                                resolved_triples.append(t)
+                        node.triples.pop(k)
+                    if isinstance(path, NegatedPath):
+                        raise ExpressionNotCoveredException("NegatedPath has not be covered yet.")
+                    if isinstance(path, AlternativePath):
+                        raise ExpressionNotCoveredException("AlternativePath has not be covered yet.")
+                    if isinstance(path, InvPath):
+                        raise ExpressionNotCoveredException("InvPath has not be covered yet.")
+                    if isinstance(path, MulPath):
+                        if triple[1].mod == ZeroOrOne:
+                            raise ExpressionNotCoveredException("ZeroOrOne path has not be covered yet.")
+                        if triple[1].mod == ZeroOrMore:
+                            raise ExpressionNotCoveredException("ZeroOrMore path has not be covered yet.")
+                        if triple[1].mod == OneOrMore:
+                            raise ExpressionNotCoveredException("OneOrMore path has not be covered yet.")
+
+                resolve(triple[1], triple[0], triple[2])
+
             node.triples.extend(resolved_triples)
 
         elif node.name == "TriplesBlock":

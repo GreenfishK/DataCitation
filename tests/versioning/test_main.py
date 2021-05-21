@@ -542,28 +542,6 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def test_get_data__query_with_union(self):
-        test = Test(test_number=16,
-                    tc_desc='Test if a query with a "union" will yield correct results after it has been '
-                            'extended with versioning extensions and executed to retrieve live data.',
-                    expected_result='',
-                    actual_result='')
-
-        return test
-
-    def x_test_get_data__nested_select(self):
-        dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
-        df = self.rdf_engine.get_data(dataset_query)
-        # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 4
-        test = Test(test_number=17,
-                    tc_desc='Test if a query with a subselect will yield correct results after it has been '
-                            'extended with versioning extensions and executed to retrieve live data.',
-                    expected_result=str(dateset_rows_before_versioning),
-                    actual_result=str(len(df.index)))
-
-        return test
-
     def test_insert__two_consecutive_inserts(self):
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
@@ -586,7 +564,7 @@ class TestVersioning(TestExecution):
         dataset_before_insert = self.rdf_engine.get_data(dataset_query, timestamp_before_insert)
         dataset_after_insert = self.rdf_engine.get_data(dataset_query)
 
-        test = Test(test_number=18,
+        test = Test(test_number=16,
                     tc_desc='Make two consecutive inserts and retrieve the dataset as it was before, between '
                             'and after the inserts. Check that the datasets reflect the right information as of'
                             'each timestamp. ',
@@ -623,7 +601,7 @@ class TestVersioning(TestExecution):
         # data_set_before_outdate_non_empty = dataset_before_outdate.empty
         dataset_after_outdate = self.rdf_engine.get_data(dataset_query)
 
-        test = Test(test_number=19,
+        test = Test(test_number=17,
                     tc_desc='Test if the number of triples in the RDF store after outdating a set of triples '
                             'did not change. Moreover, test if the result set after the triples have been outdated '
                             'is empty. ',
@@ -632,6 +610,45 @@ class TestVersioning(TestExecution):
                     actual_result="number of triples in db: {0}; number of rows in "
                                     "dataset after outdate: {1}".format(str(cnt_after_outdate),
                                                                         len(dataset_after_outdate.index)))
+
+        return test
+
+    def x_test_get_data__query_with_union(self):
+        dataset_query = open("test_data/test_get_data__query_with_union.txt", "r").read()
+        df = self.rdf_engine.get_data(dataset_query)
+        # The number of rows can be different if another test dataset is used!
+        dateset_rows_before_versioning = 10
+        test = Test(test_number=18,
+                    tc_desc='Test if a query with a "union" will yield correct results after it has been '
+                            'extended with versioning extensions and executed to retrieve live data.',
+                    expected_result=str(dateset_rows_before_versioning),
+                    actual_result=str(len(df.index)))
+
+        return test
+
+    def x_test_get_data__nested_select(self):
+        dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
+        df = self.rdf_engine.get_data(dataset_query)
+        # The number of rows can be different if another test dataset is used!
+        dateset_rows_before_versioning = 4
+        test = Test(test_number=19,
+                    tc_desc='Test if a query with a subselect will yield correct results after it has been '
+                            'extended with versioning extensions and executed to retrieve live data.',
+                    expected_result=str(dateset_rows_before_versioning),
+                    actual_result=str(len(df.index)))
+
+        return test
+
+    def test_get_data__long_query(self):
+        dataset_query = open("test_data/test_get_data__long_query.txt", "r").read()
+        df = self.rdf_engine.get_data(dataset_query)
+        # The number of rows can be different if another test dataset is used!
+        dateset_rows_before_versioning = 10
+        test = Test(test_number=20,
+                    tc_desc='Test if a long query can be handled and yield correct results after it has been '
+                            'extended with versioning extensions and executed to retrieve live data.',
+                    expected_result=str(dateset_rows_before_versioning),
+                    actual_result=str(len(df.index)))
 
         return test
 
