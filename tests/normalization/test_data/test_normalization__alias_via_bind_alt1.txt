@@ -1,7 +1,7 @@
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
 PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 
-select ?person ?mention ?document ?party ?personLabel ?party_label ?value  {
+select ?person ?mention ?document ?party ?personLabel ?party_label ?value {
     ?mention publishing:hasInstance ?person .
     ?document publishing:containsMention ?mention .
     ?person pub:memberOfPoliticalParty ?party.

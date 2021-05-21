@@ -684,8 +684,6 @@ class QueryUtils:
         def remove_alias(node):
             if isinstance(node, CompValue):
                 if node.name == "Extend":
-                    logging.debug(node.expr)
-                    logging.debug(node.var)
                     if isinstance(node.expr, Variable):
                         aliases[node.var] = node.expr
                         return node.p
@@ -786,43 +784,32 @@ class QueryUtils:
         There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
         are sorted by their bindings where the ones with the most bindings come first.
         """
-
-        """# Replace variables with letters
+        q_vars = []
+        q_vars_mapped = {}
         int_norm_var = 'a'
-        variables_mapping = {}
-        extended_variables = _query_variables(query, prefixes, 'bgp')
 
-        for i, v in enumerate(extended_variables):
+        def retrieve_bgp_var_set(node):
+            if isinstance(node, CompValue) and node.name == 'BGP':
+                for triple in node.triples:
+                    if isinstance(triple[0], Variable):
+                        if triple[0] not in q_vars:
+                            q_vars.append(triple[0])
+                    if isinstance(triple[1], Variable):
+                        if triple[1] not in q_vars:
+                            q_vars.append(triple[1])
+                    if isinstance(triple[2], Variable):
+                        if triple[2] not in q_vars:
+                            q_vars.append(triple[2])
+
+        def replace_variable_names_with_letters(node):
+            if isinstance(node, Variable):
+                return q_vars_mapped.get(node)
+
+        algebra.traverse(q_algebra.algebra, retrieve_bgp_var_set)
+        for i, v in enumerate(q_vars):
             next_norm_var = chr(ord(int_norm_var) + i)
-            variables_mapping.update({v: next_norm_var})
-
-        # Replace rdflib.term.Variable('var') with var
-        def norm_vars_1(var):
-            if isinstance(var, Variable):
-                return variables_mapping.get(var)
-            else:
-                return None
-
-        algebra.traverse(q_algebra.algebra, norm_vars_1)
-
-        # identify _var sets and sort the variables inside
-        def norm_vars_2(x):
-            if isinstance(x, set):
-                normalized_variables = [variables_mapping[a] for a in x if not a.n3().startswith('?__agg')]
-                return sorted(normalized_variables)
-            else:
-                return None
-
-        algebra.traverse(q_algebra.algebra, norm_vars_2)
-
-        # Sort variables (in select statement)
-        def sort_list_of_string(list_node):
-            if isinstance(list_node, list) and all(isinstance(list_item, str) for list_item in list_node):
-                return sorted(list_node)
-            else:
-                return None
-
-        algebra.traverse(q_algebra.algebra, visitPre=sort_list_of_string)"""
+            q_vars_mapped[v] = next_norm_var
+        algebra.traverse(q_algebra.algebra, replace_variable_names_with_letters)
 
         algebra.pprintAlgebra(q_algebra)
         return q_algebra

@@ -5,9 +5,10 @@ select ?personName ?party_label ?document ?mention where {
     ?mention publishing:hasInstance ?person .
     ?document publishing:containsMention ?mention .
     ?person pub:memberOfPoliticalParty ?party .
-    ?person pub:preferredLabel ?personName .
     ?party pub:hasValue ?value .
     ?value pub:preferredLabel ?party_label .
+    ?person pub:preferredLabel ?personName .
+
 
     filter(?personName = "Barack Obama"@en)
-} order by ?mention
+} order by ?personName
