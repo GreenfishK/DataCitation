@@ -1,7 +1,7 @@
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
 PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 
-select ?per ?mention ?document ?party ?personLabel ?party_label ?value  {
+select ?per ?mention (?document as ?doc) ?party ?personLabel ?party_label ?value  {
     ?mention publishing:hasInstance ?person .
     ?document publishing:containsMention ?mention .
     ?person pub:memberOfPoliticalParty ?party.
@@ -11,6 +11,5 @@ select ?per ?mention ?document ?party ?personLabel ?party_label ?value  {
 
     filter(?personLabel = "Barack Obama"@en)
     bind(?person as ?per)
-    bind(?mention as ?mention_in_document)
 
 } order by ?mention

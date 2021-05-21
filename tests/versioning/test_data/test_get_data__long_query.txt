@@ -16,6 +16,7 @@ select ?document ?mention ?personLabel ?party_label {
 
                 }
             }
+        }
     }
     union
     {

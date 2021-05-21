@@ -645,6 +645,22 @@ class QueryUtils:
         else:
             prefixes, query = split_prefixes_query(query)
 
+        q_algebra = _query_algebra(query, prefixes)
+
+        def remove_protected_vars(node):
+            """
+            Removes protected nodes _vars from the query tree. _vars store just the used variables within the
+            corresponding node and are found in every CompValue. E.g. _vars in BGP are variables encountered in triple
+            statements. Excluding them does not change the query semantics in any way as they are just additional
+            information.
+
+            :return:
+            """
+            if isinstance(node, set):
+                return set()
+
+        algebra.traverse(q_algebra.algebra, visitPost=remove_protected_vars)
+
         # Common SPARQL regex patterns
         re_variable = "[?][a-zA-Z0-9-_]*"
         re_prefix_ref = "[a-zA-Z0-9-_]*[:][a-zA-Z0-9-_]*"
@@ -658,35 +674,40 @@ class QueryUtils:
         """
         #6.1
         Aliases via BIND keyword just rename variables but the query result stays the same.
-        
+        It must be distinguished whether bind is used to give existing variables an alias or
+        to do the same with more complex expressions. A normalization will only be carried out
+        in former case.
+        Measure: Aliases just for the purpose of giving simple variables another name will be removed.
         """
+        aliases = {}
 
-        for var in self.bgp_variables:
-            pattern = "bind\\s*[(]\\s*[?]{0}\\s*as\\s*{1}\\s*[)]".format(var, re_variable)
-            binds = re.findall(pattern, query, re.MULTILINE)
-            for bind in binds:
-                pattern_alias_variable = "(?<=as)\\s*[?][a-zA-Z0-9-_]*"
-                aliases = re.findall(pattern_alias_variable, bind)
-                pattern_orig_var_name = "{0}\\s*(?=as)".format(re_variable)
-                orig_var_names = re.findall(pattern_orig_var_name, bind)
-                if len(aliases) == 1 and len(orig_var_names) == 1:
-                    orig_var_name = orig_var_names[0].rstrip()
-                    alias = aliases[0].lstrip()
-                    query = query.replace(bind, "")
-                    replace_pattern = "\{0}(\\s+|\\s*(?=\?))".format(alias)
-                    query = re.sub(replace_pattern, orig_var_name, query)
-                else:
-                    raise MultipleAliasesInBindError("Check your bind statement in your "
-                                                     "query and whether it has more than one alias.")
+        def remove_alias(node):
+            if isinstance(node, CompValue):
+                if node.name == "Extend":
+                    logging.debug(node.expr)
+                    logging.debug(node.var)
+                    if isinstance(node.expr, Variable):
+                        aliases[node.var] = node.expr
+                        return node.p
+
+        def remove_from_vars(n):
+            if isinstance(n, CompValue) and n.get('PV') and type(n.get('PV')) == list:
+                for i, v in enumerate(n.get('PV')):
+                    if aliases.get(v):
+                        n.get('PV')[i] = aliases.get(v)
+                return n
+
+        algebra.traverse(q_algebra.algebra, visitPost=remove_alias)
+        algebra.traverse(q_algebra.algebra, visitPost=remove_from_vars)
 
         """
         #6.2
         Aliases that are assigned in the select clause are just another means to #6.1 (using bind to
         assign aliases). 
+        Measure: Same as 6.1
         """
-        pattern = "(?<=select)(.*)(\\s*[(](\\s*{variable})\\s*as\\s*{variable}\\s*[)])+".format(variable=re_variable)
-        while re.findall(pattern, query, re.MULTILINE):
-            query = re.sub(pattern, r"\1 \3", query)
+        # Solved with 6.1 as "Extend" in the algebra tree can mean explicit binding using the BIND keyword
+        # or implicitly in the projection part (=select variables) of the select clause.
 
         """
         #8 
@@ -722,8 +743,7 @@ class QueryUtils:
         while re.findall(pattern, query, re.MULTILINE):
             query = re.sub(pattern, r"\1 \2 ?dummy{0} . ?dummy{0} ".format(str(dummy_cnt)), query)
             dummy_cnt += 1"""
-        q_algebra = _query_algebra(query, prefixes)
-        algebra.traverse(q_algebra, _resolve_paths)
+        algebra.traverse(q_algebra.algebra, _resolve_paths)
 
         """
         #11
@@ -760,14 +780,14 @@ class QueryUtils:
 
         """
         #7
-        Variables in the query tree will be replaced by letters from the alphabet. For each variable 
-        a letter from the alphabet will be assigned starting with 'a' and continuing in alphabetic order. 
-        Two letters will be used  and combinations of letters will be assigned should there be more than 26 variables. 
+        Variable names have no effect on the query semantic.
+        Measure: Variables in the query tree will be replaced by letters from the alphabet. Only up to 26 variables 
+        are supported. 
         There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
         are sorted by their bindings where the ones with the most bindings come first.
         """
 
-        # Replace variables with letters
+        """# Replace variables with letters
         int_norm_var = 'a'
         variables_mapping = {}
         extended_variables = _query_variables(query, prefixes, 'bgp')
@@ -802,8 +822,9 @@ class QueryUtils:
             else:
                 return None
 
-        algebra.traverse(q_algebra.algebra, visitPre=sort_list_of_string)
+        algebra.traverse(q_algebra.algebra, visitPre=sort_list_of_string)"""
 
+        algebra.pprintAlgebra(q_algebra)
         return q_algebra
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):

@@ -75,7 +75,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def test_normalization__alias_via_bind(self):
+    def x_test_normalization__alias_via_bind(self):
         test = Test(test_number=6,
                     tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
                             "as when not using any alias.",
@@ -152,6 +152,6 @@ class TestNormalization(TestExecution):
         return test
 
 
-t = TestNormalization(annotated_tests=False)
+t = TestNormalization(annotated_tests=True)
 t.run_tests()
 t.print_test_results()

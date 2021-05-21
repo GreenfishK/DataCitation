@@ -613,7 +613,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def x_test_get_data__query_with_union(self):
+    def test_get_data__query_with_union(self):
         dataset_query = open("test_data/test_get_data__query_with_union.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
@@ -626,7 +626,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def x_test_get_data__nested_select(self):
+    def test_get_data__nested_select(self):
         dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
@@ -653,6 +653,6 @@ class TestVersioning(TestExecution):
         return test
 
 
-t = TestVersioning(annotated_tests=True)
+t = TestVersioning(annotated_tests=False)
 t.run_tests()
 t.print_test_results()
