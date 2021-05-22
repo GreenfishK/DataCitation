@@ -7,7 +7,7 @@ from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefix
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError, \
     MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
-from rdflib.term import Variable, Identifier
+from rdflib.term import Variable, Identifier, URIRef
 from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne,\
     ZeroOrMore, OneOrMore
 import rdflib.plugins.sparql.parser as parser
@@ -551,40 +551,67 @@ def _resolve_paths(node: CompValue):
 
             def resolve(path: Path, subj, obj):
                 if isinstance(path, SequencePath):
-                    sequences = path.args
-                    for i, ref in enumerate(sequences, start=1):
-                        if isinstance(ref, Path):
-                            # Should be recursively called but the solution for other Paths is not implemented yet
-                            # Ther could e.g. be an alternative path nested within a sequence path
-                            resolve(ref, subj, obj)
+                    for i, ref in enumerate(path.args, start=1):
+                        if i == 1:
+                            s = subj
+                            p = ref
+                            o = Variable("?dummy{0}".format(str(i)))
+                        elif i == len(path.args):
+                            s = Variable("?dummy{0}".format(len(path.args) - 1))
+                            p = ref
+                            o = obj
                         else:
-                            if i == 1:
-                                t = (subj, ref, Variable("?dummy{0}".format(str(i))))
-                            elif i == len(sequences):
-                                t = (Variable("?dummy{0}".format(len(sequences) - 1)), ref, obj)
-                            else:
-                                t = (
-                                Variable("?dummy{0}".format(str(i - 1))), ref, Variable("?dummy{0}".format(str(i))))
+                            s = Variable("?dummy{0}".format(str(i - 1)))
+                            p = ref
+                            o = Variable("?dummy{0}".format(str(i)))
+                        if isinstance(ref, URIRef):
+                            t = (s, p, o)
                             resolved_triples.append(t)
+                            continue
+                        if isinstance(ref, Path):
+                            resolve(p, s, o)
+                        else:
+                            raise ExpressionNotCoveredException("Node inside Path is neither Path nor URIRef but: "
+                                                                "{0}. This case has not been covered yet. "
+                                                                "Path will not be resolved.".format(type(ref)))
+
                 if isinstance(path, NegatedPath):
-                    raise ExpressionNotCoveredException("NegatedPath has not be covered yet.")
+                    raise ExpressionNotCoveredException("NegatedPath has not be covered yet. Path will not be resolved")
                 if isinstance(path, AlternativePath):
-                    raise ExpressionNotCoveredException("AlternativePath has not be covered yet.")
+                    raise ExpressionNotCoveredException("AlternativePath has not be covered yet. "
+                                                        "Path will not be resolved")
                 if isinstance(path, InvPath):
-                    raise ExpressionNotCoveredException("InvPath has not be covered yet.")
+                    if isinstance(path.arg, URIRef):
+                        t = (obj, path.arg, subj)
+                        resolved_triples.append(t)
+                        return
+                    else:
+                        raise ExpressionNotCoveredException("An argument for inverted paths other than URIRef "
+                                                            "was given. This case is not implemented yet.")
                 if isinstance(path, MulPath):
                     if triple[1].mod == ZeroOrOne:
-                        raise ExpressionNotCoveredException("ZeroOrOne path has not be covered yet.")
+                        raise ExpressionNotCoveredException("ZeroOrOne path has not be covered yet. "
+                                                            "Path will not be resolved")
                     if triple[1].mod == ZeroOrMore:
-                        raise ExpressionNotCoveredException("ZeroOrMore path has not be covered yet.")
+                        raise ExpressionNotCoveredException("ZeroOrMore path has not be covered yet. "
+                                                            "Path will not be resolved")
                     if triple[1].mod == OneOrMore:
-                        raise ExpressionNotCoveredException("OneOrMore path has not be covered yet.")
+                        raise ExpressionNotCoveredException("OneOrMore path has not be covered yet. "
+                                                            "Path will not be resolved")
 
             for k, triple in enumerate(node.triples):
-                if isinstance(triple[1], Path):
-                    resolve(triple[1], triple[0], triple[2])
+                if isinstance(triple[0], Identifier) and isinstance(triple[2], Identifier):
+                    if isinstance(triple[1], Path):
+                        resolve(triple[1], triple[0], triple[2])
+                    else:
+                        if isinstance(triple[1], Identifier):
+                            resolved_triples.append(triple)
+                        else:
+                            raise ExpressionNotCoveredException("Predicate is neither Path nor Identifier. "
+                                                                "This case has not been covered yet.")
                 else:
-                    resolved_triples.append(triple)
+                    raise ExpressionNotCoveredException("Subject and/or object are not identifiers but "
+                                                        "something else. This is not implemented yet.")
 
             node.triples.clear()
             node.triples.extend(resolved_triples)
@@ -747,7 +774,7 @@ class QueryUtils:
         try:
             algebra.traverse(q_algebra.algebra, _resolve_paths)
         except ExpressionNotCoveredException as e:
-            print (e)
+            print(e)
 
         """
         #11
@@ -809,7 +836,9 @@ class QueryUtils:
                     var = Variable(q_vars_mapped.get(node))
                     return var
                 except Exception as e:
-                    print("The variable is not found in: BGP, Bind. Check whether the variable can be removed.")
+                    print("The variable {0} is not found in: BGP, Bind. and will not be replaced with a letter. "
+                          "Check whether something went wrong prior to this step or the variable is not part "
+                          "of any triple statement.".format(node))
 
         algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
@@ -817,7 +846,6 @@ class QueryUtils:
         for i, v in enumerate(q_vars):
             next_norm_var = chr(ord(int_norm_var) + i)
             q_vars_mapped[v] = next_norm_var
-
         algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
 
         """
@@ -833,16 +861,20 @@ class QueryUtils:
                 # logging.debug(node)
                 ordered_triples = {}
                 for t in node.triples:
-                    logging.debug(t)
                     norm_triple = ""
 
                     if isinstance(t[0], Variable):
-                        s = Variable(q_vars_mapped.get(t[0]))
+                        try:
+                            s = Variable(q_vars_mapped.get(t[0]))  # Error
+                        except Exception as e:
+                            print("Variable does not exist in q_vars_mapped.")
                     else:
                         s = t[0]
 
                     if isinstance(t[1], Variable):
                         p = Variable(q_vars_mapped.get(t[1]))
+                    elif isinstance(t[1], Path):
+                        p = "not_covered_yet"
                     else:
                         p = t[1]
 
@@ -857,10 +889,15 @@ class QueryUtils:
 
                 node.triples.clear()
                 node.triples.extend(list(ordered_triples.keys()))
+            elif isinstance(node, CompValue) and node.name == 'TriplesBlock':
+                raise ExpressionNotCoveredException("Triples within a TriplesBlock will"
+                                                    " not be ordered. This is not implemented yet.")
 
-        logging.debug("before")
-        algebra.traverse(q_algebra.algebra, reorder_triples)
-        logging.debug("after")
+        try:
+            algebra.traverse(q_algebra.algebra, reorder_triples)
+        except Exception as e:
+            print("There might be uncovered expressions, identifiers or paths. Triple statements will not "
+                  "be re-ordered.")
 
         return q_algebra
 

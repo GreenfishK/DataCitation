@@ -34,14 +34,14 @@ class TestNormalization(TestExecution):
 
         query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
         self.query_data_alt1 = QueryUtils(query=query_alt1)
-        logging.debug(self.query_data_alt1.normalized_query)
-        logging.debug(self.query_data_alt1.normalized_query_algebra.algebra)
+        logging.info(self.query_data_alt1.normalized_query)
+        #logging.info(self.query_data_alt1.normalized_query_algebra.algebra)
         query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
         self.query_data_alt2 = QueryUtils(query=query_alt2)
-        logging.debug(self.query_data_alt2.normalized_query)
-        logging.debug(self.query_data_alt2.normalized_query_algebra.algebra)
+        logging.info(self.query_data_alt2.normalized_query)
+        #logging.info(self.query_data_alt2.normalized_query_algebra.algebra)
 
-    def x_test_normalization__optional_where_clause(self):
+    def test_normalization__optional_where_clause(self):
         test = Test(test_number=1,
                     tc_desc='Tests if leaving out the "where" keyword yields the same checksum.',
                     expected_result=self.query_data_alt1.checksum,
@@ -49,7 +49,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__rdf_type_predicate(self):
+    def test_normalization__rdf_type_predicate(self):
         test = Test(test_number=2,
                     tc_desc='Tests if replacing the predicate rdf:type by "a" yields the same checksum.',
                     expected_result=self.query_data_alt1.checksum,
@@ -57,7 +57,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__asterisk(self):
+    def test_normalization__asterisk(self):
         """
         Fails because the asterisk gets resolved in an order that might not be the same as the explicitly
         stated variables in the select clause. Only for one out of n combinations it will pass.
@@ -73,7 +73,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__leave_out_subject_in_triple_statements(self):
+    def test_normalization__leave_out_subject_in_triple_statements(self):
         test = Test(test_number=4,
                     tc_desc="If the same subject is used multiple times in subsequent triple statements (separated by "
                             "a dot) it can be left out in all the subsequent triple statements where the subject "
@@ -84,7 +84,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__order_of_triple_statements(self):
+    def test_normalization__order_of_triple_statements(self):
         test = Test(test_number=5,
                     tc_desc="Tests if differently permuted tripled statements yield the same checksum.",
                     expected_result=self.query_data_alt1.checksum,
@@ -92,7 +92,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__alias_via_bind(self):
+    def test_normalization__alias_via_bind(self):
         test = Test(test_number=6,
                     tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
                             "as when not using any alias.",
@@ -101,7 +101,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__alias_in_select(self):
+    def test_normalization__alias_in_select(self):
         test = Test(test_number=7,
                     tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
                             "as when not using any alias.",
@@ -110,7 +110,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__variable_names(self):
+    def test_normalization__variable_names(self):
         test = Test(test_number=8,
                     tc_desc="Test if two queries where as one has one variable renamed within the whole query"
                             " (select statement, triple statements, filter, ...) yields the same checksum.",
@@ -133,15 +133,14 @@ class TestNormalization(TestExecution):
 
     def x_test_normalization__inverted_paths(self):
         test = Test(test_number=10,
-                    tc_desc='Test if inverting the order of the triple statement (object predicate subject '
-                            'instead of subject predicate object) using "^" yields the same result as if actually '
-                            'exchanging the subject and object within the triple statement. ',
+                    tc_desc='Test if inverted paths and its explicit version using no paths '
+                            'but only triple statements yield the same checksum. ',
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 
         return test
 
-    def x_test_normalization__sequence_paths(self):
+    def test_normalization__sequence_paths(self):
         test = Test(test_number=11,
                     tc_desc="Test if two queries - one with a sequence path and the second with "
                             "the sequence path resolved as explicit triple statements yield the same checksum. "
@@ -152,7 +151,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__sequence_paths2(self):
+    def test_normalization__sequence_paths2(self):
         test = Test(test_number=12,
                     tc_desc="Test if two queries - one with a sequence path and the second with "
                             "the sequence path resolved as explicit triple statements yield the same checksum."
@@ -163,7 +162,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__prefix_alias(self):
+    def test_normalization__prefix_alias(self):
         test = Test(test_number=13,
                     tc_desc="Prefixes can be interchanged in the prefix section before the query "
                             "and subsequently in the query without changing the outcome.",
@@ -172,7 +171,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__switched_filter_statements(self):
+    def test_normalization__switched_filter_statements(self):
         """
         Fails because the algebra tree nesting of filters is switched.
         :return:
@@ -185,7 +184,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__complex_bind_expression(self):
+    def test_normalization__complex_bind_expression(self):
         test = Test(test_number=15,
                     tc_desc="Test if two queries where a complex bind expression (e.g. arithmetic operations) is given"
                             "different names yields the same query checksum. "
@@ -195,7 +194,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__complex_bind_expression2(self):
+    def test_normalization__complex_bind_expression2(self):
         # While the two query algebras are not completely equal to each other the normalized queries are.
         # This is because the nesting withing the query algebra for bindings is different between
         # the implicit binding (in the select clause) and the explicit via BIND keyword.
