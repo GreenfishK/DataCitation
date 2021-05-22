@@ -3,7 +3,9 @@ query_checksum CHAR (200) PRIMARY KEY,
 orig_query CHAR (4000),
 query_prefixes CHAR (4000),
 last_citation_pid CHAR (4000),
+normal_query_algebra CHAR (4000),
 normal_query CHAR (4000)
+
 );
 
 Create table query_citation (

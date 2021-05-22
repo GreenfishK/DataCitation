@@ -64,6 +64,7 @@ class QueryStore:
                 query_data = QueryUtils()
                 query_data.checksum = df.query_checksum.loc[0]
                 query_data.pid = df.query_pid.loc[0]
+                query_data.normalized_query_algebra = df.normal_query_algebra.loc[0]
                 query_data.normalized_query_algebra = df.normal_query.loc[0]
                 query_data.sparql_prefixes = df.query_prefixes.loc[0]
                 query_data.citation_timestamp = df.citation_timestamp.loc[0]
@@ -122,7 +123,8 @@ class QueryStore:
                                        query_checksum=query_data.checksum,
                                        orig_query=query_data.query,
                                        query_prefixes=query_data.sparql_prefixes,
-                                       normal_query=query_data.normalized_query_algebra)
+                                       normal_query_algebra=str(query_data.normalized_query_algebra.algebra),
+                                       normal_query=query_data.normalized_query)
                     print("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
                                                                                   query_data.pid))
                 except exc.IntegrityError as e:

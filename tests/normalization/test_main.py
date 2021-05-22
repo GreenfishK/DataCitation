@@ -75,7 +75,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__alias_via_bind(self):
+    def test_normalization__alias_via_bind(self):
         test = Test(test_number=6,
                     tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
                             "as when not using any alias.",
@@ -84,7 +84,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def test_normalization__alias_in_select(self):
+    def x_test_normalization__alias_in_select(self):
         test = Test(test_number=7,
                     tc_desc="Test if binding an alias to a variable using the BIND keyword yields the same checksum "
                             "as when not using any alias.",
@@ -146,6 +146,32 @@ class TestNormalization(TestExecution):
         test = Test(test_number=13,
                     tc_desc="Filters can stated in different orders in a MultiSet or Basic Graph Pattern (BGP) without"
                             "affecting the result. ",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def x_test_normalization__complex_bind_expression(self):
+        test = Test(test_number=14,
+                    tc_desc="Test if two queries where a complex bind expression (e.g. arithmetic operations) is given"
+                            "different names yields the same query checksum. "
+                            "The bind must be used in the select clause.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def x_test_normalization__complex_bind_expression2(self):
+        # While the two query algebras are not completely equal to each other the normalized queries are.
+        # This is because the nesting withing the query algebra for bindings is different between
+        # the implicit binding (in the select clause) and the explicit via BIND keyword.
+        # When the normalized query algebra gets back-translated into a query all the bindings appear
+        # within the select clause.
+
+        test = Test(test_number=15,
+                    tc_desc="Test if two queries where a complex expression (e.g. arithmetic operations) is given"
+                            "different names yields the same query checksum."
+                            "The bind must be explicitly used via BIND keyword.",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 

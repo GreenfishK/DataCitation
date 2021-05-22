@@ -605,7 +605,8 @@ class QueryUtils:
             self.bgp_variables = _query_variables(self.query, self.sparql_prefixes, 'bgp')
             self.select_variables = _query_variables(self.query, self.sparql_prefixes, 'select')
             self.order_by_variables = _query_variables(self.query, self.sparql_prefixes, 'order_by')
-            self.normalized_query_algebra = str(self.normalize_query_tree().algebra)
+            self.normalized_query_algebra = self.normalize_query_tree()
+            self.normalized_query = _translate_algebra(self.normalized_query_algebra)
             self.checksum = self.compute_checksum()
 
             if citation_timestamp is not None:
@@ -788,7 +789,7 @@ class QueryUtils:
         q_vars_mapped = {}
         int_norm_var = 'a'
 
-        def retrieve_bgp_var_set(node):
+        def retrieve_bgp_vars(node):
             if isinstance(node, CompValue) and node.name == 'BGP':
                 for triple in node.triples:
                     if isinstance(triple[0], Variable):
@@ -801,17 +802,22 @@ class QueryUtils:
                         if triple[2] not in q_vars:
                             q_vars.append(triple[2])
 
+        def retrieve_bind_vars(node):
+            if isinstance(node, CompValue) and node.name == 'Extend':
+                q_vars.append(node.var)
+
         def replace_variable_names_with_letters(node):
             if isinstance(node, Variable):
-                return q_vars_mapped.get(node)
+                return Variable(q_vars_mapped.get(node))
 
-        algebra.traverse(q_algebra.algebra, retrieve_bgp_var_set)
+        algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
+        algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
+
         for i, v in enumerate(q_vars):
             next_norm_var = chr(ord(int_norm_var) + i)
             q_vars_mapped[v] = next_norm_var
         algebra.traverse(q_algebra.algebra, replace_variable_names_with_letters)
 
-        algebra.pprintAlgebra(q_algebra)
         return q_algebra
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):
@@ -1014,13 +1020,12 @@ class QueryUtils:
 
         checksum = hashlib.sha256()
         if string is None:
-            if self.normalized_query_algebra is not None:
-                checksum.update(str.encode(self.normalized_query_algebra))
+            if self.normalized_query is not None:
+                checksum.update(str.encode(self.normalized_query))
             else:
                 return "Checksum could not be computed because the normalized query algebra is missing."
         else:
             checksum.update(str.encode(string))
-
         return checksum.hexdigest()
 
     def generate_query_pid(self, query_checksum: str = None, citation_timestamp: datetime = None):
