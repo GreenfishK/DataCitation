@@ -1,6 +1,6 @@
 PREFIX foaf:   <http://xmlns.com/foaf/0.1/>
 
 select ?x ?y {
-    ?x foaf:knows/^foaf:knows ?y .
+    ?x foaf:knows / ^foaf:knows ?y
     FILTER(?x != ?y)
 }
