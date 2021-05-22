@@ -833,15 +833,19 @@ class QueryUtils:
                 # logging.debug(node)
                 ordered_triples = {}
                 for t in node.triples:
+                    logging.debug(t)
                     norm_triple = ""
+
                     if isinstance(t[0], Variable):
                         s = Variable(q_vars_mapped.get(t[0]))
                     else:
                         s = t[0]
+
                     if isinstance(t[1], Variable):
                         p = Variable(q_vars_mapped.get(t[1]))
                     else:
                         p = t[1]
+
                     if isinstance(t[2], Variable):
                         o = Variable(q_vars_mapped.get(t[2]))
                     else:
@@ -854,7 +858,9 @@ class QueryUtils:
                 node.triples.clear()
                 node.triples.extend(list(ordered_triples.keys()))
 
+        logging.debug("before")
         algebra.traverse(q_algebra.algebra, reorder_triples)
+        logging.debug("after")
 
         return q_algebra
 

@@ -131,7 +131,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def test_normalization__circumflex_invert(self):
+    def x_test_normalization__inverted_paths(self):
         test = Test(test_number=10,
                     tc_desc='Test if inverting the order of the triple statement (object predicate subject '
                             'instead of subject predicate object) using "^" yields the same result as if actually '
