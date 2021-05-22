@@ -4,8 +4,8 @@ import os
 import rdflib.plugins.sparql.parser
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
-from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError,\
-    MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException
+from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError, \
+    MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Variable, Identifier
 from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne,\
@@ -548,42 +548,47 @@ def _resolve_paths(node: CompValue):
     if isinstance(node, CompValue):
         if node.name == "BGP":
             resolved_triples = []
-            for k, triple in enumerate(node.triples):
 
-                def resolve(path: Path, subj, obj):
-                    if isinstance(path, SequencePath):
-                        sequences = path.args
-                        for i, ref in enumerate(sequences, start=1):
-                            if isinstance(ref, Path):
-                                # Should be recursively called but the solution for other Paths is not implemented yet
-                                # Ther could e.g. be an alternative path nested within a sequence path
-                                resolve(ref, subj, obj)
+            def resolve(path: Path, subj, obj):
+                if isinstance(path, SequencePath):
+                    sequences = path.args
+                    for i, ref in enumerate(sequences, start=1):
+                        if isinstance(ref, Path):
+                            # Should be recursively called but the solution for other Paths is not implemented yet
+                            # Ther could e.g. be an alternative path nested within a sequence path
+                            resolve(ref, subj, obj)
+                        else:
+                            if i == 1:
+                                t = (subj, ref, Variable("?dummy{0}".format(str(i))))
+                            elif i == len(sequences):
+                                t = (Variable("?dummy{0}".format(len(sequences) - 1)), ref, obj)
                             else:
-                                if i == 1:
-                                    t = (subj, ref, Variable("?dummy{0}".format(str(i))))
-                                elif i == len(sequences):
-                                    t = (Variable("?dummy{0}".format(len(sequences) - 1)), ref, obj)
-                                else:
-                                    t = (Variable("?dummy{0}".format(str(i - 1))), ref, Variable("?dummy{0}".format(str(i))))
-                                resolved_triples.append(t)
-                        node.triples.pop(k)
-                    if isinstance(path, NegatedPath):
-                        raise ExpressionNotCoveredException("NegatedPath has not be covered yet.")
-                    if isinstance(path, AlternativePath):
-                        raise ExpressionNotCoveredException("AlternativePath has not be covered yet.")
-                    if isinstance(path, InvPath):
-                        raise ExpressionNotCoveredException("InvPath has not be covered yet.")
-                    if isinstance(path, MulPath):
-                        if triple[1].mod == ZeroOrOne:
-                            raise ExpressionNotCoveredException("ZeroOrOne path has not be covered yet.")
-                        if triple[1].mod == ZeroOrMore:
-                            raise ExpressionNotCoveredException("ZeroOrMore path has not be covered yet.")
-                        if triple[1].mod == OneOrMore:
-                            raise ExpressionNotCoveredException("OneOrMore path has not be covered yet.")
+                                t = (
+                                Variable("?dummy{0}".format(str(i - 1))), ref, Variable("?dummy{0}".format(str(i))))
+                            resolved_triples.append(t)
+                if isinstance(path, NegatedPath):
+                    raise ExpressionNotCoveredException("NegatedPath has not be covered yet.")
+                if isinstance(path, AlternativePath):
+                    raise ExpressionNotCoveredException("AlternativePath has not be covered yet.")
+                if isinstance(path, InvPath):
+                    raise ExpressionNotCoveredException("InvPath has not be covered yet.")
+                if isinstance(path, MulPath):
+                    if triple[1].mod == ZeroOrOne:
+                        raise ExpressionNotCoveredException("ZeroOrOne path has not be covered yet.")
+                    if triple[1].mod == ZeroOrMore:
+                        raise ExpressionNotCoveredException("ZeroOrMore path has not be covered yet.")
+                    if triple[1].mod == OneOrMore:
+                        raise ExpressionNotCoveredException("OneOrMore path has not be covered yet.")
 
-                resolve(triple[1], triple[0], triple[2])
+            for k, triple in enumerate(node.triples):
+                if isinstance(triple[1], Path):
+                    resolve(triple[1], triple[0], triple[2])
+                else:
+                    resolved_triples.append(triple)
 
+            node.triples.clear()
             node.triples.extend(resolved_triples)
+            node.triples = algebra.reorderTriples(node.triples)
 
         elif node.name == "TriplesBlock":
             raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
@@ -606,7 +611,10 @@ class QueryUtils:
             self.select_variables = _query_variables(self.query, self.sparql_prefixes, 'select')
             self.order_by_variables = _query_variables(self.query, self.sparql_prefixes, 'order_by')
             self.normalized_query_algebra = self.normalize_query_tree()
-            self.normalized_query = _translate_algebra(self.normalized_query_algebra)
+            try:
+                self.normalized_query = _translate_algebra(self.normalized_query_algebra)
+            except ExpressionNotCoveredException as e:
+                print("The query will not be normalized due to an uncovered expression", e)
             self.checksum = self.compute_checksum()
 
             if citation_timestamp is not None:
@@ -633,6 +641,7 @@ class QueryUtils:
         normalization is still needed, the query algebra is be updated. First, the query is wrapped with a select
         statement selecting all its variables in unambiguous order. The query tree of the extended query
         is then computed and normalization measures are taken.
+
         :return: normalized query tree object
         """
 
@@ -735,14 +744,10 @@ class QueryUtils:
         Sequence paths can reduce the number of triplets in the query statement and are commonly used. They can be
         resolved to 'normal' triple statements.
         """
-        """pattern = "\\s*(" + re_subject + ")" \
-                  "\\s*(" + re_predicate + ")" \
-                  "\\s*[/]"
-        dummy_cnt = 1
-        while re.findall(pattern, query, re.MULTILINE):
-            query = re.sub(pattern, r"\1 \2 ?dummy{0} . ?dummy{0} ".format(str(dummy_cnt)), query)
-            dummy_cnt += 1"""
-        algebra.traverse(q_algebra.algebra, _resolve_paths)
+        try:
+            algebra.traverse(q_algebra.algebra, _resolve_paths)
+        except ExpressionNotCoveredException as e:
+            print (e)
 
         """
         #11
@@ -750,32 +755,24 @@ class QueryUtils:
         in the query without changing the outcome
         """
         pass
-        # Implicitly solved by query algebra. Prefixes get resolved
+        # Solved by translating the query into the query algebra. Prefixes get resolved
 
         """
         #3
-        In case of an asterisk in the select-clause, all variables will be explicitly mentioned 
-        and ordered alphabetically.
+        In case of an asterisk in the select-clause, all variables will be projected. However, if one query
+        states all variables explicitly and the second uses an asterisk they will only in one out of n 
+        cases be considered semantically identical as the order of variables is important.
         
         """
         pass
-        # Implicitly solved by query algebra
+        # Solved by translating the query into the query algebra.
 
         """
         #1
         A where clause will always be inserted
         """
         pass
-        # Implicitly solved by query algebra
-
-        """
-        #5
-        Triple statements will be ordered alphabetically by subject, predicate, object.
-        The triple order is already unambiguous in the query algebra. The only requirement is
-        that the variables in the select clause are in an unambiguous order. E.g. ?a ?b ?c ...
-        """
-        pass
-        # Implicitly solved by query algebra
+        # Solved by translating the query into the query algebra.
 
         """
         #7
@@ -808,7 +805,11 @@ class QueryUtils:
 
         def replace_variable_names_with_letters(node):
             if isinstance(node, Variable):
-                return Variable(q_vars_mapped.get(node))
+                try:
+                    var = Variable(q_vars_mapped.get(node))
+                    return var
+                except Exception as e:
+                    print("The variable is not found in: BGP, Bind. Check whether the variable can be removed.")
 
         algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
@@ -816,7 +817,44 @@ class QueryUtils:
         for i, v in enumerate(q_vars):
             next_norm_var = chr(ord(int_norm_var) + i)
             q_vars_mapped[v] = next_norm_var
-        algebra.traverse(q_algebra.algebra, replace_variable_names_with_letters)
+
+        algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
+
+        """
+        #5
+        Triple statements are first ordered by the number of their bindings. This is already done in the 
+        query-to-algebra translation step. 
+        Then, the query is ordered alphabetically by subject, predicate, object.
+        """
+
+        def reorder_triples(node):
+            if isinstance(node, CompValue) and node.name == 'BGP':
+                # logging.debug(node.triples)
+                # logging.debug(node)
+                ordered_triples = {}
+                for t in node.triples:
+                    norm_triple = ""
+                    if isinstance(t[0], Variable):
+                        s = Variable(q_vars_mapped.get(t[0]))
+                    else:
+                        s = t[0]
+                    if isinstance(t[1], Variable):
+                        p = Variable(q_vars_mapped.get(t[1]))
+                    else:
+                        p = t[1]
+                    if isinstance(t[2], Variable):
+                        o = Variable(q_vars_mapped.get(t[2]))
+                    else:
+                        o = t[2]
+                    norm_triple += s + "_" + p + "_" + o
+                    ordered_triples[(s, p, o)] = norm_triple
+                    ordered_triples = {k: v for k, v in sorted(ordered_triples.items(),
+                                                               key=lambda item: item[1])}
+
+                node.triples.clear()
+                node.triples.extend(list(ordered_triples.keys()))
+
+        algebra.traverse(q_algebra.algebra, reorder_triples)
 
         return q_algebra
 
@@ -867,8 +905,12 @@ class QueryUtils:
 
         query_tree = parser.parseQuery(query_vers)
         query_algebra = algebra.translateQuery(query_tree)
-        algebra.traverse(query_algebra.algebra, visitPre=_resolve_paths)
-        algebra.traverse(query_algebra.algebra, visitPre=inject_versioning_extensions)
+        try:
+            algebra.traverse(query_algebra.algebra, visitPre=_resolve_paths)
+            algebra.traverse(query_algebra.algebra, visitPre=inject_versioning_extensions)
+        except ExpressionNotCoveredException as e:
+            print(e)
+
         query_vers_out = _translate_algebra(query_algebra)
 
         for bgp_identifier, triples in bgp_triples.items():
@@ -1022,8 +1064,13 @@ class QueryUtils:
         if string is None:
             if self.normalized_query is not None:
                 checksum.update(str.encode(self.normalized_query))
+                return checksum.hexdigest()
+            elif self.normalized_query_algebra is not None:
+                checksum.update(str.encode(self.normalized_query_algebra.algebra))
+                return checksum.hexdigest()
             else:
-                return "Checksum could not be computed because the normalized query algebra is missing."
+                raise InputMissing("Checksum could not be computed because the normalized"
+                                   " query or query algebra is missing.")
         else:
             checksum.update(str.encode(string))
         return checksum.hexdigest()

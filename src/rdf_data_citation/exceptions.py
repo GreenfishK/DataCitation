@@ -48,3 +48,7 @@ class RDFStarNotSupported(Exception):
 
 class NoConnectionToRDFStore(Exception):
     pass
+
+
+class InputMissing(Exception):
+    pass

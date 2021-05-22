@@ -4,10 +4,8 @@ PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 select ?personLabel ?party_label ?document ?mention where {
     ?mention publishing:hasInstance ?person .
     ?document publishing:containsMention ?mention .
-    ?person pub:memberOfPoliticalParty ?party .
-    ?party pub:hasValue ?value .
-    ?value pub:preferredLabel ?party_label .
+    ?person pub:memberOfPoliticalParty / pub:hasValue / pub:preferredLabel ?party_label.
     ?person pub:preferredLabel ?personLabel .
-    ?person pub:preferredLabel "literal"
+
     filter(?personLabel = "Barack Obama"@en)
 } order by ?mention
