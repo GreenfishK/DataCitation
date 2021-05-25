@@ -121,7 +121,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__variables_not_bound(self):
+    def test_normalization__variables_not_bound(self):
         test = Test(test_number=9,
                     tc_desc='Finding variables that are not bound can be written in two ways: '
                             '1. with optional keyword adding the optional triplet combined with filter condition: '
@@ -179,7 +179,7 @@ class TestNormalization(TestExecution):
         :return:
         """
         test = Test(test_number=14,
-                    tc_desc="Filters can stated in different orders in a MultiSet or Basic Graph Pattern (BGP) without"
+                    tc_desc="Filters can stated in different orders in a MultiSet or Basic Graph Pattern (BGP) without "
                             "affecting the result. ",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
@@ -213,6 +213,6 @@ class TestNormalization(TestExecution):
         return test
 
 
-t = TestNormalization(annotated_tests=True)
+t = TestNormalization(annotated_tests=False)
 t.run_tests()
 t.print_test_results()

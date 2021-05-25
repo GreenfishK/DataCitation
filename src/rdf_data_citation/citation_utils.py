@@ -611,11 +611,11 @@ def _resolve_paths(node: CompValue):
                         if isinstance(triple[1], Identifier):
                             resolved_triples.append(triple)
                         else:
-                            raise ExpressionNotCoveredException("Predicate is neither Path nor Identifier. "
-                                                                "This case has not been covered yet.")
+                            raise ExpressionNotCoveredException("Predicate is neither Path nor Identifier but: {0}. "
+                                                                "This case has not been covered yet.".format(triple[1]))
                 else:
-                    raise ExpressionNotCoveredException("Subject and/or object are not identifiers but "
-                                                        "something else. This is not implemented yet.")
+                    raise ExpressionNotCoveredException("Subject and/or object are not identifiers but: {0} and {1}."
+                                                        " This is not implemented yet.".format(triple[0], triple[2]))
 
             node.triples.clear()
             node.triples.extend(resolved_triples)
@@ -623,7 +623,7 @@ def _resolve_paths(node: CompValue):
 
         elif node.name == "TriplesBlock":
             raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
-                                                "The paths will not be resolved.")
+                                                "If there are any paths they will not be resolved.")
 
 
 class QueryUtils:
@@ -702,16 +702,6 @@ class QueryUtils:
 
         algebra.traverse(q_algebra.algebra, visitPost=remove_protected_vars)
 
-        # Common SPARQL regex patterns
-        re_variable = "[?][a-zA-Z0-9-_]*"
-        re_prefix_ref = "[a-zA-Z0-9-_]*[:][a-zA-Z0-9-_]*"
-        re_full_ref = "<[^\\s]>"
-        re_value = '["].*["]'
-        re_ref = re_full_ref + "|" + re_prefix_ref
-        re_subject = re_variable + "|" + re_prefix_ref + "|" + re_full_ref
-        re_predicate = re_variable + "|" + re_prefix_ref + "|" + re_full_ref
-        re_object = re_variable + "|" + re_prefix_ref + "|" + re_full_ref + "|" + re_value
-
         """
         #6.1
         Aliases via BIND keyword just rename variables but the query result stays the same.
@@ -755,13 +745,24 @@ class QueryUtils:
         def replace_filter_not_exists(node):
             if isinstance(node, CompValue) and node.name == 'Filter':
                 if node.expr.name == 'Builtin_NOTEXISTS' and node.p.name == 'BGP':
-                    return algebra.Filter(expr=Expr(name='UnaryNot', evalfn=UnaryNot,
-                                                    expr=Expr(name='Builtin_BOUND', evalfn=Builtin_BOUND,
-                                                              arg=node.expr.graph.p2.triples[0][2])),
-                                          p=algebra.LeftJoin(node.p, algebra.BGP(triples=node.expr.graph.p2.triples),
-                                                             expr=TrueFilter))
-
-        algebra.traverse(q_algebra.algebra, replace_filter_not_exists)
+                    if len(node.expr.graph.p2.triples) == 1:
+                        return algebra.Filter(expr=Expr(name='UnaryNot', evalfn=UnaryNot,
+                                                        expr=Expr(name='Builtin_BOUND',
+                                                                  evalfn=Builtin_BOUND,
+                                                                  arg=node.expr.graph.p2.triples[0][2])),
+                                              p=algebra.LeftJoin(node.p,
+                                                                 algebra.BGP(triples=node.expr.graph.p2.triples),
+                                                                 expr=TrueFilter))
+                    else:
+                        raise ExpressionNotCoveredException("FILTER NOT EXISTS clause has more than one "
+                                                            "triple statement. This case is seemingly rare and "
+                                                            "has not been covered yet. Therefore, FILTER NOT EXISTS "
+                                                            "will not be translated into the OPTIONAL + !BOUND pattern."
+                                                            "")
+        try:
+            algebra.traverse(q_algebra.algebra, replace_filter_not_exists)
+        except ExpressionNotCoveredException as e:
+            print(e)
 
         """
         #9
@@ -840,10 +841,11 @@ class QueryUtils:
                 try:
                     var = Variable(q_vars_mapped.get(node))
                     return var
-                except Exception as e:
-                    print("The variable {0} is not found in: BGP, Bind. and will not be replaced with a letter. "
-                          "Check whether something went wrong prior to this step or the variable is not part "
-                          "of any triple statement.".format(node))
+                except Exception:
+                    raise ExpressionNotCoveredException("The variable {0} is not found in: BGP, Bind. and will "
+                                                        "not be replaced with a letter. Check whether something "
+                                                        "went wrong prior to this step or the variable is not part "
+                                                        "of any triple statement.".format(node))
 
         algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
@@ -851,7 +853,10 @@ class QueryUtils:
         for i, v in enumerate(q_vars):
             next_norm_var = chr(ord(int_norm_var) + i)
             q_vars_mapped[v] = next_norm_var
-        algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
+        try:
+            algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
+        except ExpressionNotCoveredException as e:
+            print(e)
 
         """
         #5
