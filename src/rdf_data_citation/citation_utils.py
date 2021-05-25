@@ -719,7 +719,7 @@ class QueryUtils:
                         aliases[node.var] = node.expr
                         return node.p
 
-        def remove_from_vars(n):
+        def overwrite_aliases_with_orig_var(n):
             if isinstance(n, CompValue) and n.get('PV') and type(n.get('PV')) == list:
                 for i, v in enumerate(n.get('PV')):
                     if aliases.get(v):
@@ -727,7 +727,7 @@ class QueryUtils:
                 return n
 
         algebra.traverse(q_algebra.algebra, visitPost=remove_alias)
-        algebra.traverse(q_algebra.algebra, visitPost=remove_from_vars)
+        algebra.traverse(q_algebra.algebra, visitPost=overwrite_aliases_with_orig_var)
 
         """
         #6.2
@@ -867,36 +867,41 @@ class QueryUtils:
 
         def reorder_triples(node):
             if isinstance(node, CompValue) and node.name == 'BGP':
-                # logging.debug(node.triples)
-                # logging.debug(node)
                 ordered_triples = {}
-                for t in node.triples:
-                    norm_triple = ""
+                try:
+                    for t in node.triples:
+                        norm_triple = ""
 
-                    if isinstance(t[0], Variable):
-                        try:
-                            s = Variable(q_vars_mapped.get(t[0]))  # Error
-                        except Exception as e:
-                            s = "does_not_exist"
-                            print("Variable does not exist in q_vars_mapped.")
-                    else:
-                        s = t[0]
+                        if isinstance(t[0], Variable):
+                            try:
+                                s = Variable(q_vars_mapped.get(t[0]))  # Error
+                            except Exception:
+                                s = "does_not_exist"
+                                print("Variable does not exist in q_vars_mapped.")
+                        else:
+                            s = t[0]
 
-                    if isinstance(t[1], Variable):
-                        p = Variable(q_vars_mapped.get(t[1]))
-                    elif isinstance(t[1], Path):
-                        p = "not_covered_yet"
-                    else:
-                        p = t[1]
+                        if isinstance(t[1], Variable):
+                            p = Variable(q_vars_mapped.get(t[1]))
+                        elif isinstance(t[1], Path):
+                            print("A not resolved path was found: {0}. The whole triple statement will not be "
+                                  "considered for re-ordering the triple statements.".format(t[1]))
+                            continue
+                        else:
+                            p = t[1]
 
-                    if isinstance(t[2], Variable):
-                        o = Variable(q_vars_mapped.get(t[2]))
-                    else:
-                        o = t[2]
-                    norm_triple += s + "_" + p + "_" + o
-                    ordered_triples[(s, p, o)] = norm_triple
-                    ordered_triples = {k: v for k, v in sorted(ordered_triples.items(),
-                                                               key=lambda item: item[1])}
+                        if isinstance(t[2], Variable):
+                            o = Variable(q_vars_mapped.get(t[2]))
+                        else:
+                            o = t[2]
+                        norm_triple += s + "_" + p + "_" + o
+                        ordered_triples[(s, p, o)] = norm_triple
+                        ordered_triples = {k: v for k, v in sorted(ordered_triples.items(),
+                                                                   key=lambda item: item[1])}
+                except Exception:
+                    raise ExpressionNotCoveredException("There might be uncovered expressions, "
+                                                        "identifiers or paths. Triple statements will not "
+                                                        "be re-ordered.")
 
                 node.triples.clear()
                 node.triples.extend(list(ordered_triples.keys()))
@@ -906,11 +911,9 @@ class QueryUtils:
 
         try:
             algebra.traverse(q_algebra.algebra, reorder_triples)
-        except Exception as e:
-            print("There might be uncovered expressions, identifiers or paths. Triple statements will not "
-                  "be re-ordered.")
+        except ExpressionNotCoveredException as e:
+            print(e)
 
-        algebra.pprintAlgebra(q_algebra)
         return q_algebra
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):

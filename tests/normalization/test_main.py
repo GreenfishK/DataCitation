@@ -1,6 +1,6 @@
 import logging
 
-from tests.test_base import Test, TestExecution, format_text
+from tests.test_base import Test, TestExecution
 from src.rdf_data_citation.citation_utils import QueryUtils
 
 
@@ -35,13 +35,13 @@ class TestNormalization(TestExecution):
         logging.info("Query1:")
         query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
         self.query_data_alt1 = QueryUtils(query=query_alt1)
-        logging.info(self.query_data_alt1.normalized_query)
-        logging.info(self.query_data_alt1.normalized_query_algebra.algebra)
+        logging.debug(self.query_data_alt1.normalized_query)
+        logging.debug(self.query_data_alt1.normalized_query_algebra.algebra)
         logging.info("Query2:")
         query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
         self.query_data_alt2 = QueryUtils(query=query_alt2)
-        logging.info(self.query_data_alt2.normalized_query)
-        logging.info(self.query_data_alt2.normalized_query_algebra.algebra)
+        logging.debug(self.query_data_alt2.normalized_query)
+        logging.debug(self.query_data_alt2.normalized_query_algebra.algebra)
 
     def test_normalization__optional_where_clause(self):
         test = Test(test_number=1,
@@ -114,8 +114,8 @@ class TestNormalization(TestExecution):
 
     def test_normalization__variable_names(self):
         test = Test(test_number=8,
-                    tc_desc="Test if two queries where as one has one variable renamed within the whole query"
-                            " (select statement, triple statements, filter, ...) yields the same checksum.",
+                    tc_desc="Test if two queries where as one has one variable renamed within the whole query "
+                            "(select statement, triple statements, filter, ...) yields the same checksum.",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 
@@ -156,7 +156,7 @@ class TestNormalization(TestExecution):
     def test_normalization__sequence_paths2(self):
         test = Test(test_number=12,
                     tc_desc="Test if two queries - one with a sequence path and the second with "
-                            "the sequence path resolved as explicit triple statements yield the same checksum."
+                            "the sequence path resolved as explicit triple statements yield the same checksum. "
                             "The resolved triple statements are in different order "
                             "compared to the sequence path. ",
                     expected_result=self.query_data_alt1.checksum,
@@ -188,7 +188,7 @@ class TestNormalization(TestExecution):
 
     def test_normalization__complex_bind_expression(self):
         test = Test(test_number=15,
-                    tc_desc="Test if two queries where a complex bind expression (e.g. arithmetic operations) is given"
+                    tc_desc="Test if two queries where a complex bind expression (e.g. arithmetic operations) is given "
                             "different names yields the same query checksum. "
                             "The bind must be used in the select clause.",
                     expected_result=self.query_data_alt1.checksum,
@@ -197,15 +197,26 @@ class TestNormalization(TestExecution):
         return test
 
     def test_normalization__complex_bind_expression2(self):
-        # While the two query algebras are not completely equal to each other the normalized queries are.
+        # While the two queries' algebras are not completely equal to each other the normalized queries are.
         # This is because the nesting withing the query algebra for bindings is different between
         # the implicit binding (in the select clause) and the explicit via BIND keyword.
         # When the normalized query algebra gets back-translated into a query all the bindings appear
         # within the select clause.
 
         test = Test(test_number=16,
-                    tc_desc="Test if two queries where a complex expression (e.g. arithmetic operations) is given"
+                    tc_desc="Test if two queries where a complex expression (e.g. arithmetic operations) is given "
                             "different names yields the same query checksum."
+                            "The bind must be explicitly used via BIND keyword.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def test_normalization__nested_paths(self):
+        test = Test(test_number=17,
+                    tc_desc="Test if two queries with a combination of sequence and alternative paths is given in one "
+                            "query and the alternative statement (resolved alternative path using UNION) "
+                            "is given in the second query yields the same query checksum. "
                             "The bind must be explicitly used via BIND keyword.",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
