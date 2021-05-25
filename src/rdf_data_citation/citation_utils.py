@@ -2,6 +2,8 @@ import copy
 import logging
 import os
 import rdflib.plugins.sparql.parser
+from rdflib.plugins.sparql.operators import TrueFilter, UnaryNot, Builtin_BOUND
+
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError, \
@@ -201,6 +203,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                 # If there is no "Group By" clause the placeholder will simply be deleted. Otherwise there will be
                 # no matching {GroupBy} placeholder because it has already been replaced by "group by variables"
                 replace("{GroupBy}", "", count=-1)
+                replace("{Having}", "", count=-1)
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -211,10 +214,12 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 if node.p:
+                    # Filter with p=AggregateJoin = Having
                     if node.p.name == "AggregateJoin":
-                        replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                        replace("{Filter}", "{" + node.p.name + "}")
+                        replace("{Having}", "HAVING({" + expr + "})")
                     else:
-                        replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
+                        replace("{Filter}", "FILTER({" + expr + "}) {" + node.p.name + "}")
                 else:
                     replace("{Filter}", "FILTER({" + expr + "})")
 
@@ -270,7 +275,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                 replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
             elif node.name == "TriplesBlock":
                 replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
-                                                  for triple in node.triples))
+                                                   for triple in node.triples))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -300,7 +305,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                 if node.p.name == "OrderBy":
                     order_by_pattern = "ORDER BY {OrderConditions}"
                 replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}"
-                        + "{GroupBy}" + order_by_pattern)
+                        + "{GroupBy}" + order_by_pattern + "{Having}")
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -315,7 +320,6 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     replace("{ToMultiSet}", "{-*-SELECT-*- " + "{" + node.p.name + "}" + "}")
 
             # 18.2 Property Path
-            # Does not need to be explicitly covered as paths are translated into SPARQL language with the n3() function
 
             # 17 Expressions and Testing Values
             # # 17.3 Operator Mapping
@@ -619,7 +623,7 @@ def _resolve_paths(node: CompValue):
 
         elif node.name == "TriplesBlock":
             raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
-                                                "No versioning extensions will be injected.")
+                                                "The paths will not be resolved.")
 
 
 class QueryUtils:
@@ -748,23 +752,24 @@ class QueryUtils:
         #8 
         "filter not exists {triple}" expressions will be converted into the "filter + !bound" expression.
         """
-        pattern = "(filter\\s*not\\s*exists\\s*)([{]" \
-                  "(?:\\s*(?:" + re_subject + "))" \
-                  "(?:\\s*(?:" + re_predicate + "))" \
-                  "(\\s*(?:" + re_object + "))[}])"
-        while re.findall(pattern, query, re.MULTILINE):
-            query = re.sub(pattern, r"OPTIONAL \2 . filter(!bound(\3))", query)
+        def replace_filter_not_exists(node):
+            if isinstance(node, CompValue) and node.name == 'Filter':
+                if node.expr.name == 'Builtin_NOTEXISTS' and node.p.name == 'BGP':
+                    return algebra.Filter(expr=Expr(name='UnaryNot', evalfn=UnaryNot,
+                                                    expr=Expr(name='Builtin_BOUND', evalfn=Builtin_BOUND,
+                                                              arg=node.expr.graph.p2.triples[0][2])),
+                                          p=algebra.LeftJoin(node.p, algebra.BGP(triples=node.expr.graph.p2.triples),
+                                                             expr=TrueFilter))
+
+        algebra.traverse(q_algebra.algebra, replace_filter_not_exists)
 
         """
         #9
         Inverting the order of the triple statement (object predicate subject instead of subject predicate object) 
         using "^" yields the same result as if actually exchanging the subject and object within the triple statement.
         """
-        pattern = "(\\s*(?:" + re_subject + "))" \
-                  "(?:\\s*\^(" + re_ref + "))" \
-                  "(\\s*(?:" + re_object + "))"
-        while re.findall(pattern, query, re.MULTILINE):
-            query = re.sub(pattern, r"\3 \2 \1", query)
+        pass
+        # Solved with _resolve_paths (see #10)
 
         """
         #10
@@ -867,6 +872,7 @@ class QueryUtils:
                         try:
                             s = Variable(q_vars_mapped.get(t[0]))  # Error
                         except Exception as e:
+                            s = "does_not_exist"
                             print("Variable does not exist in q_vars_mapped.")
                     else:
                         s = t[0]
@@ -890,8 +896,8 @@ class QueryUtils:
                 node.triples.clear()
                 node.triples.extend(list(ordered_triples.keys()))
             elif isinstance(node, CompValue) and node.name == 'TriplesBlock':
-                raise ExpressionNotCoveredException("Triples within a TriplesBlock will"
-                                                    " not be ordered. This is not implemented yet.")
+                raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
+                                                    "Triples within a TripleBlock Node will not be ordered. ")
 
         try:
             algebra.traverse(q_algebra.algebra, reorder_triples)
@@ -899,6 +905,7 @@ class QueryUtils:
             print("There might be uncovered expressions, identifiers or paths. Triple statements will not "
                   "be re-ordered.")
 
+        algebra.pprintAlgebra(q_algebra)
         return q_algebra
 
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):

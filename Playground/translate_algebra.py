@@ -114,6 +114,7 @@ def to_sparql_query_text(query_algebra):
                 # If there is no "Group By" clause the placeholder will simply be deleted. Otherwise there will be
                 # no matching {GroupBy} placeholder because it has already been replaced by "group by variables"
                 replace("{GroupBy}", "", count=-1)
+                replace("{Having}", "", count=-1)
             elif node.name == "Join":
                 replace("{Join}", "{" + node.p1.name + "}{" + node.p2.name + "}")  #
             elif node.name == "LeftJoin":
@@ -124,10 +125,12 @@ def to_sparql_query_text(query_algebra):
                 else:
                     raise ExpressionNotCoveredException("This expression might not be covered yet.")
                 if node.p:
+                    # Filter with p=AggregateJoin = Having
                     if node.p.name == "AggregateJoin":
-                        replace("{Filter}", "{" + node.p.name + "}HAVING({" + expr + "})")
+                        replace("{Filter}", "{" + node.p.name + "}")
+                        replace("{Having}", "HAVING({" + expr + "})")
                     else:
-                        replace("{Filter}", "{" + node.p.name + "}FILTER({" + expr + "})")
+                        replace("{Filter}", "FILTER({" + expr + "}) {" + node.p.name + "}")
                 else:
                     replace("{Filter}", "FILTER({" + expr + "})")
 
@@ -182,6 +185,7 @@ def to_sparql_query_text(query_algebra):
             elif node.name == "GroupGraphPatternSub":
                 replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
             elif node.name == "TriplesBlock":
+                print("triplesblock")
                 replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
                                                    for triple in node.triples))
 
@@ -213,7 +217,7 @@ def to_sparql_query_text(query_algebra):
                 if node.p.name == "OrderBy":
                     order_by_pattern = "ORDER BY {OrderConditions}"
                 replace("{Project}", " ".join(project_variables) + "{{" + node.p.name + "}}"
-                        + "{GroupBy}" + order_by_pattern)
+                        + "{GroupBy}" + order_by_pattern + "{Having}")
             elif node.name == "Distinct":
                 replace("{Distinct}", "DISTINCT {" + node.p.name + "}")
             elif node.name == "Reduced":
@@ -287,6 +291,7 @@ def to_sparql_query_text(query_algebra):
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
                 # NotExistsFunc can only have a GroupGraphPattern as parameter. However, when we print the query algebra
                 # we get a GroupGraphPatternSub
+                print(node.graph.name)
                 replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
                 return node.graph

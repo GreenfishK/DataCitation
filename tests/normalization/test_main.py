@@ -32,14 +32,16 @@ class TestNormalization(TestExecution):
         if self.annotated_tests:
             test_name = test_name[2:]
 
+        logging.info("Query1:")
         query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
         self.query_data_alt1 = QueryUtils(query=query_alt1)
         logging.info(self.query_data_alt1.normalized_query)
-        #logging.info(self.query_data_alt1.normalized_query_algebra.algebra)
+        logging.info(self.query_data_alt1.normalized_query_algebra.algebra)
+        logging.info("Query2:")
         query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
         self.query_data_alt2 = QueryUtils(query=query_alt2)
         logging.info(self.query_data_alt2.normalized_query)
-        #logging.info(self.query_data_alt2.normalized_query_algebra.algebra)
+        logging.info(self.query_data_alt2.normalized_query_algebra.algebra)
 
     def test_normalization__optional_where_clause(self):
         test = Test(test_number=1,
@@ -119,7 +121,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def test_normalization__variables_not_bound(self):
+    def x_test_normalization__variables_not_bound(self):
         test = Test(test_number=9,
                     tc_desc='Finding variables that are not bound can be written in two ways: '
                             '1. with optional keyword adding the optional triplet combined with filter condition: '
@@ -131,7 +133,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__inverted_paths(self):
+    def test_normalization__inverted_paths(self):
         test = Test(test_number=10,
                     tc_desc='Test if inverted paths and its explicit version using no paths '
                             'but only triple statements yield the same checksum. ',
