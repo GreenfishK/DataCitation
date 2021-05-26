@@ -1,7 +1,7 @@
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from src.rdf_data_citation.exceptions import NoVersioningMode, RDFStarNotSupported, NoConnectionToRDFStore
+from src.rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore
 from urllib.error import URLError
 from enum import Enum
 import logging
@@ -85,7 +85,6 @@ class TripleStoreEngine:
         :param credentials: The user name and password for the remote RDF store
         """
 
-
         self.credentials = credentials
         self._template_location = template_path("templates/rdf_star_store")
 
@@ -147,7 +146,8 @@ class TripleStoreEngine:
             self.sparql_post.query()
 
         except Exception:
-            raise RDFStarNotSupported("Your RDF store might not support the 'star' extension. Make sure that it is a RDF* store.")
+            raise RDFStarNotSupported("Your RDF store might not support the 'star' extension. "
+                                      "Make sure that it is a RDF* store.")
 
         print("Connection to RDF query and update endpoints "
               "{0} and {1} established".format(query_endpoint, update_endpoint))
@@ -341,7 +341,7 @@ class TripleStoreEngine:
         <prefixes>
 
         select ?subjectToOutdate ?predicateToOutdate ?objectToOutdate {
-            # Triple staments, filter, ...
+            # Triple statements, filter, ...
             <triple statement>
             <triple statement>
             ...

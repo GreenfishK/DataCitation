@@ -4,7 +4,6 @@ from src.rdf_data_citation.exceptions import QueryExistsError
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd
-import json
 
 
 class QueryStore:
@@ -127,7 +126,7 @@ class QueryStore:
                                        normal_query=query_data.normalized_query)
                     print("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
                                                                                   query_data.pid))
-                except exc.IntegrityError as e:
+                except exc.IntegrityError:
                     raise QueryExistsError("A query is trying to be inserted that exists already. "
                                            "The checksum of the executed query "
                                            "is found within the query_hub table: {0}".format(query_data.checksum))
@@ -146,12 +145,12 @@ class QueryStore:
                     print("A new citation has been added to the existing query with checksum {0} ."
                           "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
-            except exc.IntegrityError as e:
+            except exc.IntegrityError:
                 raise QueryExistsError("A query is trying to be inserted that already exists. The query PID {0} "
                                        "of the executed query is found within the "
                                        "query_citation table".format(query_data.pid))
 
             try:
                 connection.execute(update_statement, query_checksum=query_data.checksum)
-            except Exception as e:
+            except Exception:
                 print("Could not update the last citation PID in query_hub.last_citation_pid")

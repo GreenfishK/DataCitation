@@ -1,4 +1,3 @@
-import logging
 import os
 import configparser
 import sys
@@ -39,4 +38,3 @@ def citation_timestamp_format(citation_timestamp: datetime) -> str:
     :return:
     """
     return citation_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-2] + ":" + citation_timestamp.strftime("%z")[3:5]
-

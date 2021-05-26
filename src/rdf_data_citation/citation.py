@@ -96,7 +96,7 @@ class Citation:
                                        "variables that yield a unique sort.")
         try:
             yn_unique_sort_index = result_set.set_index(order_by_variables).index.is_unique
-        except KeyError as e:
+        except KeyError:
             raise SortVariablesNotInSelectError("There are variables in the order by clause that are not listed "
                                                 "in the select clause. While this is syntactically correct "
                                                 "a unique sort index should only contain variables from the "
@@ -150,5 +150,4 @@ class Citation:
         return self
 
         # TODO: embed query timestamp (max valid_from of dataset). No idea what it means
-
 

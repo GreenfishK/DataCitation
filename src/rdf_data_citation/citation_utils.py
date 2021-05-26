@@ -1,27 +1,22 @@
-import copy
-import logging
-import os
-import rdflib.plugins.sparql.parser
-from rdflib.plugins.sparql.operators import TrueFilter, UnaryNot, Builtin_BOUND
-
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
-from src.rdf_data_citation.exceptions import NoVersioningMode, MultipleAliasesInBindError, NoDataSetError, \
+from src.rdf_data_citation.exceptions import NoDataSetError, \
     MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Variable, Identifier, URIRef
-from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne,\
+from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne, \
     ZeroOrMore, OneOrMore
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
-from nested_lookup import nested_lookup
+import os
+import rdflib.plugins.sparql.parser
+from rdflib.plugins.sparql.operators import TrueFilter, UnaryNot, Builtin_BOUND
 import pandas as pd
 import hashlib
 import datetime
 from pandas.util import hash_pandas_object
 import json
 import numpy as np
-import re
 from datetime import datetime, timedelta, timezone
 import tzlocal
 
@@ -83,10 +78,11 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
 
         def retrieve_bgp_variables(node):
             if isinstance(node, CompValue) and node.name == 'BGP':
-                bgp_triples[node.name+str(len(bgp_triples))] = node.get('triples')
+                bgp_triples[node.name + str(len(bgp_triples))] = node.get('triples')
                 return node
             else:
                 return None
+
         algebra.traverse(query_algebra.algebra, retrieve_bgp_variables)
 
         for bgp_index, triple_list in bgp_triples.items():
@@ -106,6 +102,7 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
                 return node.get('PV')
             else:
                 del node
+
         algebra.traverse(query_algebra.algebra, retrieve_select_variables)
 
     elif variable_set_type == 'order_by':
@@ -143,7 +140,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
     def replace(old, new, search_from_match: str = None, search_from_match_occurrence: int = None, count: int = 1):
         # Read in the file
         with open('query.txt', 'r') as file:
-            filedata = file.read()
+            query = file.read()
 
         def find_nth(haystack, needle, n):
             start = haystack.lower().find(needle)
@@ -153,16 +150,16 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
             return start
 
         if search_from_match and search_from_match_occurrence:
-            position = find_nth(filedata, search_from_match, search_from_match_occurrence)
-            filedata_pre = filedata[:position]
-            filedata_post = filedata[position:].replace(old, new, count)
-            filedata = filedata_pre + filedata_post
+            position = find_nth(query, search_from_match, search_from_match_occurrence)
+            query_pre = query[:position]
+            query_post = query[position:].replace(old, new, count)
+            query = query_pre + query_post
         else:
-            filedata = filedata.replace(old, new, count)
+            query = query.replace(old, new, count)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
-            file.write(filedata)
+            file.write(query)
 
     def convert_node_arg(node_arg):
         if isinstance(node_arg, Identifier):
@@ -264,7 +261,8 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                         replace(identifier, "GROUP_CONCAT" + "(" + distinct
                                 + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")")
                     else:
-                        replace(identifier, agg_func_name.upper() + "(" + distinct + convert_node_arg(agg_func.vars) + ")")
+                        replace(identifier, agg_func_name.upper() + "(" + distinct
+                                + convert_node_arg(agg_func.vars) + ")")
                     # For non-aggregated variables the aggregation function "sample" is automatically assigned.
                     # However, we do not want to have "sample" wrapped around non-aggregated variables. That is
                     # why we replace it. If "sample" is used on purpose it will not be replaced as the alias
@@ -275,7 +273,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                 replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
             elif node.name == "TriplesBlock":
                 replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
-                                                   for triple in node.triples))
+                                                  for triple in node.triples))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -517,7 +515,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                         columns.append(key.n3())
                     else:
                         raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
-                values = "VALUES (" + " ".join(columns) +")"
+                values = "VALUES (" + " ".join(columns) + ")"
 
                 rows = ""
                 for elem in node.res:
@@ -721,9 +719,9 @@ class QueryUtils:
 
         def overwrite_aliases_with_orig_var(n):
             if isinstance(n, CompValue) and n.get('PV') and type(n.get('PV')) == list:
-                for i, v in enumerate(n.get('PV')):
-                    if aliases.get(v):
-                        n.get('PV')[i] = aliases.get(v)
+                for idx, pv in enumerate(n.get('PV')):
+                    if aliases.get(pv):
+                        n.get('PV')[idx] = aliases.get(pv)
                 return n
 
         algebra.traverse(q_algebra.algebra, visitPost=remove_alias)
@@ -742,6 +740,7 @@ class QueryUtils:
         #8 
         "filter not exists {triple}" expressions will be converted into the "filter + !bound" expression.
         """
+
         def replace_filter_not_exists(node):
             if isinstance(node, CompValue) and node.name == 'Filter':
                 if node.expr.name == 'Builtin_NOTEXISTS' and node.p.name == 'BGP':
@@ -759,6 +758,7 @@ class QueryUtils:
                                                             "has not been covered yet. Therefore, FILTER NOT EXISTS "
                                                             "will not be translated into the OPTIONAL + !BOUND pattern."
                                                             "")
+
         try:
             algebra.traverse(q_algebra.algebra, replace_filter_not_exists)
         except ExpressionNotCoveredException as e:
@@ -874,8 +874,8 @@ class QueryUtils:
 
                         if isinstance(t[0], Variable):
                             try:
-                                s = Variable(q_vars_mapped.get(t[0]))  # Error
-                            except Exception:
+                                s = Variable(q_vars_mapped.get(t[0]))
+                            except TypeError:
                                 s = "does_not_exist"
                                 print("Variable does not exist in q_vars_mapped.")
                         else:
@@ -896,8 +896,8 @@ class QueryUtils:
                             o = t[2]
                         norm_triple += s + "_" + p + "_" + o
                         ordered_triples[(s, p, o)] = norm_triple
-                        ordered_triples = {k: v for k, v in sorted(ordered_triples.items(),
-                                                                   key=lambda item: item[1])}
+                        ordered_triples = {k: var for k, var in sorted(ordered_triples.items(),
+                                                                       key=lambda item: item[1])}
                 except Exception:
                     raise ExpressionNotCoveredException("There might be uncovered expressions, "
                                                         "identifiers or paths. Triple statements will not "
@@ -916,7 +916,7 @@ class QueryUtils:
 
         return q_algebra
 
-    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):
+    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None):
         """
         R7 - Query timestamping
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
@@ -952,11 +952,11 @@ class QueryUtils:
         def inject_versioning_extensions(node):
             if isinstance(node, CompValue):
                 if node.name == "BGP":
-                    bgp_identifier = "BGP_" + str(len(bgp_triples))
-                    bgp_triples[bgp_identifier] = node.triples.copy()
-                    node.triples.append((rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)),
-                                         rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)),
-                                         rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier))))
+                    bgp_id = "BGP_" + str(len(bgp_triples))
+                    bgp_triples[bgp_id] = node.triples.copy()
+                    node.triples.append((rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_id)),
+                                         rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_id)),
+                                         rdflib.term.Literal('__{0}dummy_object__'.format(bgp_id))))
                 elif node.name == "TriplesBlock":
                     raise ExpressionNotCoveredException("TriplesBlock has not been covered yet. "
                                                         "No versioning extensions will be injected.")
@@ -983,8 +983,8 @@ class QueryUtils:
                                       "?triple_statement_{0}_valid_from".format(str(i)),
                                       "?triple_statement_{0}_valid_until".format(str(i)))
 
-            dummy_triple = rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)).n3() + " " \
-                           + rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)).n3() + " " \
+            dummy_triple = rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)).n3() + " "\
+                           + rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)).n3() + " "\
                            + rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier)).n3() + "."
             ver_block += 'bind("' + timestamp + '"^^xsd:dateTime as ?TimeOfCiting)'
             query_vers_out = query_vers_out.replace(dummy_triple, ver_block)
@@ -992,121 +992,6 @@ class QueryUtils:
         query_vers_out = citation_prefixes("") + "\n" + query_vers_out
 
         return query_vers_out
-
-    def timestamp_query_old(self, query: str = None, citation_timestamp: datetime = None, colored: bool = False):
-        """
-        R7 - Query timestamping
-        Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
-        the query with a code snippet that ensures that a snapshot of the data as of citation
-        time gets returned when the query is executed. Optionally, but recommended, the order by clause
-        is attached to the query to ensure a unique sort of the data.
-
-        :param query:
-        :param citation_timestamp:
-        :param colored: f colored is true, the injected strings within the statement template will be colored.
-        Use this parameter only for presentation purpose as the code for color encoding will make the SPARQL
-        query erroneous!
-        :return: A query string extended with the given timestamp
-        """
-
-        if colored:
-            red = ("\x1b[31m", "\x1b[0m")
-            green = ("\x1b[32m", "\x1b[0m")
-            blue = ("\x1b[34m", "\x1b[0m")
-            magenta = ("\x1b[35m", "\x1b[0m")
-            cyan = ("\x1b[36m", "\x1b[0m")
-        else:
-            red = ("", "")
-            green = ("", "")
-            blue = ("", "")
-            magenta = ("", "")
-            cyan = ("", "")
-
-        template = open(template_path("templates/query_utils/query_wrapper.txt"), "r").read()
-
-        if query is None:
-            if self.query is not None:
-                prefixes = self.sparql_prefixes
-                query = self.query
-            else:
-                raise NoQueryString("Query could not be normalized because the query string was not set.")
-        else:
-            prefixes, query = split_prefixes_query(query)
-        final_prefixes = citation_prefixes(prefixes)
-
-        # Variables from the original query's select clause
-        if self.bgp_variables is not None:
-            select_variables = self.select_variables
-        else:
-            select_variables = _query_variables(query, final_prefixes, variable_set_type='select')
-        variables_string = " ".join(v.n3() for v in select_variables)
-
-        if citation_timestamp is not None:
-            timestamp = citation_timestamp_format(citation_timestamp)
-        else:
-            timestamp = self.citation_timestamp
-
-        # QueryData extensions for versioning_modes injection
-        def query_triples(query, sparql_prefixes: str = None) -> list:
-            """
-            Takes a query and extracts the triple statements from it that are found in the query body.
-
-            :return: A list of triple statements.
-            """
-
-            template = open(template_path("templates/query_utils/prefixes_query.txt"), "r").read()
-
-            if sparql_prefixes:
-                statement = template.format(sparql_prefixes, query)
-            else:
-                statement = template.format("", query)
-
-            q_desc = parser.parseQuery(statement)
-            q_algebra = algebra.translateQuery(q_desc).algebra
-            triples = nested_lookup('triples', q_algebra)
-
-            n3_triples = []
-            for triple_list in triples:
-                for triple in triple_list:
-                    if isinstance(triple[1], SequencePath):
-                        sequences = triple[1].args
-                        for i, ref in enumerate(sequences, start=1):
-                            if i == 1:
-                                t = triple[0].n3() + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
-                            elif i == len(sequences):
-                                t = "?dummy{0}".format(len(sequences) - 1) + " " + ref.n3() + " " + triple[2].n3()
-                            else:
-                                t = "?dummy{0}".format(str(i - 1)) + " " + ref.n3() + " " + "?dummy{0}".format(str(i))
-                            n3_triples.append(t)
-                    else:
-                        t = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-                        n3_triples.append(t)
-
-            return sorted(n3_triples)
-
-        triples = query_triples(query, final_prefixes)
-
-        versioning_query_extensions_template = \
-            open(template_path("templates/query_utils/versioning_query_extensions.txt"), "r").read()
-
-        versioning_query_extensions = ""
-        for i, triple in enumerate(triples):
-            v = versioning_query_extensions_template
-            versioning_query_extensions += v.format(triple,
-                                                    "?triple_statement_{0}_valid_from".format(str(i)),
-                                                    "?triple_statement_{0}_valid_until".format(str(i)))
-
-        # Formatting and styling select statement
-        normalized_query_formatted = query.replace('\n', '\n \t')
-
-        decorated_query = template.format(final_prefixes,
-                                          "{0}{1}{2}".format(red[0], variables_string, red[1]),
-                                          "{0}{1}{2}".format(green[0], normalized_query_formatted, green[1]),
-                                          "{0}{1}{2}".format(blue[0], timestamp, blue[1]),
-                                          "{0}{1}{2}".format(magenta[0], versioning_query_extensions, magenta[1]),
-                                          "{0}{1}{2}".format(cyan[0], "", cyan[1]))
-
-        return decorated_query
 
     def compute_checksum(self, string: str = None) -> str:
         """
@@ -1305,9 +1190,9 @@ class RDFDataSetUtils:
         cnt_columns = len(df_key_finder.columns)
         columns = df_key_finder.columns
 
-        distinct_occurences = {}
+        distinct_occurrences = {}
         for column in columns:
-            distinct_occurences[column] = len(df_key_finder[column].unique().flat)
+            distinct_occurrences[column] = len(df_key_finder[column].unique().flat)
 
         attribute_combos_min_tuple_size = {}
         cnt_index_attrs = 1
@@ -1329,7 +1214,7 @@ class RDFDataSetUtils:
             if is_potential_key:
                 cnt_dist_stacked_attr_values = 0
                 for attribute in composition:
-                    cnt_distinct_attribute_values = distinct_occurences[attribute]
+                    cnt_distinct_attribute_values = distinct_occurrences[attribute]
                     cnt_dist_stacked_attr_values += cnt_distinct_attribute_values
                 dist_stacked_key_attr_values[composition] = cnt_dist_stacked_attr_values
 
@@ -1345,7 +1230,7 @@ class RDFDataSetUtils:
         unique indexes, the first one will be taken.
 
         :sort_order: A user defined sort order for the dataset. If nothing is provided, the sort index will be derived
-        from the dataset. Sometimes, this can yield ambiguous multi-indexes in which case the first multiindex will
+        from the dataset. Sometimes, this can yield ambiguous multi-indexes in which case the first multi-index will
         be taken from the list of possible unique indexes.
         :return:
         """
