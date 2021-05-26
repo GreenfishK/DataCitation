@@ -199,7 +199,9 @@ class TestNormalization(TestExecution):
     def test_normalization__complex_bind_expression2(self):
         # While the two queries' algebras are not completely equal to each other the normalized queries are.
         # This is because the nesting withing the query algebra for bindings is different between
-        # the implicit binding (in the select clause) and the explicit via BIND keyword.
+        # the implicit binding (in the select clause) and the explicit via BIND keyword. However, various case
+        # distinctions are needed to tell from the algebra in which clause or pattern the binding was actually
+        # stated, thus, whether it was implicit or explicit.
         # When the normalized query algebra gets back-translated into a query all the bindings appear
         # within the select clause.
 

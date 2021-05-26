@@ -193,13 +193,14 @@ class TripleStoreEngine:
             versioning_mode_template2 = \
                 open(versioning_mode_dir2 + "/versioning_query_extensions_q_perf.txt", "r").read()
             update_statement = versioning_mode_template1.format(final_prefixes, version_timestamp)
-
+            message = "All rows have been annotated with start date {0} " \
+                      "and an artificial end date".format(initial_timestamp)
         elif versioning_mode == VersioningMode.SAVE_MEM:
             versioning_mode_template1 = open(versioning_mode_dir1 + "/version_all_rows_save_mem.txt", "r").read()
             versioning_mode_template2 = \
                 open(versioning_mode_dir2 + "/versioning_query_extensions_save_mem.txt", "r").read()
             update_statement = versioning_mode_template1.format(final_prefixes)
-
+            message = "All rows have been annotated with an artificial end date."
         else:
             raise NoVersioningMode("Versioning mode is neither Q_PERF nor SAVE_MEM. Initial versioning will not be"
                                    "executed. Check also whether an initial timestamp was passed in case of Q_PERF.")
@@ -212,7 +213,7 @@ class TripleStoreEngine:
         self.sparql_post.setQuery(update_statement)
         self.sparql_post.query()
 
-        print("All rows have been annotated with an artificial end date.")
+        print(message)
 
     def get_data(self, select_statement, timestamp: datetime = None, yn_timestamp_query: bool = True) -> pd.DataFrame:
         """

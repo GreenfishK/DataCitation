@@ -1,10 +1,13 @@
-PREFIX : <http://books.example/>
-SELECT (SUM(?lprice) AS ?totalPrice)
-WHERE {
-  ?org :affiliates ?auth .
-  ?auth :writesBook ?book .
-  ?book :price ?lprice .
-  filter(?lprice < 5)
-}
-GROUP BY ?org
-HAVING (SUM(?lprice) > 10)
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+
+select ?x ?mention ?personLabel ?value where {
+    ?x publishing:containsMention ?mention .
+    ?person pub:memberOfPoliticalParty ?party .
+    ?person pub:preferredLabel ?personLabel .
+    ?mention publishing:hasInstance ?person .
+    ?party pub:hasValue ?value .
+    ?value pub:preferredLabel ?preflab .
+    filter(?preflab = "Democratic Party"@en)
+    filter(?personLabel = "Judy Chu"@en)
+} order by ?x ?mention ?person

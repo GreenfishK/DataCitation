@@ -1,3 +1,5 @@
+import logging
+
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoDataSetError, \
@@ -28,12 +30,15 @@ def _query_algebra(query: str, sparql_prefixes: str) -> rdflib.plugins.sparql.al
     :param sparql_prefixes: A query tree
     :return:
     """
-
     if sparql_prefixes:
+        # Warning: a_http://ontology.ontotext.com/taxonomy/preferredLabel_Democratic Party does
+        # not look like a valid URI, trying to serialize this will break.
+        # Warning gets issued because of white spaces in case a triple statement's object is a literal
         parse_tree = parser.parseQuery(sparql_prefixes + " " + query)
     else:
         parse_tree = parser.parseQuery(query)
     query_algebra = algebra.translateQuery(parse_tree)
+
     return query_algebra
 
 
@@ -636,9 +641,6 @@ class QueryUtils:
 
         if query is not None:
             self.sparql_prefixes, self.query = split_prefixes_query(query)
-            self.bgp_variables = _query_variables(self.query, self.sparql_prefixes, 'bgp')
-            self.select_variables = _query_variables(self.query, self.sparql_prefixes, 'select')
-            self.order_by_variables = _query_variables(self.query, self.sparql_prefixes, 'order_by')
             self.normalized_query_algebra = self.normalize_query_tree()
             try:
                 self.normalized_query = _translate_algebra(self.normalized_query_algebra)
@@ -658,7 +660,6 @@ class QueryUtils:
             self.pid = self.generate_query_pid()
         else:
             self.query = None
-            self.bgp_variables = None
             self.normalized_query_algebra = None
             self.checksum = None
 
@@ -683,7 +684,6 @@ class QueryUtils:
                 raise NoQueryString("Query could not be normalized because the query string was not set.")
         else:
             prefixes, query = split_prefixes_query(query)
-
         q_algebra = _query_algebra(query, prefixes)
 
         def remove_protected_vars(node):
@@ -926,7 +926,6 @@ class QueryUtils:
 
         :param query:
         :param citation_timestamp:
-        :param colored: f colored is true, the injected strings within the statement template will be colored.
         Use this parameter only for presentation purpose as the code for color encoding will make the SPARQL
         query erroneous!
         :return: A query string extended with the given timestamp
@@ -1012,8 +1011,8 @@ class QueryUtils:
                 checksum.update(str.encode(self.normalized_query_algebra.algebra))
                 return checksum.hexdigest()
             else:
-                raise InputMissing("Checksum could not be computed because the normalized"
-                                   " query or query algebra is missing.")
+                raise InputMissing("Checksum could not be computed because the normalized "
+                                   "query or query algebra is missing.")
         else:
             checksum.update(str.encode(string))
         return checksum.hexdigest()
