@@ -1,7 +1,7 @@
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from src.rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore
+from src.rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode
 from urllib.error import URLError
 from enum import Enum
 import logging
@@ -166,43 +166,48 @@ class TripleStoreEngine:
 
         print("All annotations have been removed.")
 
-    def version_all_rows(self, initial_timestamp: datetime, versioning_mode: VersioningMode = VersioningMode.SAVE_MEM):
+    def version_all_rows(self, initial_timestamp: datetime = None,
+                         versioning_mode: VersioningMode = VersioningMode.SAVE_MEM):
         """
         Version all triples with an artificial end date. If the mode is Q_PERF then every triple is additionally
         annotated with a valid_from date where the date is the initial_timestamp provided by the caller.
 
         :param versioning_mode: The mode to use for versioning your data in the RDF store. The Q_PERF mode takes up
         more storage as for every triple in the RDF store two additional triples are added. In return, querying
-        timestamped data is faster. The SAVE_MEM mode only adds one additional triple per triple in the RDF store.
-        However, the queries are more time-consuming as additional filters are needed. Make sure to choose the mode
-        the better suits your need as the mode gets set only once at the beginning. Every subsequent query that gets
-        send to the RDF endpoint using get_data() will also operate in the chosen mode.
+        timestamped data is faster. The SAVE_MEM mode only adds one additional metadata triple per data triple
+        to the RDF store. However, the queries are more time-consuming as additional filters are needed.
+        Make sure to choose the mode the better suits your need as the mode gets set only once at the beginning.
+        Every subsequent query that gets send to the RDF endpoint using get_data() will also operate in the chosen mode.
         :param initial_timestamp: Timestamp which also must include the timezone. Only relevant for Q_PERF mode.
-
         :return:
         """
 
-        version_timestamp = citation_timestamp_format(initial_timestamp)
-        template = open(self._template_location + "/version_all_rows.txt", "r").read()
         final_prefixes = citation_prefixes("")
-        versioning_mode_dir = self._template_location + "/../query_utils/versioning_modes"
-        if versioning_mode == VersioningMode.Q_PERF:
-            update_statement = template.format(final_prefixes, "<<?s ?p ?o>> citing:valid_from ?currentTimestamp;",
-                                               version_timestamp)
+        versioning_mode_dir1 = self._template_location + "/../rdf_star_store/versioning_modes"
+        versioning_mode_dir2 = self._template_location + "/../query_utils/versioning_modes"
 
-            # Prepare template for query timestamping/versioning
-            versioning_mode_template = \
-                open(versioning_mode_dir + "/versioning_query_extensions_q_perf.txt", "r").read()
+        if versioning_mode == VersioningMode.Q_PERF and initial_timestamp is not None:
+            version_timestamp = citation_timestamp_format(initial_timestamp)
+
+            versioning_mode_template1 = open(versioning_mode_dir1 + "/version_all_rows_q_perf.txt", "r").read()
+            versioning_mode_template2 = \
+                open(versioning_mode_dir2 + "/versioning_query_extensions_q_perf.txt", "r").read()
+            update_statement = versioning_mode_template1.format(final_prefixes, version_timestamp)
+
+        elif versioning_mode == VersioningMode.SAVE_MEM:
+            versioning_mode_template1 = open(versioning_mode_dir1 + "/version_all_rows_save_mem.txt", "r").read()
+            versioning_mode_template2 = \
+                open(versioning_mode_dir2 + "/versioning_query_extensions_save_mem.txt", "r").read()
+            update_statement = versioning_mode_template1.format(final_prefixes)
 
         else:
-            update_statement = template.format(final_prefixes, "", version_timestamp)
+            raise NoVersioningMode("Versioning mode is neither Q_PERF nor SAVE_MEM. Initial versioning will not be"
+                                   "executed. Check also whether an initial timestamp was passed in case of Q_PERF.")
 
-            # Prepare template for query timestamping/versioning
-            versioning_mode_template = \
-                open(versioning_mode_dir + "/versioning_query_extensions_save_mem.txt", "r").read()
-
+        with open(self._template_location + "/../rdf_star_store/version_all_rows.txt", "w") as vers:
+            vers.write(versioning_mode_template1)
         with open(self._template_location + "/../query_utils/versioning_query_extensions.txt", "w") as vers:
-            vers.write(versioning_mode_template)
+            vers.write(versioning_mode_template2)
 
         self.sparql_post.setQuery(update_statement)
         self.sparql_post.query()
