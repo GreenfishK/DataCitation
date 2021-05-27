@@ -112,7 +112,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def test_normalization__variable_names(self):
+    def x_test_normalization__variable_names(self):
         test = Test(test_number=8,
                     tc_desc="Test if two queries where as one has one variable renamed within the whole query "
                             "(select statement, triple statements, filter, ...) yields the same checksum.",
@@ -226,6 +226,6 @@ class TestNormalization(TestExecution):
         return test
 
 
-t = TestNormalization(annotated_tests=False)
+t = TestNormalization(annotated_tests=True)
 t.run_tests()
 t.print_test_results()

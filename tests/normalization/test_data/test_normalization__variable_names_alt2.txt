@@ -1,14 +1,14 @@
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
 PREFIX publishing: <http://ontology.ontotext.com/publishing#>
 
-select ?personName ?party_label ?document ?mention where {
+select ?x ?mention ?personLabel ?party_label where {
+    ?x publishing:containsMention ?mention .
+    ?person pub:memberOfPoliticalParty ?dummy1.
+    ?dummy1 pub:hasValue ?value .
+    ?person pub:preferredLabel ?personLabel .
     ?mention publishing:hasInstance ?person .
-    ?document publishing:containsMention ?mention .
-    ?person pub:memberOfPoliticalParty ?party .
-    ?party pub:hasValue ?value .
-    ?value pub:preferredLabel ?party_label .
-    ?person pub:preferredLabel ?personName .
-
-
-    filter(?personName = "Barack Obama"@en)
-} order by ?personName
+    ?value pub:preferredLabel ?preflab .
+    filter(?preflab = "Democratic Party"@en)
+    filter(?personLabel = "Judy Chu"@en)
+    bind(?value as ?party_label)
+} order by ?x ?mention ?person

@@ -788,7 +788,7 @@ class QueryUtils:
         in the query without changing the outcome
         """
         pass
-        # Solved by translating the query into the query algebra. Prefixes get resolved
+        # Solved by translating the query into the query algebra. Prefixes get resolved.
 
         """
         #3
@@ -815,26 +815,32 @@ class QueryUtils:
         There is no need to sort the variables in the query tree as this is implicitly solved by the algebra. Variables
         are sorted by their bindings where the ones with the most bindings come first.
         """
-        q_vars = []
         q_vars_mapped = {}
-        int_norm_var = 'a'
+
+        def retrieve_pv_vars(node):
+            if isinstance(node, CompValue) and node.get('PV') and type(node.get('PV')) == list:
+                for idx, pv in enumerate(node.get('PV')):
+                    if isinstance(pv, Variable):
+                        q_vars_mapped.setdefault(pv, chr(len(q_vars_mapped) + 97))
+                    else:
+                        raise ExpressionNotCoveredException("There is a project variable that is actually not "
+                                                            "a variables but {0}. This case has not been covered yet."
+                                                            "It will not be considered for replacement with a "
+                                                            "letter from the alphabet.".format(type(pv)))
 
         def retrieve_bgp_vars(node):
             if isinstance(node, CompValue) and node.name == 'BGP':
                 for triple in node.triples:
                     if isinstance(triple[0], Variable):
-                        if triple[0] not in q_vars:
-                            q_vars.append(triple[0])
+                        q_vars_mapped.setdefault(triple[0], chr(len(q_vars_mapped) + 97))
                     if isinstance(triple[1], Variable):
-                        if triple[1] not in q_vars:
-                            q_vars.append(triple[1])
+                        q_vars_mapped.setdefault(triple[1], chr(len(q_vars_mapped) + 97))
                     if isinstance(triple[2], Variable):
-                        if triple[2] not in q_vars:
-                            q_vars.append(triple[2])
+                        q_vars_mapped.setdefault(triple[2], chr(len(q_vars_mapped) + 97))
 
         def retrieve_bind_vars(node):
             if isinstance(node, CompValue) and node.name == 'Extend':
-                q_vars.append(node.var)
+                q_vars_mapped.setdefault(node.var, chr(len(q_vars_mapped) + 97))
 
         def replace_variable_names_with_letters(node):
             if isinstance(node, Variable):
@@ -847,14 +853,14 @@ class QueryUtils:
                                                         "went wrong prior to this step or the variable is not part "
                                                         "of any triple statement.".format(node))
 
+        algebra.traverse(q_algebra.algebra, retrieve_pv_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
+        logging.debug(q_vars_mapped)
 
-        for i, v in enumerate(q_vars):
-            next_norm_var = chr(ord(int_norm_var) + i)
-            q_vars_mapped[v] = next_norm_var
         try:
             algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
+            #algebra.pprintAlgebra(q_algebra)
         except ExpressionNotCoveredException as e:
             print(e)
 
