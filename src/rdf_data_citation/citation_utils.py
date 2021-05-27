@@ -1,5 +1,3 @@
-import logging
-
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoDataSetError, \
@@ -792,9 +790,9 @@ class QueryUtils:
 
         """
         #3
-        In case of an asterisk in the select-clause, all variables will be projected. However, if one query
-        states all variables explicitly and the second uses an asterisk they will only in one out of n 
-        cases be considered semantically identical as the order of variables is important.
+        In case of an asterisk in the select-clause, all variables will be projected. However, this does not mean that 
+        a query with explicitly stated variables will be equivalent to a query that uses the asterisk as a shortcut 
+        to select all variables. This is due to the importance of the variables' order in the select clause.
         
         """
         pass
@@ -856,11 +854,9 @@ class QueryUtils:
         algebra.traverse(q_algebra.algebra, retrieve_pv_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
-        logging.debug(q_vars_mapped)
 
         try:
             algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
-            #algebra.pprintAlgebra(q_algebra)
         except ExpressionNotCoveredException as e:
             print(e)
 

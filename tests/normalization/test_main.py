@@ -61,15 +61,16 @@ class TestNormalization(TestExecution):
 
     def test_normalization__asterisk(self):
         """
-        Fails because the asterisk gets resolved in an order that might not be the same as the explicitly
-        stated variables in the select clause. Only for one out of n combinations it will pass.
+        This test fails in 50% of runs. This is because the asterisk gets resolved into a seemingly random permutation
+        of the available variables. Moreover, we only used two variables, thus, the output of "resolve(*)" might
+        either be ?a, ?b or ?b, ?a.
         :return:
         """
         test = Test(test_number=3,
                     tc_desc="Tests if replacing the variable names in the select clause with an asterisk yields the "
-                            "same checksum. If the variable order is important this test will usually not pass. In "
-                            "this case, it will only pass if the order of variables after the asterisk gets resolved "
-                            "is the same as the user would place them. ",
+                            "same checksum only in one case, namely, if the explicitly stated variables in query1 "
+                            "have the same permutation as the projected variables in query2 after the asterisk "
+                            "is resolved.",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 
@@ -112,10 +113,12 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__variable_names(self):
+    def test_normalization__variable_names(self):
         test = Test(test_number=8,
-                    tc_desc="Test if two queries where as one has one variable renamed within the whole query "
-                            "(select statement, triple statements, filter, ...) yields the same checksum.",
+                    tc_desc="Test if two queries with different variable names but consistent variable order in the "
+                            "select clause yield the same checksum. In addition to different variable names the second "
+                            "query should also have differently ordered triple statements and one variable alias "
+                            "assigned using the BIND keyword.",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 
@@ -175,7 +178,8 @@ class TestNormalization(TestExecution):
 
     def test_normalization__switched_filter_statements(self):
         """
-        Fails because the algebra tree nesting of filters is switched.
+        Fails because the algebra tree nesting of filters is switched. Filters would somehow need to be sorted in order
+        for this test to pass.
         :return:
         """
         test = Test(test_number=14,
@@ -226,6 +230,6 @@ class TestNormalization(TestExecution):
         return test
 
 
-t = TestNormalization(annotated_tests=True)
+t = TestNormalization(annotated_tests=False)
 t.run_tests()
 t.print_test_results()
