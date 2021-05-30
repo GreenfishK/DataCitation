@@ -1,0 +1,826 @@
+s,p,o
+http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#TransitiveProperty
+http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#TransitiveProperty
+http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2002/07/owl#equivalentProperty,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#SymmetricProperty
+http://www.w3.org/2002/07/owl#equivalentProperty,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#TransitiveProperty
+http://www.w3.org/2002/07/owl#equivalentClass,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#SymmetricProperty
+http://www.w3.org/2002/07/owl#equivalentClass,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#TransitiveProperty
+http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#SymmetricProperty
+http://www.w3.org/1999/02/22-rdf-syntax-ns#subject,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#object,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#first,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#rest,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#value,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#nil,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#List
+http://www.w3.org/2000/01/rdf-schema#comment,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2000/01/rdf-schema#label,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#Datatype
+http://www.w3.org/2002/07/owl#differentFrom,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#SymmetricProperty
+http://www.w3.org/2001/XMLSchema#nonNegativeInteger,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/2001/XMLSchema#nonNegativeInteger,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#Datatype
+http://www.w3.org/2001/XMLSchema#string,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/2001/XMLSchema#string,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#Datatype
+http://www.w3.org/1999/02/22-rdf-syntax-ns#_1,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#_1,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty
+http://ontology.ontotext.com/taxonomy/,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Ontology
+http://purl.org/dc/elements/1.1/title,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://purl.org/dc/elements/1.1/subject,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://purl.org/dc/elements/1.1/creator,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://purl.org/dc/elements/1.1/rights,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/2002/07/owl#versionInfo,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://ontology.ontotext.com/taxonomy/Thing,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Concept,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Event,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Location,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Time,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Agent,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Person,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Organization,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/preferredLabel,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/alternativeLabel,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/picture,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/thumbnail,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/description,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/exactMatch,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/generated,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/genericProperty,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/partOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/memberOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/hasPart,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/startTime,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/endTime,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/pointInTime,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/replaces,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/genre,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/replacedBy,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/coordinateLocation,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/eventTime,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/locatedIn,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/headOfGoverment,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/operatingSystem,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/programmingLanguage,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/author,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/of,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/gender,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/dateOfBirth,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/dateOfDeath,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/placeOfBirth,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/placeOfDeath,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/countryOfCitizenship,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/occupation,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/almaMater,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/fieldOfWork,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/positionHeld,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/religion,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/mother,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/father,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/brother,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/sister,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/spouse,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/employer,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/officialWebsite,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/positionAtTeam,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/club,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/countryForSport,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/notableWork,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/instrument,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/nobleFamily,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/coatOfArmsImage,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/inception,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/logoImage,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/headquartersLocation,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/industry,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/production,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/founder,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/CEO,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/chairperson,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/website,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/affiliation,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/subsidiaries,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/parentCompany,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/continent,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/country,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/population,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/capital,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/officialLanguage,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/headOfState,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/capitalOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/taxonomy/latitude,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/taxonomy/longitude,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Ontology
+http://ontology.ontotext.com/publishing#Feature,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#DocumentTopic,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Category,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Mention,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#TextMention,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#EntitySource,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#LinkedDatasetSource,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#NamedEntityRecognitionSource,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Asset,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Image,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Video,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Document,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#PresentableDocument,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#ProfileInformation,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#Channel,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#featureName,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#featureName,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#featureValue,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#featureValue,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#hasInstance,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasInstance,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#hasClass,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasClass,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#annotationType,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#annotationType,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#annotationString,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#annotationString,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#mentionScore,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#mentionScore,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#startOffset,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#startOffset,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#endOffset,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#endOffset,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#title,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#title,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#author,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#author,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#source,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#source,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#creationDate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#creationDate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#content,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#content,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#customFeature,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#summary,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#summary,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#containsMention,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#originalUrl,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#originalUrl,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#hasCategory,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasImage,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasVideo,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasDocument,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#mostRepresentativeDocument,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#mostRepresentativeDocument,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#articlesCount,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#articlesCount,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#clusterStartDate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#clusterStartDate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#clusterEndDate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#clusterEndDate,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#hasChannel,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasUser,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasConstraint,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasConstraint,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#channelIndex,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#DatatypeProperty
+http://ontology.ontotext.com/publishing#channelIndex,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/publishing#hasEntitySource,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#ObjectProperty
+http://ontology.ontotext.com/publishing#hasEntitySource,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#FunctionalProperty
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/PopulatedPlace,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Building,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/BodyOfWater,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/SportFacility,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Infrastructure,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Mountain,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Work,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/MeanOfTransportation,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Software,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Plant,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/taxonomy/Animal,http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2002/07/owl#Class
+http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf
+http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#subClassOf
+http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#domain
+http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#range
+http://www.w3.org/2002/07/owl#equivalentProperty,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf
+http://www.w3.org/2002/07/owl#equivalentClass,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#subClassOf
+http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://proton.semanticweb.org/protonsys#transitiveOver
+http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2002/07/owl#inverseOf
+http://www.w3.org/2000/01/rdf-schema#comment,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#comment
+http://www.w3.org/2000/01/rdf-schema#label,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#label
+http://www.w3.org/2000/01/rdf-schema#isDefinedBy,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#seeAlso
+http://purl.org/dc/elements/1.1/title,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://purl.org/dc/elements/1.1/title
+http://purl.org/dc/elements/1.1/subject,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://purl.org/dc/elements/1.1/subject
+http://purl.org/dc/elements/1.1/creator,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://purl.org/dc/elements/1.1/creator
+http://purl.org/dc/elements/1.1/rights,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://purl.org/dc/elements/1.1/rights
+http://www.w3.org/2002/07/owl#versionInfo,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2002/07/owl#versionInfo
+http://ontology.ontotext.com/taxonomy/preferredLabel,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#label
+http://ontology.ontotext.com/taxonomy/alternativeLabel,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2000/01/rdf-schema#label
+http://ontology.ontotext.com/taxonomy/partOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/memberOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/hasPart,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/startTime,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/endTime,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/pointInTime,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/replaces,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/genre,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/replacedBy,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/coordinateLocation,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/eventTime,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/locatedIn,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/headOfGoverment,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/operatingSystem,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/programmingLanguage,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/author,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/of,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/gender,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/dateOfBirth,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/dateOfDeath,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/placeOfBirth,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/placeOfDeath,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/countryOfCitizenship,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/occupation,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/almaMater,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/fieldOfWork,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/positionHeld,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/religion,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/mother,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/father,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/brother,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/sister,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/spouse,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/employer,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/officialWebsite,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/positionAtTeam,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/club,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/countryForSport,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/notableWork,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/instrument,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/nobleFamily,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/coatOfArmsImage,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/inception,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/logoImage,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/headquartersLocation,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/industry,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/production,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/founder,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/CEO,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/chairperson,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/website,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/affiliation,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/subsidiaries,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/parentCompany,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/continent,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/country,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/population,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/capital,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/officialLanguage,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/headOfState,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/capitalOf,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://ontology.ontotext.com/taxonomy/genericProperty
+http://ontology.ontotext.com/taxonomy/latitude,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2003/01/geo/wgs84_pos#latitude
+http://ontology.ontotext.com/taxonomy/longitude,http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://www.w3.org/2003/01/geo/wgs84_pos#longitude
+http://www.w3.org/1999/02/22-rdf-syntax-ns#Alt,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#Container
+http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#Container
+http://www.w3.org/1999/02/22-rdf-syntax-ns#Seq,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#Container
+http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#Literal
+http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral
+http://www.w3.org/2000/01/rdf-schema#Datatype,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/2001/XMLSchema#nonNegativeInteger,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2001/XMLSchema#nonNegativeInteger
+http://www.w3.org/2001/XMLSchema#string,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/taxonomy/Thing,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Concept,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Concept,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Event,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Event,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Event,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Location,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Location,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Location,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Time,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Time,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Time,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Agent,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Agent,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Agent,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Person,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Person,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Person,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Person,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Organization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Organization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Organization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Organization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Feature,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#DocumentTopic,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Category,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Mention,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#TextMention,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#TextMention,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Mention
+http://ontology.ontotext.com/publishing#EntitySource,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#LinkedDatasetSource,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#LinkedDatasetSource,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#EntitySource
+http://ontology.ontotext.com/publishing#NamedEntityRecognitionSource,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#NamedEntityRecognitionSource,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#EntitySource
+http://ontology.ontotext.com/publishing#Asset,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Image,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Image,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#Video,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Video,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#Document,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Document,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#PresentableDocument,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#PresentableDocument,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#PresentableDocument,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/publishing#PresentableDocument
+http://ontology.ontotext.com/publishing#ProfileInformation,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#Channel,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Person
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Agent
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Organization
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/PopulatedPlace,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/PopulatedPlace,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/PopulatedPlace,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Location
+http://ontology.ontotext.com/taxonomy/PopulatedPlace,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Building,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Building,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Building,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Location
+http://ontology.ontotext.com/taxonomy/Building,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/BodyOfWater,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/BodyOfWater,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/BodyOfWater,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Location
+http://ontology.ontotext.com/taxonomy/BodyOfWater,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/SportFacility,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/SportFacility,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/SportFacility,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Location
+http://ontology.ontotext.com/taxonomy/SportFacility,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Infrastructure,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Infrastructure,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Infrastructure,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Location
+http://ontology.ontotext.com/taxonomy/Infrastructure,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Mountain,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Mountain,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Mountain,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Location
+http://ontology.ontotext.com/taxonomy/Mountain,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Work,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Work,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Work,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/MeanOfTransportation,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/MeanOfTransportation,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/MeanOfTransportation,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/MeanOfTransportation,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Work
+http://ontology.ontotext.com/taxonomy/Software,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Software,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Software,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Software,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Work
+http://ontology.ontotext.com/taxonomy/Plant,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Plant,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Plant,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/taxonomy/Animal,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/Animal,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://ontology.ontotext.com/taxonomy/Concept
+http://ontology.ontotext.com/taxonomy/Animal,http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2002/07/owl#Thing
+http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/1999/02/22-rdf-syntax-ns#subject,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement
+http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement
+http://www.w3.org/1999/02/22-rdf-syntax-ns#object,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement
+http://www.w3.org/1999/02/22-rdf-syntax-ns#first,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/1999/02/22-rdf-syntax-ns#List
+http://www.w3.org/1999/02/22-rdf-syntax-ns#rest,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/1999/02/22-rdf-syntax-ns#List
+http://ontology.ontotext.com/taxonomy/preferredLabel,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/alternativeLabel,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/picture,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/thumbnail,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/description,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/exactMatch,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/generated,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/taxonomy/Relation
+http://ontology.ontotext.com/publishing#featureName,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Feature
+http://ontology.ontotext.com/publishing#featureValue,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Feature
+http://ontology.ontotext.com/publishing#hasInstance,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Mention
+http://ontology.ontotext.com/publishing#hasClass,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Mention
+http://ontology.ontotext.com/publishing#annotationType,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Mention
+http://ontology.ontotext.com/publishing#annotationString,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Mention
+http://ontology.ontotext.com/publishing#mentionScore,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Mention
+http://ontology.ontotext.com/publishing#startOffset,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#TextMention
+http://ontology.ontotext.com/publishing#endOffset,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#TextMention
+http://ontology.ontotext.com/publishing#title,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#author,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#source,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#creationDate,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#content,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#customFeature,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Asset
+http://ontology.ontotext.com/publishing#summary,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#containsMention,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#originalUrl,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#hasCategory,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#hasImage,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#PresentableDocument
+http://ontology.ontotext.com/publishing#hasVideo,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#PresentableDocument
+http://ontology.ontotext.com/publishing#hasDocument,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#DocumentCluster
+http://ontology.ontotext.com/publishing#mostRepresentativeDocument,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#DocumentCluster
+http://ontology.ontotext.com/publishing#articlesCount,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#DocumentCluster
+http://ontology.ontotext.com/publishing#clusterStartDate,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#DocumentCluster
+http://ontology.ontotext.com/publishing#clusterEndDate,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#DocumentCluster
+http://ontology.ontotext.com/publishing#hasChannel,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#ProfileInformation
+http://ontology.ontotext.com/publishing#hasUser,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#ProfileInformation
+http://ontology.ontotext.com/publishing#hasConstraint,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Channel
+http://ontology.ontotext.com/publishing#channelIndex,http://www.w3.org/2000/01/rdf-schema#domain,http://ontology.ontotext.com/publishing#Channel
+http://ontology.ontotext.com/publishing#hasEntitySource,http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/2002/07/owl#Thing
+http://www.w3.org/2000/01/rdf-schema#subClassOf,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/2000/01/rdf-schema#domain,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#Class
+http://www.w3.org/1999/02/22-rdf-syntax-ns#rest,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/1999/02/22-rdf-syntax-ns#List
+http://www.w3.org/2000/01/rdf-schema#comment,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#Literal
+http://www.w3.org/2000/01/rdf-schema#label,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2000/01/rdf-schema#Literal
+http://ontology.ontotext.com/taxonomy/preferredLabel,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/taxonomy/alternativeLabel,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/taxonomy/picture,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/taxonomy/thumbnail,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/taxonomy/description,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/taxonomy/exactMatch,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/taxonomy/Thing
+http://ontology.ontotext.com/taxonomy/generated,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#boolean
+http://ontology.ontotext.com/publishing#featureName,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#hasInstance,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#hasClass,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2002/07/owl#Class
+http://ontology.ontotext.com/publishing#annotationType,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#annotationString,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#mentionScore,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#double
+http://ontology.ontotext.com/publishing#startOffset,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#long
+http://ontology.ontotext.com/publishing#endOffset,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#long
+http://ontology.ontotext.com/publishing#title,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#author,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#source,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#creationDate,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#dateTime
+http://ontology.ontotext.com/publishing#customFeature,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Feature
+http://ontology.ontotext.com/publishing#summary,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#containsMention,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#TextMention
+http://ontology.ontotext.com/publishing#originalUrl,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#hasCategory,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Category
+http://ontology.ontotext.com/publishing#hasImage,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Image
+http://ontology.ontotext.com/publishing#hasVideo,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Video
+http://ontology.ontotext.com/publishing#hasDocument,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#mostRepresentativeDocument,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Document
+http://ontology.ontotext.com/publishing#articlesCount,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#integer
+http://ontology.ontotext.com/publishing#clusterStartDate,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#dateTime
+http://ontology.ontotext.com/publishing#clusterEndDate,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#dateTime
+http://ontology.ontotext.com/publishing#hasChannel,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#Channel
+http://ontology.ontotext.com/publishing#hasUser,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#string
+http://ontology.ontotext.com/publishing#hasConstraint,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2002/07/owl#Thing
+http://ontology.ontotext.com/publishing#channelIndex,http://www.w3.org/2000/01/rdf-schema#range,http://www.w3.org/2001/XMLSchema#integer
+http://ontology.ontotext.com/publishing#hasEntitySource,http://www.w3.org/2000/01/rdf-schema#range,http://ontology.ontotext.com/publishing#EntitySource
+http://www.w3.org/1999/02/22-rdf-syntax-ns#type,http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/2000/01/rdf-schema#subClassOf
+http://www.w3.org/2000/01/rdf-schema#subPropertyOf,http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/2000/01/rdf-schema#subPropertyOf
+http://www.w3.org/2000/01/rdf-schema#subClassOf,http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/2000/01/rdf-schema#subClassOf
+http://www.w3.org/2002/07/owl#equivalentProperty,http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/2002/07/owl#equivalentProperty
+http://www.w3.org/2002/07/owl#equivalentClass,http://proton.semanticweb.org/protonsys#transitiveOver,http://www.w3.org/2002/07/owl#equivalentClass
+http://www.w3.org/2002/07/owl#equivalentProperty,http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/2002/07/owl#equivalentProperty
+http://www.w3.org/2002/07/owl#equivalentClass,http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/2002/07/owl#equivalentClass
+http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/2002/07/owl#inverseOf
+http://www.w3.org/2002/07/owl#differentFrom,http://www.w3.org/2002/07/owl#inverseOf,http://www.w3.org/2002/07/owl#differentFrom
+http://ontology.ontotext.com/taxonomy/alternativeLabel,http://www.w3.org/2000/01/rdf-schema#comment,Constructed from wiki-page-redirects in dbpedia.
+http://ontology.ontotext.com/taxonomy/generated,http://www.w3.org/2000/01/rdf-schema#comment,"
+    Specifies whether the relation was generated from document or extracted from the KB.
+  "
+http://ontology.ontotext.com/taxonomy/startTime,http://www.w3.org/2000/01/rdf-schema#comment,"Indicates the time an item begins to exist or a statement starts being valid, usually used as a qualifier"
+http://ontology.ontotext.com/taxonomy/endTime,http://www.w3.org/2000/01/rdf-schema#comment,Indicates the time an item ceases to exist or a statement stops being valid
+http://ontology.ontotext.com/taxonomy/pointInTime,http://www.w3.org/2000/01/rdf-schema#comment,"Time and date something took place, existed or a statement was true"
+http://ontology.ontotext.com/taxonomy/eventTime,http://www.w3.org/2000/01/rdf-schema#comment,"Time and date something took place, existed or a statement was true"
+http://ontology.ontotext.com/taxonomy/operatingSystem,http://www.w3.org/2000/01/rdf-schema#comment,Operating system (OS) on which a software works; OS installed on hardware.
+http://ontology.ontotext.com/taxonomy/programmingLanguage,http://www.w3.org/2000/01/rdf-schema#comment,The programming language(s) in which the software is developed
+http://ontology.ontotext.com/taxonomy/author,http://www.w3.org/2000/01/rdf-schema#comment,main creator(s) of a written work
+http://ontology.ontotext.com/taxonomy/of,http://www.w3.org/2000/01/rdf-schema#comment,qualifiers stating that a statement applies within the scope of a particular item
+http://ontology.ontotext.com/taxonomy/gender,http://www.w3.org/2000/01/rdf-schema#comment,Sexual identity of the subject
+http://ontology.ontotext.com/taxonomy/dateOfBirth,http://www.w3.org/2000/01/rdf-schema#comment,Date on which the subject was born
+http://ontology.ontotext.com/taxonomy/dateOfDeath,http://www.w3.org/2000/01/rdf-schema#comment,Date on which the subject died
+http://ontology.ontotext.com/taxonomy/placeOfBirth,http://www.w3.org/2000/01/rdf-schema#comment,"The most specific known (e.g. city instead of country, or hospital instead of city)"
+http://ontology.ontotext.com/taxonomy/placeOfDeath,http://www.w3.org/2000/01/rdf-schema#comment,"The most specific known (e.g. city instead of country, or hospital instead of city)"
+http://ontology.ontotext.com/taxonomy/countryOfCitizenship,http://www.w3.org/2000/01/rdf-schema#comment,The object is a country that recognizes the subject as its citizen
+http://ontology.ontotext.com/taxonomy/occupation,http://www.w3.org/2000/01/rdf-schema#comment,Occupation of a person
+http://ontology.ontotext.com/taxonomy/fieldOfWork,http://www.w3.org/2000/01/rdf-schema#comment,"Fields of work related to this item (physics, history). "
+http://ontology.ontotext.com/taxonomy/positionHeld,http://www.w3.org/2000/01/rdf-schema#comment,Subject currently or formerly holds the object position or public office
+http://ontology.ontotext.com/taxonomy/coatOfArmsImage,http://www.w3.org/2000/01/rdf-schema#comment,Image of the item's coat of arms
+http://ontology.ontotext.com/taxonomy/headquartersLocation,http://www.w3.org/2000/01/rdf-schema#comment,Specific location where an organization's HQ is or has been situated
+http://ontology.ontotext.com/taxonomy/industry,http://www.w3.org/2000/01/rdf-schema#comment,Industry of company or organization
+http://ontology.ontotext.com/taxonomy/production,http://www.w3.org/2000/01/rdf-schema#comment,"The material produced by a mine, an industrial site or a production process"
+http://ontology.ontotext.com/taxonomy/founder,http://www.w3.org/2000/01/rdf-schema#comment,"Founder or co-founder of the organization, religion or place"
+http://ontology.ontotext.com/taxonomy/CEO,http://www.w3.org/2000/01/rdf-schema#comment,Highest-ranking corporate officer appointed as the CEO within an organization
+http://ontology.ontotext.com/taxonomy/chairperson,http://www.w3.org/2000/01/rdf-schema#comment,"Presiding member of an organization, group or body"
+http://ontology.ontotext.com/taxonomy/website,http://www.w3.org/2000/01/rdf-schema#comment,URL to the website of this item
+http://ontology.ontotext.com/taxonomy/subsidiaries,http://www.w3.org/2000/01/rdf-schema#comment,"subsidiary of a company or organization, opposite of parent company"
+http://ontology.ontotext.com/taxonomy/parentCompany,http://www.w3.org/2000/01/rdf-schema#comment,"a parent company of an organisation, opposite of subsidiaries"
+http://ontology.ontotext.com/taxonomy/continent,http://www.w3.org/2000/01/rdf-schema#comment,Continent of which the subject is a part. 
+http://ontology.ontotext.com/taxonomy/country,http://www.w3.org/2000/01/rdf-schema#comment,Sovereign state of this item
+http://ontology.ontotext.com/taxonomy/population,http://www.w3.org/2000/01/rdf-schema#comment,Continent of which the subject is a part. 
+http://ontology.ontotext.com/taxonomy/capital,http://www.w3.org/2000/01/rdf-schema#comment,"Location (city, municipality) of governmental seat of the country, or administrative territorial entity"
+http://ontology.ontotext.com/taxonomy/officialLanguage,http://www.w3.org/2000/01/rdf-schema#comment,language designated as official by this item. 
+http://ontology.ontotext.com/taxonomy/headOfState,http://www.w3.org/2000/01/rdf-schema#comment,official with the highest formal authority in a country
+http://ontology.ontotext.com/taxonomy/capitalOf,http://www.w3.org/2000/01/rdf-schema#comment,"country, state, department, canton or other administrative division of which the municipality is the governmental seat"
+http://ontology.ontotext.com/taxonomy/latitude,http://www.w3.org/2000/01/rdf-schema#comment,The WGS84 latitude of a pub object
+http://ontology.ontotext.com/taxonomy/longitude,http://www.w3.org/2000/01/rdf-schema#comment,The WGS84 longitude of a pub object
+http://ontology.ontotext.com/publishing#Feature,http://www.w3.org/2000/01/rdf-schema#comment,A miscellaneous feature of an asset.
+http://ontology.ontotext.com/publishing#Category,http://www.w3.org/2000/01/rdf-schema#comment,Category of a document or document cluster (e.g. Science and Technology).
+http://ontology.ontotext.com/publishing#Mention,http://www.w3.org/2000/01/rdf-schema#comment,A mention of an entity in an asset.
+http://ontology.ontotext.com/publishing#TextMention,http://www.w3.org/2000/01/rdf-schema#comment,A mention of an entity in a textual document. The mention has start and end offsets.
+http://ontology.ontotext.com/publishing#EntitySource,http://www.w3.org/2000/01/rdf-schema#comment,The source of an entity or from where it was added to the knowledge base.
+http://ontology.ontotext.com/publishing#LinkedDatasetSource,http://www.w3.org/2000/01/rdf-schema#comment,The source of an entity is a linked dataset.
+http://ontology.ontotext.com/publishing#NamedEntityRecognitionSource,http://www.w3.org/2000/01/rdf-schema#comment,The entity was created and added to the knowledge base via automatic named entity recognition and semantic indexing.
+http://ontology.ontotext.com/publishing#Asset,http://www.w3.org/2000/01/rdf-schema#comment,"A publishing asset e.g. - document, image, video etc."
+http://ontology.ontotext.com/publishing#Document,http://www.w3.org/2000/01/rdf-schema#comment,News article/blogpost etc.
+http://ontology.ontotext.com/publishing#PresentableDocument,http://www.w3.org/2000/01/rdf-schema#comment,an asset that can be presented in the publishing UI
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/2000/01/rdf-schema#comment,Different articles that are about the same thing are grouped in clusters.
+http://ontology.ontotext.com/publishing#ProfileInformation,http://www.w3.org/2000/01/rdf-schema#comment,The infromation associated with an user.
+http://ontology.ontotext.com/publishing#Channel,http://www.w3.org/2000/01/rdf-schema#comment,Channel configuration - the channel constraint its show order etc.
+http://ontology.ontotext.com/publishing#mentionScore,http://www.w3.org/2000/01/rdf-schema#comment,the score of a mention relative to the document it occurs in.
+http://ontology.ontotext.com/publishing#title,http://www.w3.org/2000/01/rdf-schema#comment,title of the asset
+http://ontology.ontotext.com/publishing#customFeature,http://www.w3.org/2000/01/rdf-schema#comment,Custom miscellaneous features of the asset.
+http://ontology.ontotext.com/publishing#summary,http://www.w3.org/2000/01/rdf-schema#comment,The summary of the textual document.
+http://ontology.ontotext.com/publishing#containsMention,http://www.w3.org/2000/01/rdf-schema#comment,"Mentioned conceptual entities (named entity, concrete concept, topic etc.) in the document content."
+http://ontology.ontotext.com/publishing#originalUrl,http://www.w3.org/2000/01/rdf-schema#comment,The orignial URL of an article imported into the system from somewhere on the web.
+http://ontology.ontotext.com/publishing#hasImage,http://www.w3.org/2000/01/rdf-schema#comment,Image associated with the visualizable asset.
+http://ontology.ontotext.com/publishing#hasVideo,http://www.w3.org/2000/01/rdf-schema#comment,Video associated with the document
+http://ontology.ontotext.com/publishing#hasDocument,http://www.w3.org/2000/01/rdf-schema#comment,The document cluster contains many documents.
+http://ontology.ontotext.com/publishing#mostRepresentativeDocument,http://www.w3.org/2000/01/rdf-schema#comment,Most representative document for the article cluster
+http://ontology.ontotext.com/publishing#articlesCount,http://www.w3.org/2000/01/rdf-schema#comment,The count of articles this cluster contains
+http://ontology.ontotext.com/publishing#clusterStartDate,http://www.w3.org/2000/01/rdf-schema#comment,The clustering of articles is temporal and is relevant for a given period of time
+http://ontology.ontotext.com/publishing#clusterEndDate,http://www.w3.org/2000/01/rdf-schema#comment,The clustering of articles is temporal and is relevant for a given period of time
+http://ontology.ontotext.com/publishing#hasChannel,http://www.w3.org/2000/01/rdf-schema#comment,
+http://ontology.ontotext.com/publishing#hasUser,http://www.w3.org/2000/01/rdf-schema#comment,
+http://ontology.ontotext.com/publishing#hasConstraint,http://www.w3.org/2000/01/rdf-schema#comment,
+http://ontology.ontotext.com/publishing#channelIndex,http://www.w3.org/2000/01/rdf-schema#comment,
+http://ontology.ontotext.com/publishing#hasEntitySource,http://www.w3.org/2000/01/rdf-schema#comment,The source of an entity
+http://ontology.ontotext.com/taxonomy/,http://www.w3.org/2000/01/rdf-schema#label,Ontotext Publishing
+http://ontology.ontotext.com/taxonomy/Thing,http://www.w3.org/2000/01/rdf-schema#label,Thing
+http://ontology.ontotext.com/taxonomy/Concept,http://www.w3.org/2000/01/rdf-schema#label,Concept
+http://ontology.ontotext.com/taxonomy/Event,http://www.w3.org/2000/01/rdf-schema#label,Event
+http://ontology.ontotext.com/taxonomy/Location,http://www.w3.org/2000/01/rdf-schema#label,Location
+http://ontology.ontotext.com/taxonomy/Time,http://www.w3.org/2000/01/rdf-schema#label,Time
+http://ontology.ontotext.com/taxonomy/Agent,http://www.w3.org/2000/01/rdf-schema#label,Agent
+http://ontology.ontotext.com/taxonomy/Person,http://www.w3.org/2000/01/rdf-schema#label,Person
+http://ontology.ontotext.com/taxonomy/Organization,http://www.w3.org/2000/01/rdf-schema#label,Organization
+http://ontology.ontotext.com/taxonomy/preferredLabel,http://www.w3.org/2000/01/rdf-schema#label,preferred label
+http://ontology.ontotext.com/taxonomy/alternativeLabel,http://www.w3.org/2000/01/rdf-schema#label,alternative label
+http://ontology.ontotext.com/taxonomy/picture,http://www.w3.org/2000/01/rdf-schema#label,picture
+http://ontology.ontotext.com/taxonomy/thumbnail,http://www.w3.org/2000/01/rdf-schema#label,thumbnail
+http://ontology.ontotext.com/taxonomy/description,http://www.w3.org/2000/01/rdf-schema#label,description
+http://ontology.ontotext.com/taxonomy/exactMatch,http://www.w3.org/2000/01/rdf-schema#label,exact match
+http://ontology.ontotext.com/taxonomy/generated,http://www.w3.org/2000/01/rdf-schema#label,Generated
+http://ontology.ontotext.com/taxonomy/genericProperty,http://www.w3.org/2000/01/rdf-schema#label,generic property
+http://ontology.ontotext.com/taxonomy/partOf,http://www.w3.org/2000/01/rdf-schema#label,part of
+http://ontology.ontotext.com/taxonomy/memberOf,http://www.w3.org/2000/01/rdf-schema#label,member of
+http://ontology.ontotext.com/taxonomy/hasPart,http://www.w3.org/2000/01/rdf-schema#label,has part
+http://ontology.ontotext.com/taxonomy/startTime,http://www.w3.org/2000/01/rdf-schema#label,start time
+http://ontology.ontotext.com/taxonomy/endTime,http://www.w3.org/2000/01/rdf-schema#label,end time
+http://ontology.ontotext.com/taxonomy/pointInTime,http://www.w3.org/2000/01/rdf-schema#label,point in time
+http://ontology.ontotext.com/taxonomy/replaces,http://www.w3.org/2000/01/rdf-schema#label,replaces
+http://ontology.ontotext.com/taxonomy/genre,http://www.w3.org/2000/01/rdf-schema#label,genre
+http://ontology.ontotext.com/taxonomy/replacedBy,http://www.w3.org/2000/01/rdf-schema#label,replaced by
+http://ontology.ontotext.com/taxonomy/coordinateLocation,http://www.w3.org/2000/01/rdf-schema#label,coordinate location
+http://ontology.ontotext.com/taxonomy/eventTime,http://www.w3.org/2000/01/rdf-schema#label,event time
+http://ontology.ontotext.com/taxonomy/locatedIn,http://www.w3.org/2000/01/rdf-schema#label,located in
+http://ontology.ontotext.com/taxonomy/headOfGoverment,http://www.w3.org/2000/01/rdf-schema#label,head of goverment
+http://ontology.ontotext.com/taxonomy/operatingSystem,http://www.w3.org/2000/01/rdf-schema#label,operating system
+http://ontology.ontotext.com/taxonomy/programmingLanguage,http://www.w3.org/2000/01/rdf-schema#label,programming language
+http://ontology.ontotext.com/taxonomy/author,http://www.w3.org/2000/01/rdf-schema#label,author
+http://ontology.ontotext.com/taxonomy/of,http://www.w3.org/2000/01/rdf-schema#label,of
+http://ontology.ontotext.com/taxonomy/gender,http://www.w3.org/2000/01/rdf-schema#label,gender
+http://ontology.ontotext.com/taxonomy/dateOfBirth,http://www.w3.org/2000/01/rdf-schema#label,date of birth
+http://ontology.ontotext.com/taxonomy/dateOfDeath,http://www.w3.org/2000/01/rdf-schema#label,date of death
+http://ontology.ontotext.com/taxonomy/placeOfBirth,http://www.w3.org/2000/01/rdf-schema#label,place of birth
+http://ontology.ontotext.com/taxonomy/placeOfDeath,http://www.w3.org/2000/01/rdf-schema#label,place of death
+http://ontology.ontotext.com/taxonomy/countryOfCitizenship,http://www.w3.org/2000/01/rdf-schema#label,country of citizenship
+http://ontology.ontotext.com/taxonomy/occupation,http://www.w3.org/2000/01/rdf-schema#label,occupation
+http://ontology.ontotext.com/taxonomy/almaMater,http://www.w3.org/2000/01/rdf-schema#label,alma mater
+http://ontology.ontotext.com/taxonomy/fieldOfWork,http://www.w3.org/2000/01/rdf-schema#label,field of work
+http://ontology.ontotext.com/taxonomy/positionHeld,http://www.w3.org/2000/01/rdf-schema#label,position held
+http://ontology.ontotext.com/taxonomy/religion,http://www.w3.org/2000/01/rdf-schema#label,religion
+http://ontology.ontotext.com/taxonomy/mother,http://www.w3.org/2000/01/rdf-schema#label,mother
+http://ontology.ontotext.com/taxonomy/father,http://www.w3.org/2000/01/rdf-schema#label,father
+http://ontology.ontotext.com/taxonomy/brother,http://www.w3.org/2000/01/rdf-schema#label,brother
+http://ontology.ontotext.com/taxonomy/sister,http://www.w3.org/2000/01/rdf-schema#label,sister
+http://ontology.ontotext.com/taxonomy/spouse,http://www.w3.org/2000/01/rdf-schema#label,spouse
+http://ontology.ontotext.com/taxonomy/employer,http://www.w3.org/2000/01/rdf-schema#label,employer
+http://ontology.ontotext.com/taxonomy/officialWebsite,http://www.w3.org/2000/01/rdf-schema#label,official website
+http://ontology.ontotext.com/taxonomy/positionAtTeam,http://www.w3.org/2000/01/rdf-schema#label,position at team
+http://ontology.ontotext.com/taxonomy/club,http://www.w3.org/2000/01/rdf-schema#label,club
+http://ontology.ontotext.com/taxonomy/countryForSport,http://www.w3.org/2000/01/rdf-schema#label,country for sport
+http://ontology.ontotext.com/taxonomy/notableWork,http://www.w3.org/2000/01/rdf-schema#label,notable work
+http://ontology.ontotext.com/taxonomy/instrument,http://www.w3.org/2000/01/rdf-schema#label,instrument
+http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty,http://www.w3.org/2000/01/rdf-schema#label,member of political party
+http://ontology.ontotext.com/taxonomy/nobleFamily,http://www.w3.org/2000/01/rdf-schema#label,noble family
+http://ontology.ontotext.com/taxonomy/coatOfArmsImage,http://www.w3.org/2000/01/rdf-schema#label,coat of arms image
+http://ontology.ontotext.com/taxonomy/inception,http://www.w3.org/2000/01/rdf-schema#label,inception
+http://ontology.ontotext.com/taxonomy/logoImage,http://www.w3.org/2000/01/rdf-schema#label,logo image
+http://ontology.ontotext.com/taxonomy/headquartersLocation,http://www.w3.org/2000/01/rdf-schema#label,headquarters location
+http://ontology.ontotext.com/taxonomy/industry,http://www.w3.org/2000/01/rdf-schema#label,industry
+http://ontology.ontotext.com/taxonomy/production,http://www.w3.org/2000/01/rdf-schema#label,production
+http://ontology.ontotext.com/taxonomy/founder,http://www.w3.org/2000/01/rdf-schema#label,founder
+http://ontology.ontotext.com/taxonomy/CEO,http://www.w3.org/2000/01/rdf-schema#label,CEO
+http://ontology.ontotext.com/taxonomy/chairperson,http://www.w3.org/2000/01/rdf-schema#label,chairperson
+http://ontology.ontotext.com/taxonomy/website,http://www.w3.org/2000/01/rdf-schema#label,website
+http://ontology.ontotext.com/taxonomy/affiliation,http://www.w3.org/2000/01/rdf-schema#label,affiliation
+http://ontology.ontotext.com/taxonomy/subsidiaries,http://www.w3.org/2000/01/rdf-schema#label,subsidiaries
+http://ontology.ontotext.com/taxonomy/parentCompany,http://www.w3.org/2000/01/rdf-schema#label,parent company
+http://ontology.ontotext.com/taxonomy/continent,http://www.w3.org/2000/01/rdf-schema#label,continent
+http://ontology.ontotext.com/taxonomy/country,http://www.w3.org/2000/01/rdf-schema#label,country
+http://ontology.ontotext.com/taxonomy/population,http://www.w3.org/2000/01/rdf-schema#label,population
+http://ontology.ontotext.com/taxonomy/capital,http://www.w3.org/2000/01/rdf-schema#label,capital
+http://ontology.ontotext.com/taxonomy/officialLanguage,http://www.w3.org/2000/01/rdf-schema#label,official language
+http://ontology.ontotext.com/taxonomy/headOfState,http://www.w3.org/2000/01/rdf-schema#label,head of state
+http://ontology.ontotext.com/taxonomy/capitalOf,http://www.w3.org/2000/01/rdf-schema#label,capital of
+http://ontology.ontotext.com/taxonomy/latitude,http://www.w3.org/2000/01/rdf-schema#label,latitude
+http://ontology.ontotext.com/taxonomy/longitude,http://www.w3.org/2000/01/rdf-schema#label,longitude
+http://ontology.ontotext.com/publishing,http://www.w3.org/2000/01/rdf-schema#label,Dynamic Semantic Publishing Ontology
+http://ontology.ontotext.com/publishing#Feature,http://www.w3.org/2000/01/rdf-schema#label,Feature
+http://ontology.ontotext.com/publishing#DocumentTopic,http://www.w3.org/2000/01/rdf-schema#label,Document Topic
+http://ontology.ontotext.com/publishing#Category,http://www.w3.org/2000/01/rdf-schema#label,Category
+http://ontology.ontotext.com/publishing#Mention,http://www.w3.org/2000/01/rdf-schema#label,Mention
+http://ontology.ontotext.com/publishing#TextMention,http://www.w3.org/2000/01/rdf-schema#label,Text Mention
+http://ontology.ontotext.com/publishing#EntitySource,http://www.w3.org/2000/01/rdf-schema#label,Entity Source
+http://ontology.ontotext.com/publishing#LinkedDatasetSource,http://www.w3.org/2000/01/rdf-schema#label,Linked Dataset Source
+http://ontology.ontotext.com/publishing#NamedEntityRecognitionSource,http://www.w3.org/2000/01/rdf-schema#label,Named Entity Recognition Source
+http://ontology.ontotext.com/publishing#Asset,http://www.w3.org/2000/01/rdf-schema#label,Asset
+http://ontology.ontotext.com/publishing#Image,http://www.w3.org/2000/01/rdf-schema#label,Image
+http://ontology.ontotext.com/publishing#Video,http://www.w3.org/2000/01/rdf-schema#label,Video
+http://ontology.ontotext.com/publishing#Document,http://www.w3.org/2000/01/rdf-schema#label,Document
+http://ontology.ontotext.com/publishing#PresentableDocument,http://www.w3.org/2000/01/rdf-schema#label,Presentable Asset
+http://ontology.ontotext.com/publishing#DocumentCluster,http://www.w3.org/2000/01/rdf-schema#label,Cluster of articles
+http://ontology.ontotext.com/publishing#ProfileInformation,http://www.w3.org/2000/01/rdf-schema#label,Profile Information
+http://ontology.ontotext.com/publishing#Channel,http://www.w3.org/2000/01/rdf-schema#label,Channel
+http://ontology.ontotext.com/publishing#featureName,http://www.w3.org/2000/01/rdf-schema#label,Feature name
+http://ontology.ontotext.com/publishing#featureValue,http://www.w3.org/2000/01/rdf-schema#label,Feature value
+http://ontology.ontotext.com/publishing#hasInstance,http://www.w3.org/2000/01/rdf-schema#label,The URI of the mentioned concept
+http://ontology.ontotext.com/publishing#hasClass,http://www.w3.org/2000/01/rdf-schema#label,The rdf type of the mentioned concept
+http://ontology.ontotext.com/publishing#annotationType,http://www.w3.org/2000/01/rdf-schema#label,Annotation type
+http://ontology.ontotext.com/publishing#annotationString,http://www.w3.org/2000/01/rdf-schema#label,Annotation string
+http://ontology.ontotext.com/publishing#mentionScore,http://www.w3.org/2000/01/rdf-schema#label,Mention score
+http://ontology.ontotext.com/publishing#startOffset,http://www.w3.org/2000/01/rdf-schema#label,Mention start offset
+http://ontology.ontotext.com/publishing#endOffset,http://www.w3.org/2000/01/rdf-schema#label,Mention end offset
+http://ontology.ontotext.com/publishing#title,http://www.w3.org/2000/01/rdf-schema#label,Title
+http://ontology.ontotext.com/publishing#author,http://www.w3.org/2000/01/rdf-schema#label,Author
+http://ontology.ontotext.com/publishing#source,http://www.w3.org/2000/01/rdf-schema#label,Source
+http://ontology.ontotext.com/publishing#creationDate,http://www.w3.org/2000/01/rdf-schema#label,Creation date
+http://ontology.ontotext.com/publishing#content,http://www.w3.org/2000/01/rdf-schema#label,Content
+http://ontology.ontotext.com/publishing#customFeature,http://www.w3.org/2000/01/rdf-schema#label,Custom feature
+http://ontology.ontotext.com/publishing#summary,http://www.w3.org/2000/01/rdf-schema#label,Summary
+http://ontology.ontotext.com/publishing#containsMention,http://www.w3.org/2000/01/rdf-schema#label,Contains mention
+http://ontology.ontotext.com/publishing#originalUrl,http://www.w3.org/2000/01/rdf-schema#label,Original URL
+http://ontology.ontotext.com/publishing#hasCategory,http://www.w3.org/2000/01/rdf-schema#label,Date of publishing
+http://ontology.ontotext.com/publishing#hasImage,http://www.w3.org/2000/01/rdf-schema#label,Image
+http://ontology.ontotext.com/publishing#hasVideo,http://www.w3.org/2000/01/rdf-schema#label,Video
+http://ontology.ontotext.com/publishing#hasDocument,http://www.w3.org/2000/01/rdf-schema#label,Has document
+http://ontology.ontotext.com/publishing#mostRepresentativeDocument,http://www.w3.org/2000/01/rdf-schema#label,Most representative document
+http://ontology.ontotext.com/publishing#articlesCount,http://www.w3.org/2000/01/rdf-schema#label,Articles count
+http://ontology.ontotext.com/publishing#clusterStartDate,http://www.w3.org/2000/01/rdf-schema#label,Start date of the cluster
+http://ontology.ontotext.com/publishing#clusterEndDate,http://www.w3.org/2000/01/rdf-schema#label,End date of the cluster
+http://ontology.ontotext.com/publishing#hasChannel,http://www.w3.org/2000/01/rdf-schema#label,Has channel
+http://ontology.ontotext.com/publishing#hasUser,http://www.w3.org/2000/01/rdf-schema#label,Has user
+http://ontology.ontotext.com/publishing#hasConstraint,http://www.w3.org/2000/01/rdf-schema#label,Has constraint
+http://ontology.ontotext.com/publishing#channelIndex,http://www.w3.org/2000/01/rdf-schema#label,Index
+http://ontology.ontotext.com/publishing#hasEntitySource,http://www.w3.org/2000/01/rdf-schema#label,Has entity source
+http://ontology.ontotext.com/taxonomy/Athlete,http://www.w3.org/2000/01/rdf-schema#label,Athlete
+http://ontology.ontotext.com/taxonomy/Artist,http://www.w3.org/2000/01/rdf-schema#label,Artist
+http://ontology.ontotext.com/taxonomy/Politician,http://www.w3.org/2000/01/rdf-schema#label,Politician
+http://ontology.ontotext.com/taxonomy/Monarch,http://www.w3.org/2000/01/rdf-schema#label,Monarch
+http://ontology.ontotext.com/taxonomy/Journalist,http://www.w3.org/2000/01/rdf-schema#label,Journalist
+http://ontology.ontotext.com/taxonomy/Scientist,http://www.w3.org/2000/01/rdf-schema#label,Scientist
+http://ontology.ontotext.com/taxonomy/Cleric,http://www.w3.org/2000/01/rdf-schema#label,Cleric
+http://ontology.ontotext.com/taxonomy/Economist,http://www.w3.org/2000/01/rdf-schema#label,Economist
+http://ontology.ontotext.com/taxonomy/Company,http://www.w3.org/2000/01/rdf-schema#label,Company
+http://ontology.ontotext.com/taxonomy/Band,http://www.w3.org/2000/01/rdf-schema#label,Band
+http://ontology.ontotext.com/taxonomy/EducationalInstitution,http://www.w3.org/2000/01/rdf-schema#label,Educational institution
+http://ontology.ontotext.com/taxonomy/SportsTeam,http://www.w3.org/2000/01/rdf-schema#label,Sports team
+http://ontology.ontotext.com/taxonomy/Broadcaster,http://www.w3.org/2000/01/rdf-schema#label,Broadcaster
+http://ontology.ontotext.com/taxonomy/MilitaryUnit,http://www.w3.org/2000/01/rdf-schema#label,Military unit
+http://ontology.ontotext.com/taxonomy/PoliticalParty,http://www.w3.org/2000/01/rdf-schema#label,Political party
+http://ontology.ontotext.com/taxonomy/Non-ProfitOrganization,http://www.w3.org/2000/01/rdf-schema#label,Non-profit organization
+http://ontology.ontotext.com/taxonomy/SportsLeague,http://www.w3.org/2000/01/rdf-schema#label,Sports league
+http://ontology.ontotext.com/taxonomy/TradeUnion,http://www.w3.org/2000/01/rdf-schema#label,Trade union
+http://ontology.ontotext.com/taxonomy/PopulatedPlace,http://www.w3.org/2000/01/rdf-schema#label,Populated place
+http://ontology.ontotext.com/taxonomy/Building,http://www.w3.org/2000/01/rdf-schema#label,Building
+http://ontology.ontotext.com/taxonomy/BodyOfWater,http://www.w3.org/2000/01/rdf-schema#label,Body of water
+http://ontology.ontotext.com/taxonomy/SportFacility,http://www.w3.org/2000/01/rdf-schema#label,Sport facility
+http://ontology.ontotext.com/taxonomy/Infrastructure,http://www.w3.org/2000/01/rdf-schema#label,Infrastructure
+http://ontology.ontotext.com/taxonomy/Mountain,http://www.w3.org/2000/01/rdf-schema#label,Mountain
+http://ontology.ontotext.com/taxonomy/Work,http://www.w3.org/2000/01/rdf-schema#label,Work
+http://ontology.ontotext.com/taxonomy/MeanOfTransportation,http://www.w3.org/2000/01/rdf-schema#label,Mean of transportation
+http://ontology.ontotext.com/taxonomy/Software,http://www.w3.org/2000/01/rdf-schema#label,Software
+http://ontology.ontotext.com/taxonomy/Plant,http://www.w3.org/2000/01/rdf-schema#label,Plant
+http://ontology.ontotext.com/taxonomy/Animal,http://www.w3.org/2000/01/rdf-schema#label,Animal
+http://ontology.ontotext.com/taxonomy/,http://purl.org/dc/elements/1.1/title,Ontotext Publishing Taxonomy
+http://ontology.ontotext.com/publishing,http://purl.org/dc/elements/1.1/title,Dynamic Semantic Publishing
+http://ontology.ontotext.com/taxonomy/,http://purl.org/dc/elements/1.1/subject,Ontotext Publishing Taxonomy
+http://ontology.ontotext.com/publishing,http://purl.org/dc/elements/1.1/subject,Semantic authoring and publishing
+http://ontology.ontotext.com/taxonomy/,http://purl.org/dc/elements/1.1/creator,Ontotext
+http://ontology.ontotext.com/publishing,http://purl.org/dc/elements/1.1/creator,Ontotext (Anton Atanassov)
+http://ontology.ontotext.com/taxonomy/,http://purl.org/dc/elements/1.1/rights,
+http://ontology.ontotext.com/publishing,http://purl.org/dc/elements/1.1/rights,
+http://ontology.ontotext.com/taxonomy/,http://www.w3.org/2002/07/owl#versionInfo,2.0
+http://ontology.ontotext.com/publishing,http://www.w3.org/2002/07/owl#versionInfo,0.3

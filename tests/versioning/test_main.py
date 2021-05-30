@@ -10,6 +10,7 @@ class TestVersioning(TestExecution):
         super().__init__(annotated_tests)
         self.rdf_engine = None
         self.initial_timestamp = None
+        self.initial_df = None
         self.cnt_initial_triples = None
         self.cnt_actual_triples = None
         self.query_cnt_triples = "select (count(*) as ?cnt) where {?s ?p ?o.}"
@@ -27,8 +28,8 @@ class TestVersioning(TestExecution):
         self.initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
         self.rdf_engine = TripleStoreEngine(self.test_config.get('RDFSTORE', 'get'),
                                             self.test_config.get('RDFSTORE', 'post'))
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
-        self.cnt_initial_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
+        self.initial_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
+        self.cnt_initial_triples = int(self.initial_df['cnt'].item().split(" ")[0])
         self.rdf_engine.reset_all_versions()
 
     def before_single_test(self, test_name: str):
@@ -68,15 +69,16 @@ class TestVersioning(TestExecution):
                             "consecutively must equal the initial number of triples.",
                     expected_result=str(self.cnt_initial_triples))
         # version_all_rows is executed in before_single_test
-        self.rdf_engine.reset_all_versions()
         test_query = """
                select ?s ?p ?o {
                    ?s ?p ?o .
                } 
                """
+        self.rdf_engine.reset_all_versions()
         df = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)  # dataframe
-        cnt_triples_after_versioning_and_resetting = str(len(df.index))
-        test.actual_result = cnt_triples_after_versioning_and_resetting
+        test.actual_result = str(len(df.index))
+        print(self.initial_df[~self.initial_df.isin(df)].dropna())
+
         return test
 
     def test_version__init(self):
@@ -553,10 +555,10 @@ class TestVersioning(TestExecution):
         vieTZObject = timezone(timedelta(hours=2))
         timestamp_before_insert = datetime.now(vieTZObject)
 
-        mention = "<http://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
+        mention = "<http://data.ontotext.com/publishing#newMention>"
         hasInstance = "publishing:hasInstance"
         person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
-        document = "<http://www.reuters.com/article/2014/10/10/us-usa-california-mountains-idUSKCN0HZ0U720141010>"
+        document = "<http://www.reuters.com/article/2021/01/01/newDocument>"
         containsMention = "publishing:containsMention"
 
         self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
@@ -617,7 +619,7 @@ class TestVersioning(TestExecution):
         dataset_query = open("test_data/test_get_data__query_with_union.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 10
+        dateset_rows_before_versioning = 11
         test = Test(test_number=18,
                     tc_desc='Test if a query with a "union" will yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
@@ -630,7 +632,7 @@ class TestVersioning(TestExecution):
         dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 4
+        dateset_rows_before_versioning = 5
         test = Test(test_number=19,
                     tc_desc='Test if a query with a subselect will yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
@@ -643,7 +645,7 @@ class TestVersioning(TestExecution):
         dataset_query = open("test_data/test_get_data__long_query.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 10
+        dateset_rows_before_versioning = 11
         test = Test(test_number=20,
                     tc_desc='Test if a long query can be handled and yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
