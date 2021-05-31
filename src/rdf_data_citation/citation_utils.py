@@ -2,8 +2,8 @@ import logging
 
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
-from src.rdf_data_citation.exceptions import NoDataSetError, \
-    MultipleSortIndexesError, NoUniqueSortIndexError, NoQueryString, ExpressionNotCoveredException, InputMissing
+from src.rdf_data_citation.exceptions import MultipleSortIndexesError, NoUniqueSortIndexError, \
+    ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Variable, Identifier, URIRef
 from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne, \
@@ -656,7 +656,7 @@ class QueryUtils:
                 prefixes = self.sparql_prefixes
                 query = self.query
             else:
-                raise NoQueryString("Query could not be normalized because the query string was not set.")
+                raise InputMissing("Query could not be normalized because the query string was not set.")
         else:
             prefixes, query = split_prefixes_query(query)
         q_algebra = _query_algebra(query, prefixes)
@@ -919,7 +919,7 @@ class QueryUtils:
                 prefixes = self.sparql_prefixes
                 query = self.query
             else:
-                raise NoQueryString("Query could not be normalized because the query string is not set.")
+                raise InputMissing("Query could not be normalized because the query string is not set.")
         else:
             prefixes, query = split_prefixes_query(query)
         query_vers = prefixes + "\n" + query
@@ -953,23 +953,23 @@ class QueryUtils:
             raise ExpressionNotCoveredException(err)
 
         query_vers_out = _translate_algebra(query_algebra)
-
         for bgp_identifier, triples in bgp_triples.items():
             ver_block_template = \
                 open(template_path("templates/query_utils/versioning_query_extensions.txt"), "r").read()
 
             ver_block = ""
             for i, triple in enumerate(triples):
-                v = ver_block_template
+                templ = ver_block_template
                 triple_n3 = triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3()
-                ver_block += v.format(triple_n3,
-                                      "?triple_statement_{0}_valid_from".format(str(i)),
-                                      "?triple_statement_{0}_valid_until".format(str(i)))
+                ver_block += templ.format(triple_n3,
+                                          "?triple_statement_{0}_valid_from".format(str(i)),
+                                          "?triple_statement_{0}_valid_until".format(str(i)),
+                                          bgp_identifier)
 
             dummy_triple = rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)).n3() + " "\
                            + rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)).n3() + " "\
                            + rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier)).n3() + "."
-            ver_block += 'bind("' + timestamp + '"^^xsd:dateTime as ?TimeOfCiting)'
+            ver_block += 'bind("{0}"^^xsd:dateTime as ?TimeOfCiting{1})'.format(timestamp, bgp_identifier)
             query_vers_out = query_vers_out.replace(dummy_triple, ver_block)
 
         query_vers_out = citation_prefixes("") + "\n" + query_vers_out
@@ -1129,7 +1129,7 @@ class RDFDataSetUtils:
         :return: A list of suggested indexes to use for sorting the dataset.
         """
         if self.dataset is None:
-            raise NoDataSetError("No dataset was provided. This function needs self.dataset as an input")
+            raise InputMissing("No dataset was provided. This function needs self.dataset as an input")
 
         # TODO: Think about whether the order of columns should yield a different permutation of key attributes
         #  within composite keys, thus, meaning a different sorting or not.

@@ -1,3 +1,4 @@
+from src.rdf_data_citation.exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct
@@ -77,7 +78,7 @@ class TestCitation(TestExecution):
         print("Executing after_tests ...")
         self.rdf_engine.reset_all_versions()
 
-    def x_test_citation__empty_dataset(self):
+    def test_citation__empty_dataset(self):
         citation = self.citation
         self.citation_metadata.title = "Obama occurrences as Republican"
 
@@ -102,7 +103,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__non_empty_dataset(self):
+    def test_citation__non_empty_dataset(self):
         citation = self.citation
         self.citation_metadata.title = "Obama occurrences"
 
@@ -130,7 +131,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__changed_dataset(self):
+    def test_citation__changed_dataset(self):
         citation1 = self.citation
         citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
@@ -190,7 +191,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__recite_unchanged_dataset(self):
+    def test_citation__recite_unchanged_dataset(self):
         citation1 = self.citation
         citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
@@ -231,7 +232,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__recite_semantically_identical(self):
+    def test_citation__recite_semantically_identical(self):
         citation1 = self.citation
         citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
@@ -264,25 +265,73 @@ class TestCitation(TestExecution):
 
         expected_result = citation_snippet1 + "\n" + citation_snippet1
         test = Test(test_number=5,
-                    tc_desc='',
+                    tc_desc='Test if citing a query which is semantically equivalent to an existing query in the '
+                            'query store will return the existing citation snippet. The test needs to pass only '
+                            'for covered normalization measures where two queries would be transformed to the same '
+                            'normal query and thus recognized as semantically identical.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_citation__cite_non_unique_sort(self):
+    def x_test_citation__non_unique_sort(self):
+        # Actual results
+        citation = self.citation
+
         test = Test(test_number=6,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
+                    tc_desc='Test if a query with a non-unique order by clause written by the user will throw a '
+                            'NoUniqueSortIndexError exception.',
+                    expected_result='The "order by"-clause in your query does not yield a uniquely sorted dataset. '
+                                    'Please provide a primary key or another unique sort index',
+                    actual_result="No exception thrown")
+        try:
+            citation.cite(select_statement=self.select_statement,
+                          citation_metadata=self.citation_metadata,
+                          citation_timestamp=self.citation_timestamp)
+        except NoUniqueSortIndexError as e:
+            test.actual_result = str(e)
 
         return test
 
-    def test_citation__sort_by_not_select_variable(self):
+    def x_test_citation__sort_var_not_in_select(self):
+        # Actual results
+        citation = self.citation
+
         test = Test(test_number=7,
-                    tc_desc='',
-                    expected_result='',
-                    actual_result='')
+                    tc_desc='Test if a query that contains a variable in the order by clause which is not in the '
+                            'select clause throws a SortVariablesNotInSelectError exception.',
+                    expected_result="There are variables in the order by clause that are not listed "
+                                    "in the select clause. While this is syntactically correct "
+                                    "a unique sort index should only contain variables from the "
+                                    "select clause or dataset columns respectively.",
+                    actual_result="No exception thrown")
+
+        try:
+            citation.cite(select_statement=self.select_statement,
+                          citation_metadata=self.citation_metadata,
+                          citation_timestamp=self.citation_timestamp)
+        except SortVariablesNotInSelectError as e:
+            test.actual_result = str(e)
+
+        return test
+
+    def x_test_citation__missing_order_by(self):
+        # Actual results
+        citation = self.citation
+
+        test = Test(test_number=8,
+                    tc_desc='Test if a query that does not have an "order by" clause throws '
+                            'a MissingSortVariables exception.',
+                    expected_result="There is no order by clause. Please provide an order by clause with "
+                                    "variables that yield a unique sort.",
+                    actual_result="No exception thrown")
+
+        try:
+            citation.cite(select_statement=self.select_statement,
+                          citation_metadata=self.citation_metadata,
+                          citation_timestamp=self.citation_timestamp)
+        except MissingSortVariables as e:
+            test.actual_result = str(e)
 
         return test
 
@@ -338,7 +387,7 @@ class TestCitation(TestExecution):
         self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
         self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
 
-        test = Test(test_number=8,
+        test = Test(test_number=9,
                     tc_desc='Test if a query that uses aggregation functions yields the right result before '
                             'and after an insert.',
                     expected_result=expected_result,

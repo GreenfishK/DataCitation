@@ -11,6 +11,7 @@ class TestVersioning(TestExecution):
         self.rdf_engine = None
         self.initial_timestamp = None
         self.initial_df = None
+        self.df_test_query = None
         self.cnt_initial_triples = None
         self.cnt_actual_triples = None
         self.query_cnt_triples = "select (count(*) as ?cnt) where {?s ?p ?o.}"
@@ -39,9 +40,14 @@ class TestVersioning(TestExecution):
         """
 
         print("Executing before_single_tests ...")
+        try:
+            test_query = open("test_data/{0}.txt".format(test_name), "r").read()
+            self.df_test_query = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
+        except FileNotFoundError as e:
+            print("Prepared query does not exist for test {0}".format(test_name))
 
-        cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
-        self.cnt_actual_triples = int(cnt_triples_df['cnt'].item().split(" ")[0])
+        df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
+        self.cnt_actual_triples = int(df['cnt'].item().split(" ")[0])
         self.rdf_engine.version_all_rows(self.initial_timestamp)
 
     def after_single_test(self):
@@ -619,11 +625,10 @@ class TestVersioning(TestExecution):
         dataset_query = open("test_data/test_get_data__query_with_union.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 11
         test = Test(test_number=18,
                     tc_desc='Test if a query with a "union" will yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
-                    expected_result=str(dateset_rows_before_versioning),
+                    expected_result=str(len(self.df_test_query.index)),
                     actual_result=str(len(df.index)))
 
         return test
@@ -632,11 +637,10 @@ class TestVersioning(TestExecution):
         dataset_query = open("test_data/test_get_data__nested_select.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 5
         test = Test(test_number=19,
                     tc_desc='Test if a query with a subselect will yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
-                    expected_result=str(dateset_rows_before_versioning),
+                    expected_result=str(len(self.df_test_query.index)),
                     actual_result=str(len(df.index)))
 
         return test
@@ -645,11 +649,22 @@ class TestVersioning(TestExecution):
         dataset_query = open("test_data/test_get_data__long_query.txt", "r").read()
         df = self.rdf_engine.get_data(dataset_query)
         # The number of rows can be different if another test dataset is used!
-        dateset_rows_before_versioning = 11
         test = Test(test_number=20,
                     tc_desc='Test if a long query can be handled and yield correct results after it has been '
                             'extended with versioning extensions and executed to retrieve live data.',
-                    expected_result=str(dateset_rows_before_versioning),
+                    expected_result=str(len(self.df_test_query.index)),
+                    actual_result=str(len(df.index)))
+
+        return test
+
+    def test_get_data__union_between_triple_stmts(self):
+        dataset_query = open("test_data/test_get_data__union_between_triple_stmts.txt", "r").read()
+        df = self.rdf_engine.get_data(dataset_query)
+        test = Test(test_number=21,
+                    tc_desc='Test if a query with a union in between triple statements can be handled '
+                            'and yield correct results after it has been extended with versioning extensions '
+                            'and executed to retrieve live data.',
+                    expected_result=str(len(self.df_test_query.index)),
                     actual_result=str(len(df.index)))
 
         return test

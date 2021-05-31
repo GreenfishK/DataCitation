@@ -29,7 +29,7 @@ class QueryStore:
                 # Order is important due to referential integrity
                 connection.execute(delete_query_citation, query_checksum=query_checksum)
                 connection.execute(delete_query, query_checksum=query_checksum)
-                print("QueryData with checksum {0} removed from query store".format(query_checksum))
+                logging.info("QueryData with checksum {0} removed from query store".format(query_checksum))
 
             except Exception as e:
                 logging.error(e)

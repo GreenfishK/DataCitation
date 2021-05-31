@@ -76,6 +76,7 @@ class Citation:
 
         logging.info("Citing... ")
         query_store = QueryStore()
+        logging.debug("hier1")
 
         # Assign citation timestamp to query object
         current_datetime = datetime.now()
@@ -88,6 +89,7 @@ class Citation:
             query_to_cite = QueryUtils(select_statement, citation_timestamp)
         except ExpressionNotCoveredException as e:
             raise ExpressionNotCoveredException(e)
+        logging.debug("hier2")
 
         # Execute query
         result_set = self.sparqlapi.get_data(select_statement, citation_timestamp)
@@ -96,29 +98,34 @@ class Citation:
         if len(query_to_cite.order_by_variables) > 1:
             logging.warning("Multiple order by clauses were found. The first one found will be considered. "
                             "In most cases this should be the outer most clause.")
-        order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables[0]]
-        if not order_by_variables:
+        try:
+            order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables[0]]
+        except KeyError:
             raise MissingSortVariables("There is no order by clause. Please provide an order by clause with "
                                        "variables that yield a unique sort.")
+        logging.debug("hier3")
         try:
             yn_unique_sort_index = result_set.set_index(order_by_variables).index.is_unique
         except KeyError:
             raise SortVariablesNotInSelectError("There are variables in the order by clause that are not listed "
                                                 "in the select clause. While this is syntactically correct "
                                                 "a unique sort index should only contain variables from the "
-                                                "select clause, thus, from the dataset.")
+                                                "select clause or dataset columns respectively.")
+        logging.debug("hier4")
 
         if not yn_unique_sort_index:
             raise NoUniqueSortIndexError('The "order by"-clause in your query does not yield a uniquely sorted '
                                          'dataset. Please provide a primary key or another unique sort index')
         else:
             self.yn_unique_sort_index = True
+        logging.debug("hier5")
 
         # Sort result set
         rdf_ds = RDFDataSetUtils(dataset=result_set)
         # # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
         rdf_ds.description = rdf_ds.describe(result_set_description)
+        logging.debug("hier6")
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()
@@ -126,6 +133,7 @@ class Citation:
         # Lookup query by checksum
         existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
             = query_store.lookup(query_to_cite.checksum)
+        logging.debug("hier7")
 
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
             logging.info("Query was found in query store.")
@@ -139,6 +147,7 @@ class Citation:
                 return self
             else:
                 self.yn_result_set_changed = True
+        logging.debug("hier8")
 
         # Store new query data
         logging.info("A new query citation will be made.")
@@ -148,12 +157,14 @@ class Citation:
         citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_metadata)
         self.citation_metadata = copy(citation_metadata)
         self.citation_metadata.citation_snippet = citation_snippet
+        logging.debug("hier9")
 
         if self.yn_query_exists:
             if self.yn_result_set_changed:
                 query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=False)
         else:
             query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
+        logging.debug("hier10")
 
         return self
 
