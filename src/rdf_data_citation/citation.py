@@ -1,3 +1,5 @@
+import logging
+
 from src.rdf_data_citation.query_store import QueryStore
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from src.rdf_data_citation.citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
@@ -90,7 +92,10 @@ class Citation:
         result_set = self.sparqlapi.get_data(select_statement, citation_timestamp)
 
         # Validate order by clause
-        order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables]
+        if len(query_to_cite.order_by_variables) > 1:
+            print("Multiple order by clauses were found. The first one found will be considered. In most cases this"
+                  "should be the outer most clause.")
+        order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables[0]]
         if not order_by_variables:
             raise MissingSortVariables("There is no order by clause. Please provide an order by clause with "
                                        "variables that yield a unique sort.")
@@ -122,13 +127,14 @@ class Citation:
             = query_store.lookup(query_to_cite.checksum)
 
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
+            logging.info("Query was found in query store.")
             self.yn_query_exists = True
             if rdf_ds.checksum == existing_query_rdf_ds_data.checksum:
                 self.query_utils = existing_query_data
                 self.result_set_utils = existing_query_rdf_ds_data
                 self.citation_metadata = existing_query_citation_data
-                print("Query already exists and the result set has not changed since the last execution. "
-                      "The existing citation snippet will be returned.")
+                logging.info("The result set has not changed since the last execution. "
+                             "The existing citation snippet will be returned.")
                 return self
             else:
                 self.yn_result_set_changed = True

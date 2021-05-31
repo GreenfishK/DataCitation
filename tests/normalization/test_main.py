@@ -35,13 +35,13 @@ class TestNormalization(TestExecution):
         logging.info("Query1:")
         query_alt1 = open("test_data/{0}_alt1.txt".format(test_name), "r").read()
         self.query_data_alt1 = QueryUtils(query=query_alt1)
-        logging.debug(self.query_data_alt1.normalized_query)
-        logging.debug(self.query_data_alt1.normalized_query_algebra.algebra)
+        logging.debug(self.query_data_alt1.normal_query)
+        logging.debug(self.query_data_alt1.normal_query_algebra.algebra)
         logging.info("Query2:")
         query_alt2 = open("test_data/{0}_alt2.txt".format(test_name), "r").read()
         self.query_data_alt2 = QueryUtils(query=query_alt2)
-        logging.debug(self.query_data_alt2.normalized_query)
-        logging.debug(self.query_data_alt2.normalized_query_algebra.algebra)
+        logging.debug(self.query_data_alt2.normal_query)
+        logging.debug(self.query_data_alt2.normal_query_algebra.algebra)
 
     def test_normalization__optional_where_clause(self):
         test = Test(test_number=1,

@@ -141,17 +141,19 @@ class TestCitation(TestExecution):
                        citation_metadata=self.citation_metadata,
                        citation_timestamp=self.citation_timestamp)
 
+
+
+
         # Insert two new triple
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
-        mention = "<hhttp://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
+        mention = "<http://data.ontotext.com/publishing#newMention>"
         hasInstance = "publishing:hasInstance"
         person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
         self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
 
-        document = "<http://www.reuters.com/article/2014/10/10/us-usa-california-mountains-idUSKCN0HZ0U720141010>"
+        document = "<http://www.reuters.com/article/2021/01/01/newDocument>"
         containsMention = "publishing:containsMention"
-        mention = "<hhttp://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"
         self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
 
         # Citation2
@@ -163,7 +165,7 @@ class TestCitation(TestExecution):
 
         # Concat Citation1 + Citation2 into actual results
         actual_result = citation1.citation_metadata.citation_snippet \
-                          + "\n" + citation2.citation_metadata.citation_snippet
+                        + "\n" + citation2.citation_metadata.citation_snippet
 
         self.citation = citation1
 
@@ -289,7 +291,7 @@ class TestCitation(TestExecution):
 
     def test_citation__aggregated_dataset(self):
         test = Test(test_number=8,
-                    tc_desc='Test if a query that uses aggregate functions like count yields the right result before '
+                    tc_desc='Test if a query that uses aggregation functions yields the right result before '
                             'and after an insert.',
                     expected_result='',
                     actual_result='')

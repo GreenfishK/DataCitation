@@ -1,3 +1,5 @@
+import logging
+
 from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, MetaData
 from src.rdf_data_citation._helper import template_path
 from src.rdf_data_citation.exceptions import QueryExistsError
@@ -49,6 +51,7 @@ class QueryStore:
         :param query_checksum:
         :return:
         """
+
         select_statement = open("{0}/lookup_select.sql".format(self.path_to_persistence), "r").read()
         with self.engine.connect() as connection:
             try:
@@ -59,12 +62,11 @@ class QueryStore:
                     return [None, None, None]
 
                 df.columns = result.keys()
-
                 query_data = QueryUtils()
                 query_data.checksum = df.query_checksum.loc[0]
                 query_data.pid = df.query_pid.loc[0]
-                query_data.normalized_query_algebra = df.normal_query_algebra.loc[0]
-                query_data.normalized_query_algebra = df.normal_query.loc[0]
+                query_data.normal_query_algebra = df.normal_query_algebra.loc[0]
+                query_data.normal_query_algebra = df.normal_query.loc[0]
                 query_data.sparql_prefixes = df.query_prefixes.loc[0]
                 query_data.citation_timestamp = df.citation_timestamp.loc[0]
 
@@ -122,8 +124,8 @@ class QueryStore:
                                        query_checksum=query_data.checksum,
                                        orig_query=query_data.query,
                                        query_prefixes=query_data.sparql_prefixes,
-                                       normal_query_algebra=str(query_data.normalized_query_algebra.algebra),
-                                       normal_query=query_data.normalized_query)
+                                       normal_query_algebra=str(query_data.normal_query_algebra.algebra),
+                                       normal_query=query_data.normal_query)
                     print("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
                                                                                   query_data.pid))
                 except exc.IntegrityError:

@@ -62,7 +62,7 @@ def _pprint_query(query: str):
             f = print(e, end='')
 
 
-def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') -> list:
+def _order_by_variables(query: str, prefixes: str) -> dict:
     """
     The query must be a valid query including prefixes.
     The query algebra is searched for "PV". There can be more than one PV-Nodes containing the select-clause
@@ -74,57 +74,25 @@ def _query_variables(query: str, prefixes: str, variable_set_type: str = 'bgp') 
     """
 
     query_algebra = _query_algebra(query, prefixes)
-    variables = []
+    order_by_variables = {}
 
-    if variable_set_type == 'bgp':
-        bgp_triples = {}
+    def retrieve_order_by_variables(node):
+        if isinstance(node, CompValue) and node.name == 'OrderBy':
+            order_by_conditions = node.get('expr')
+            order_by_vars = []
+            for order_condition in order_by_conditions:
+                variable = order_condition['expr']
+                if isinstance(variable, Variable):
+                    order_by_vars.append(variable)
+                else:
+                    raise ExpressionNotCoveredException("Please provide only variables in the sort by clause.")
+            order_by_variables[len(order_by_variables)] = order_by_vars
+            return order_by_variables
 
-        def retrieve_bgp_variables(node):
-            if isinstance(node, CompValue) and node.name == 'BGP':
-                bgp_triples[node.name + str(len(bgp_triples))] = node.get('triples')
-                return node
-            else:
-                return None
+    # Traverses the query tree and extracts the variables into a list 'variables' that is defined above.
+    algebra.traverse(query_algebra.algebra, retrieve_order_by_variables)
 
-        algebra.traverse(query_algebra.algebra, retrieve_bgp_variables)
-
-        for bgp_index, triple_list in bgp_triples.items():
-            for triple in triple_list:
-                if isinstance(triple[0], Variable):
-                    variables.append(triple[0])
-                if isinstance(triple[1], Variable):
-                    variables.append(triple[1])
-                if isinstance(triple[2], Variable):
-                    variables.append(triple[2])
-        variables = list(dict.fromkeys(variables))
-
-    elif variable_set_type == 'select':
-        def retrieve_select_variables(node):
-            if isinstance(node, CompValue) and node.name == 'SelectQuery':
-                variables.extend(node.get('PV'))
-                return node.get('PV')
-            else:
-                del node
-
-        algebra.traverse(query_algebra.algebra, retrieve_select_variables)
-
-    elif variable_set_type == 'order_by':
-        def retrieve_order_by_variables(node):
-            if isinstance(node, CompValue) and node.name == 'OrderBy':
-                order_by_conditions = node.get('expr')
-                order_by_variables = []
-                for order_condition in order_by_conditions:
-                    variable = order_condition['expr']
-                    order_by_variables.append(variable)
-                    variables.append(variable)
-                return order_by_variables
-            else:
-                del node
-
-        # Traverses the query tree and extracts the variables into a list 'variables' that is defined above.
-        algebra.traverse(query_algebra.algebra, retrieve_order_by_variables)
-
-    return variables
+    return order_by_variables
 
 
 def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None):
@@ -639,11 +607,12 @@ class QueryUtils:
 
         if query is not None:
             self.sparql_prefixes, self.query = split_prefixes_query(query)
-            self.normalized_query_algebra = self.normalize_query_tree()
+            self.normal_query_algebra = self.normalize_query_tree()
             try:
-                self.normalized_query = _translate_algebra(self.normalized_query_algebra)
+                self.normal_query = _translate_algebra(self.normal_query_algebra)
+                self.order_by_variables = _order_by_variables(self.query, self.sparql_prefixes)
             except ExpressionNotCoveredException as e:
-                print("The query will not be normalized due to an uncovered expression", e)
+                print(e)
             self.checksum = self.compute_checksum()
 
             if citation_timestamp is not None:
@@ -658,7 +627,7 @@ class QueryUtils:
             self.pid = self.generate_query_pid()
         else:
             self.query = None
-            self.normalized_query_algebra = None
+            self.normal_query_algebra = None
             self.checksum = None
 
     def normalize_query_tree(self, query: str = None) -> rdflib.plugins.sparql.algebra.Query:
@@ -1006,11 +975,11 @@ class QueryUtils:
 
         checksum = hashlib.sha256()
         if string is None:
-            if self.normalized_query is not None:
-                checksum.update(str.encode(self.normalized_query))
+            if self.normal_query is not None:
+                checksum.update(str.encode(self.normal_query))
                 return checksum.hexdigest()
-            elif self.normalized_query_algebra is not None:
-                checksum.update(str.encode(self.normalized_query_algebra.algebra))
+            elif self.normal_query_algebra is not None:
+                checksum.update(str.encode(self.normal_query_algebra.algebra))
                 return checksum.hexdigest()
             else:
                 raise InputMissing("Checksum could not be computed because the normalized "
