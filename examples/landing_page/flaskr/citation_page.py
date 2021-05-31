@@ -1,6 +1,8 @@
+import logging
+
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
-from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError
+from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError, ExpressionNotCoveredException
 from src.rdf_data_citation.citation_utils import MetaData
 from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
@@ -38,7 +40,7 @@ def execute_query():
     refreshing the page (AJAX request)
     :return:
     """
-    print("Execute Query")
+    logging.info("Execute Query")
 
     # set up endpoints
     rdf_engine = rdfs.TripleStoreEngine(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
@@ -52,12 +54,18 @@ def execute_query():
             config.write(configfile)
 
     # Query the latest version of data (as of now)
-    result_set = rdf_engine.get_data(request.form['query_text'])  # dataframe
-
-    number_of_rows = len(result_set.index)
-    html_response = render_template('datacenter_sample_page_1/citation_page.html',
-                                    dataframe=result_set.to_html(header='true'),
-                                    number_of_rows=number_of_rows)
+    try:
+        result_set = rdf_engine.get_data(request.form['query_text'])  # dataframe
+        number_of_rows = len(result_set.index)
+        html_response = render_template('datacenter_sample_page_1/citation_page.html',
+                                        dataframe=result_set.to_html(header='true'),
+                                        number_of_rows=number_of_rows)
+    except ExpressionNotCoveredException as e:
+        message = Markup("{0}".format(e))
+        flash(message)
+        html_response = render_template('datacenter_sample_page_1/citation_page.html',
+                                        dataframe='',
+                                        number_of_rows='?')
     return html_response
 
 
@@ -67,11 +75,11 @@ def cite_query():
     Cites the query and returns the citation snippet
     :return:
     """
-    print("Cite query")
+    logging.info("Cite query")
 
     citation = Citation(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
     query_text = request.form['query_text']
-    print(query_text, citation_metadata, result_set_description)
+    logging.info(query_text, citation_metadata, result_set_description)
     try:
         citation_data = citation.cite(query_text, citation_metadata=citation_metadata,
                                       result_set_description=result_set_description)
@@ -85,7 +93,7 @@ def cite_query():
                                         yn_unique_sort_index=citation_data.yn_unique_sort_index)
         return html_response
 
-    except (NoUniqueSortIndexError, MissingSortVariables) as e:
+    except (NoUniqueSortIndexError, MissingSortVariables, ExpressionNotCoveredException) as e:
         message = Markup("{0}".format(e))
         flash(message)
         html_response = render_template('datacenter_sample_page_1/citation_page.html',

@@ -5,7 +5,8 @@ from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from src.rdf_data_citation.citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
 from src.rdf_data_citation.citation_utils import NoUniqueSortIndexError
 from src.rdf_data_citation._helper import citation_timestamp_format
-from src.rdf_data_citation.exceptions import MissingSortVariables, SortVariablesNotInSelectError
+from src.rdf_data_citation.exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
+    ExpressionNotCoveredException
 from copy import copy
 import datetime
 from datetime import datetime, timedelta, timezone
@@ -73,7 +74,7 @@ class Citation:
         :return:
         """
 
-        print("Citing... ")
+        logging.info("Citing... ")
         query_store = QueryStore()
 
         # Assign citation timestamp to query object
@@ -83,18 +84,18 @@ class Citation:
         execution_timestamp = citation_timestamp_format(execution_datetime)
         self.execution_timestamp = execution_timestamp
 
-        if not citation_timestamp:
-            query_to_cite = QueryUtils(select_statement)
-        else:
+        try:
             query_to_cite = QueryUtils(select_statement, citation_timestamp)
+        except ExpressionNotCoveredException as e:
+            raise ExpressionNotCoveredException(e)
 
         # Execute query
         result_set = self.sparqlapi.get_data(select_statement, citation_timestamp)
 
         # Validate order by clause
         if len(query_to_cite.order_by_variables) > 1:
-            print("Multiple order by clauses were found. The first one found will be considered. In most cases this"
-                  "should be the outer most clause.")
+            logging.warning("Multiple order by clauses were found. The first one found will be considered. "
+                            "In most cases this should be the outer most clause.")
         order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables[0]]
         if not order_by_variables:
             raise MissingSortVariables("There is no order by clause. Please provide an order by clause with "
@@ -140,6 +141,7 @@ class Citation:
                 self.yn_result_set_changed = True
 
         # Store new query data
+        logging.info("A new query citation will be made.")
         self.query_utils = query_to_cite
         self.result_set_utils = rdf_ds
         # TODO: assign identifier in citation_metadata.identifier
@@ -155,5 +157,4 @@ class Citation:
 
         return self
 
-        # TODO: embed query timestamp (max valid_from of dataset). No idea what it means
 

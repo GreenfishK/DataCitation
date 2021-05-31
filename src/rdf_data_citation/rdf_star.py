@@ -149,8 +149,8 @@ class TripleStoreEngine:
             raise RDFStarNotSupported("Your RDF store might not support the 'star' extension. "
                                       "Make sure that it is a RDF* store.")
 
-        print("Connection to RDF query and update endpoints "
-              "{0} and {1} established".format(query_endpoint, update_endpoint))
+        logging.info("Connection to RDF query and update endpoints "
+                     "{0} and {1} established".format(query_endpoint, update_endpoint))
 
     def reset_all_versions(self):
         """
@@ -164,7 +164,7 @@ class TripleStoreEngine:
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
 
-        print("All annotations have been removed.")
+        logging.info("All annotations have been removed.")
 
     def version_all_rows(self, initial_timestamp: datetime = None,
                          versioning_mode: VersioningMode = VersioningMode.SAVE_MEM):
@@ -213,7 +213,7 @@ class TripleStoreEngine:
         self.sparql_post.setQuery(update_statement)
         self.sparql_post.query()
 
-        print(message)
+        logging.info(message)
 
     def get_data(self, select_statement, timestamp: datetime = None, yn_timestamp_query: bool = True) -> pd.DataFrame:
         """
@@ -294,7 +294,7 @@ class TripleStoreEngine:
         self.sparql_post.setQuery(update_statement)
         result = self.sparql_post.query()
 
-        print("{0} rows updated".format(result))
+        logging.info("{0} rows updated".format(result))
 
     def insert_triple(self, triple, prefixes: dict):
         """
@@ -328,7 +328,7 @@ class TripleStoreEngine:
         statement = statement.format(sparql_prefixes, s, p, o)
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
-        print("Triple {0} successfully inserted: ".format(triple))
+        logging.info("Triple {0} successfully inserted: ".format(triple))
 
         return result
 
@@ -366,7 +366,7 @@ class TripleStoreEngine:
         self.sparql_post.setQuery(statement)
         result = self.sparql_post.query()
 
-        print("{0} rows outdated".format(result))
+        logging.info("{0} rows outdated".format(result))
 
     def _delete_triples(self, triple, prefixes):
         """

@@ -141,9 +141,6 @@ class TestCitation(TestExecution):
                        citation_metadata=self.citation_metadata,
                        citation_timestamp=self.citation_timestamp)
 
-
-
-
         # Insert two new triple
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
@@ -289,12 +286,63 @@ class TestCitation(TestExecution):
 
         return test
 
-    def test_citation__aggregated_dataset(self):
+    def x_test_citation__aggregated_dataset(self):
+        citation1 = self.citation
+        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+        self.citation_metadata.title = "Count Obama mentions with Democratic party."
+
+        # Actual results
+        # Citation1
+        citation1.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=self.citation_timestamp)
+
+        # Insert two new triple
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        mention = "<http://data.ontotext.com/publishing#newMention>"
+        hasInstance = "publishing:hasInstance"
+        person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
+        self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
+
+        document = "<http://www.reuters.com/article/2021/01/01/newDocument>"
+        containsMention = "publishing:containsMention"
+        self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
+
+        # Citation2
+        vie_tz = timezone(timedelta(hours=2))
+        citation_timestamp2 = datetime.now(vie_tz)
+        citation2.cite(select_statement=self.select_statement,
+                       citation_metadata=self.citation_metadata,
+                       citation_timestamp=citation_timestamp2)
+
+        # Concat Citation1 + Citation2 into actual results
+        actual_result = citation1.citation_metadata.citation_snippet \
+                        + "\n" + citation2.citation_metadata.citation_snippet
+
+        self.citation = citation1
+
+        # Expected results
+        # Citation1
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
+                                                      citation_data=self.citation_metadata)
+        # Citation2
+        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
+        citation_snippet2 = generate_citation_snippet(query_pid=query_utils.pid,
+                                                      citation_data=self.citation_metadata)
+
+        expected_result = citation_snippet1 + "\n" + citation_snippet2
+
+        # Clean up
+        self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
+        self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+
         test = Test(test_number=8,
                     tc_desc='Test if a query that uses aggregation functions yields the right result before '
                             'and after an insert.',
-                    expected_result='',
-                    actual_result='')
+                    expected_result=expected_result,
+                    actual_result=actual_result)
 
         return test
 

@@ -32,7 +32,7 @@ class QueryStore:
                 print("QueryData with checksum {0} removed from query store".format(query_checksum))
 
             except Exception as e:
-                print(e)
+                logging.error(e)
 
     def retrieve(self, query_pid: str):
         """
@@ -80,12 +80,12 @@ class QueryStore:
                 meta_data.set_metadata(df.citation_data.loc[0])
                 meta_data.citation_snippet = df.citation_snippet.loc[0]
 
-                print("New query checksum: {0}; Existing query checksum: {1}".format(
+                logging.info("New query checksum: {0}; Existing query checksum: {1}".format(
                     query_checksum, df.query_checksum.loc[0]))
 
                 return [query_data, result_set_data, meta_data]
             except Exception as e:
-                print(e)
+                logging.error(e)
 
     def store(self, query_data: QueryUtils, rs_data: RDFDataSetUtils, meta_data: MetaData, yn_new_query=True):
         """
@@ -126,14 +126,13 @@ class QueryStore:
                                        query_prefixes=query_data.sparql_prefixes,
                                        normal_query_algebra=str(query_data.normal_query_algebra.algebra),
                                        normal_query=query_data.normal_query)
-                    print("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
-                                                                                  query_data.pid))
+                    logging.info("New query with checksum {0} and PID {1} stored".format(query_data.checksum,
+                                                                                         query_data.pid))
                 except exc.IntegrityError:
                     raise QueryExistsError("A query is trying to be inserted that exists already. "
                                            "The checksum of the executed query "
                                            "is found within the query_hub table: {0}".format(query_data.checksum))
             try:
-                print(rs_data.sort_order)
                 connection.execute(insert_statement_2,
                                    query_pid=query_data.pid,
                                    query_checksum=query_data.checksum,
@@ -144,8 +143,8 @@ class QueryStore:
                                    citation_snippet=meta_data.citation_snippet,
                                    citation_timestamp=query_data.citation_timestamp)
                 if not yn_new_query:
-                    print("A new citation has been added to the existing query with checksum {0} ."
-                          "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
+                    logging.info("A new citation has been added to the existing query with checksum {0} ."
+                                 "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
             except exc.IntegrityError:
                 raise QueryExistsError("A query is trying to be inserted that already exists. The query PID {0} "
@@ -155,4 +154,4 @@ class QueryStore:
             try:
                 connection.execute(update_statement, query_checksum=query_data.checksum)
             except Exception:
-                print("Could not update the last citation PID in query_hub.last_citation_pid")
+                logging.error("Could not update the last citation PID in query_hub.last_citation_pid")

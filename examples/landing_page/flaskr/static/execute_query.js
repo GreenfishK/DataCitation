@@ -14,6 +14,10 @@ $(function execute_query() {
                 $("#result_set").html(res); // write to html template
                 var number_of_rows = $('#number_of_rows', response)
                 $("#number_of_rows").html(number_of_rows); // write to html template
+
+                $('.flashes', response).dialog({
+                    dialogClass: 'flashes'
+                })
             }
 
         });

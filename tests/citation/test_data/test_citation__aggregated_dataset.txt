@@ -1,0 +1,14 @@
+PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
+PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+
+select ?party_label ?personLabel (count(?mention) as ?cnt_mentions) where {
+    ?mention publishing:hasInstance ?person .
+    ?document publishing:containsMention ?mention .
+    ?person pub:memberOfPoliticalParty ?party .
+    ?person pub:preferredLabel ?personLabel .
+    ?party pub:hasValue ?value .
+    ?value pub:preferredLabel ?party_label .
+
+    filter(?personLabel = "Barack Obama"@en)
+} group by ?party_label ?personLabel
+order by ?party_label ?personLabel

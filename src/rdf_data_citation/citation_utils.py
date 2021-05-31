@@ -1,3 +1,5 @@
+import logging
+
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
 from src.rdf_data_citation.exceptions import NoDataSetError, \
@@ -69,7 +71,8 @@ def _order_by_variables(query: str, prefixes: str) -> dict:
     variables within a list. However, each of these lists enumerates the same variables only the first list
     will be selected and returned.
 
-    :param variable_set_type: can be 'all', 'select' or 'order_by'
+    :param query: The select statement.
+    :param prefixes: The query prefixes or prologue.
     :return: a list of variables used in the query
     """
 
@@ -552,7 +555,11 @@ def _resolve_paths(node: CompValue):
                     raise ExpressionNotCoveredException("NegatedPath has not be covered yet. Path will not be resolved")
                 if isinstance(path, AlternativePath):
                     raise ExpressionNotCoveredException("AlternativePath has not be covered yet. "
-                                                        "Path will not be resolved")
+                                                        "Path will not be resolved. Instead of alternative paths "
+                                                        "try using the following expression: "
+                                                        "{ <triple statements> } "
+                                                        "UNION "
+                                                        "{ <triple statements> }")
                 if isinstance(path, InvPath):
                     if isinstance(path.arg, URIRef):
                         t = (obj, path.arg, subj)
@@ -607,12 +614,13 @@ class QueryUtils:
 
         if query is not None:
             self.sparql_prefixes, self.query = split_prefixes_query(query)
-            self.normal_query_algebra = self.normalize_query_tree()
             try:
+                self.normal_query_algebra = self.normalize_query_tree()
                 self.normal_query = _translate_algebra(self.normal_query_algebra)
                 self.order_by_variables = _order_by_variables(self.query, self.sparql_prefixes)
             except ExpressionNotCoveredException as e:
-                print(e)
+                logging.error(e)
+                raise ExpressionNotCoveredException(e)
             self.checksum = self.compute_checksum()
 
             if citation_timestamp is not None:
@@ -729,7 +737,8 @@ class QueryUtils:
         try:
             algebra.traverse(q_algebra.algebra, replace_filter_not_exists)
         except ExpressionNotCoveredException as e:
-            print(e)
+            err = "Query will not be normalized because of following error: {0}".format(e)
+            raise ExpressionNotCoveredException(err)
 
         """
         #9
@@ -747,7 +756,8 @@ class QueryUtils:
         try:
             algebra.traverse(q_algebra.algebra, _resolve_paths)
         except ExpressionNotCoveredException as e:
-            print(e)
+            err = "Query will not be normalized because of following error: {0}".format(e)
+            raise ExpressionNotCoveredException(err)
 
         """
         #11
@@ -827,7 +837,8 @@ class QueryUtils:
         try:
             algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
         except ExpressionNotCoveredException as e:
-            print(e)
+            err = "Query will not be normalized because of following error: {0}".format(e)
+            raise ExpressionNotCoveredException(err)
 
         """
         #5
@@ -848,15 +859,15 @@ class QueryUtils:
                                 s = Variable(q_vars_mapped.get(t[0]))
                             except TypeError:
                                 s = "does_not_exist"
-                                print("Variable does not exist in q_vars_mapped.")
+                                logging.warning("Variable does not exist in q_vars_mapped.")
                         else:
                             s = t[0]
 
                         if isinstance(t[1], Variable):
                             p = Variable(q_vars_mapped.get(t[1]))
                         elif isinstance(t[1], Path):
-                            print("A not resolved path was found: {0}. The whole triple statement will not be "
-                                  "considered for re-ordering the triple statements.".format(t[1]))
+                            logging.warning("A not resolved path was found: {0}. The whole triple statement will not "
+                                            "be considered for re-ordering the triple statements.".format(t[1]))
                             continue
                         else:
                             p = t[1]
@@ -883,7 +894,8 @@ class QueryUtils:
         try:
             algebra.traverse(q_algebra.algebra, reorder_triples)
         except ExpressionNotCoveredException as e:
-            print(e)
+            err = "Query will not be normalized because of following error: {0}".format(e)
+            raise ExpressionNotCoveredException(err)
 
         return q_algebra
 
@@ -937,7 +949,8 @@ class QueryUtils:
             algebra.traverse(query_algebra.algebra, visitPre=_resolve_paths)
             algebra.traverse(query_algebra.algebra, visitPre=inject_versioning_extensions)
         except ExpressionNotCoveredException as e:
-            print(e)
+            err = "Query will not be timestamped because of following error: {0}".format(e)
+            raise ExpressionNotCoveredException(err)
 
         query_vers_out = _translate_algebra(query_algebra)
 
