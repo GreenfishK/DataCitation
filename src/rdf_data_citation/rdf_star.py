@@ -1,7 +1,8 @@
 from src.rdf_data_citation.citation_utils import QueryUtils
 from src.rdf_data_citation._helper import template_path, citation_timestamp_format
 from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from src.rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode
+from src.rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
+    WrongInputFormatException
 from urllib.error import URLError
 from enum import Enum
 import logging
@@ -296,13 +297,14 @@ class TripleStoreEngine:
 
         logging.info("{0} rows updated".format(result))
 
-    def insert_triple(self, triple, prefixes: dict):
+    def insert_triple(self, triples: list, prefixes: dict):
         """
         Inserts a new triple into the RDF* store and two additional (nested) triples labeling the newly inserted triple
         with a valid_from and valid_until date.
 
-        :param triple:
-        :param prefixes:
+        :param triples: A list with three elements - a subject, predicate and object.
+        Or: A list of lists with three elements.
+        :param prefixes: Prefixes that are used within :param triples
         :return:
         """
 
@@ -312,25 +314,38 @@ class TripleStoreEngine:
         if prefixes:
             sparql_prefixes = citation_prefixes(prefixes)
 
-        if type(triple[0]) == Literal:
-            s = "'" + triple[0] + "'"
+        # Handling input format
+        trpls = []
+        if not isinstance(triples[0], list) and len(triples) == 3:
+            triple = triples
+            trpls.append(triple)
         else:
-            s = triple[0]
-        if type(triple[1]) == Literal:
-            p = "'" + triple[1] + "'"
-        else:
-            p = triple[1]
-        if type(triple[2]) == Literal:
-            o = "'" + triple[2] + "'"
-        else:
-            o = triple[2]
+            trpls = triples
 
-        statement = statement.format(sparql_prefixes, s, p, o)
-        self.sparql_post.setQuery(statement)
-        result = self.sparql_post.query()
-        logging.info("Triple {0} successfully inserted: ".format(triple))
+        for triple in trpls:
+            if isinstance(triple, list) and len(triple) == 3:
+                if type(triple[0]) == Literal:
+                    s = "'" + triple[0] + "'"
+                else:
+                    s = triple[0]
+                if type(triple[1]) == Literal:
+                    p = "'" + triple[1] + "'"
+                else:
+                    p = triple[1]
+                if type(triple[2]) == Literal:
+                    o = "'" + triple[2] + "'"
+                else:
+                    o = triple[2]
 
-        return result
+                statement = statement.format(sparql_prefixes, s, p, o)
+                self.sparql_post.setQuery(statement)
+                self.sparql_post.query()
+                logging.info("Triple {0} successfully inserted: ".format(triple))
+            else:
+                e = "Please provide either a list of lists with three elements - subject, predicate and object or a " \
+                    "single list with aforementioned three elements. "
+                logging.error(e)
+                raise WrongInputFormatException(e)
 
     def outdate_triples(self, select_statement):
         """

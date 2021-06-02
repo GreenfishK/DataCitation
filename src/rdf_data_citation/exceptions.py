@@ -52,3 +52,7 @@ class NoConnectionToRDFStore(Exception):
 
 class InputMissing(Exception):
     pass
+
+
+class WrongInputFormatException(Exception):
+    pass
