@@ -313,9 +313,10 @@ class TripleStoreEngine:
 
         statement = open(self._template_location + "/insert_triple.txt", "r").read()
 
-        sparql_prefixes = ""
         if prefixes:
             sparql_prefixes = citation_prefixes(prefixes)
+        else:
+            sparql_prefixes = citation_prefixes("")
 
         # Handling input format
         trpls = []
@@ -390,9 +391,10 @@ class TripleStoreEngine:
 
         statement = open(self._template_location + "/_delete_triple.txt", "r").read()
 
-        sparql_prefixes = ""
         if prefixes:
             sparql_prefixes = citation_prefixes(prefixes)
+        else:
+            sparql_prefixes = citation_prefixes("")
 
         # Handling input format
         trpls = []
