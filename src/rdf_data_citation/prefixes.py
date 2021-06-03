@@ -1,5 +1,5 @@
-from src.rdf_data_citation.exceptions import ReservedPrefixError
-from src.rdf_data_citation._helper import template_path
+from rdf_data_citation.exceptions import ReservedPrefixError
+from rdf_data_citation._helper import template_path
 import re
 
 

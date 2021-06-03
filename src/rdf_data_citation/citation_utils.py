@@ -1,13 +1,12 @@
-import logging
-
-from src.rdf_data_citation._helper import template_path, citation_timestamp_format
-from src.rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
-from src.rdf_data_citation.exceptions import MultipleSortIndexesError, NoUniqueSortIndexError, \
+from rdf_data_citation._helper import template_path, citation_timestamp_format
+from rdf_data_citation.prefixes import split_prefixes_query, citation_prefixes
+from rdf_data_citation.exceptions import MultipleSortIndexesError, NoUniqueSortIndexError, \
     ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Variable, Identifier, URIRef
 from rdflib.paths import SequencePath, Path, NegatedPath, AlternativePath, InvPath, MulPath, ZeroOrOne, \
     ZeroOrMore, OneOrMore
+import logging
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 import os

@@ -1,7 +1,7 @@
-from src.rdf_data_citation.citation_utils import QueryUtils
-from src.rdf_data_citation._helper import template_path, citation_timestamp_format
-from src.rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from src.rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
+from rdf_data_citation.citation_utils import QueryUtils
+from rdf_data_citation._helper import template_path, citation_timestamp_format
+from rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
+from rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
     WrongInputFormatException
 from urllib.error import URLError
 from enum import Enum
@@ -228,7 +228,7 @@ class TripleStoreEngine:
         :param select_statement:
         :return:
         """
-
+        logging.info("Get data ...")
         if yn_timestamp_query:
             if timestamp is None:
                 query_utils = QueryUtils(query=select_statement)
@@ -236,8 +236,10 @@ class TripleStoreEngine:
                 query_utils = QueryUtils(query=select_statement, citation_timestamp=timestamp)
 
             query = query_utils.timestamped_query
+            logging.info("Timestamped query with timestamp {0} being executed: \n {1}".format(timestamp, query))
             self.sparql_get_with_post.setQuery(query)
         else:
+            logging.info("Query being executed: \n {0}".format(select_statement))
             self.sparql_get_with_post.setQuery(select_statement)
         result = self.sparql_get_with_post.query()
         df = _to_df(result)

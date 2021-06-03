@@ -1,7 +1,6 @@
 import os
 from flask import Flask, url_for
 import db
-from src.rdf_data_citation import persistence
 import landing_page
 import citation_page
 

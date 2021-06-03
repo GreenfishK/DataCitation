@@ -1,17 +1,16 @@
-import logging
-
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
 from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError, ExpressionNotCoveredException
 from src.rdf_data_citation.citation_utils import MetaData
+import logging
 from datetime import datetime, timedelta, timezone
 from flask import (Blueprint, flash, g, redirect, Markup, render_template, request, session, url_for)
 import configparser
 
-
-"""Load configuration from .ini file."""
+# Load configuration from .ini file.
 config = configparser.ConfigParser()
 config.read('../../../config.ini')
+logging.getLogger().setLevel(int(config.get('TEST', 'log_level')))
 
 # Example citation data and result set description
 citation_metadata = MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
@@ -47,8 +46,8 @@ def execute_query():
 
     if config.get('VERSIONING', 'yn_init_version_all_applied') == 'False':
         vieTZObject = timezone(timedelta(hours=2))
-        initialcond_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
-        rdf_engine.version_all_rows(initialcond_timestamp)
+        # initialcond_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vieTZObject)
+        rdf_engine.version_all_rows()
         config.set('VERSIONING', 'yn_init_version_all_applied', 'True')
         with open('../../../config.ini', 'w') as configfile:
             config.write(configfile)
