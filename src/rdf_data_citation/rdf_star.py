@@ -332,8 +332,8 @@ class TripleStoreEngine:
                 p = triple[1]
                 o = triple[2]
 
-                statement = statement.format(sparql_prefixes, s, p, o)
-                self.sparql_post.setQuery(statement)
+                insert_statement = statement.format(sparql_prefixes, s, p, o)
+                self.sparql_post.setQuery(insert_statement)
                 self.sparql_post.query()
                 logging.info("Triple {0} successfully inserted: ".format(triple))
             else:
@@ -410,8 +410,8 @@ class TripleStoreEngine:
                 p = triple[1]
                 o = triple[2]
 
-                statement = statement.format(sparql_prefixes, s, p, o)
-                self.sparql_post.setQuery(statement)
+                delete_statement = statement.format(sparql_prefixes, s, p, o)
+                self.sparql_post.setQuery(delete_statement)
                 self.sparql_post.query()
                 logging.info("Triple {0} successfully deleted: ".format(triple))
             else:
