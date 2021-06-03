@@ -20,6 +20,13 @@ class QueryStore:
         self.engine = sql.create_engine("sqlite:///{0}".format(db_path))
 
     def _remove(self, query_checksum):
+        """
+        Removes a query with a given query checksum from the query store. This function is not intended to be used
+        in a production environment but should only be used by System administrators with care!
+
+        :param query_checksum:
+        :return:
+        """
         delete_query_citation = "Delete from query_citation where query_checksum = :query_checksum "
         delete_query = "Delete from query_hub where query_checksum = :query_checksum "
 
@@ -32,15 +39,6 @@ class QueryStore:
 
             except Exception as e:
                 logging.error(e)
-
-    def retrieve(self, query_pid: str):
-        """
-        Retrieves the full query object which shall be displayed on the landing page.
-
-        :param query_pid:
-        :return:
-        """
-        pass
 
     def lookup(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
