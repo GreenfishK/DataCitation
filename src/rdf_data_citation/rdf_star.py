@@ -299,12 +299,13 @@ class TripleStoreEngine:
 
         logging.info("{0} rows updated".format(result))
 
-    def insert_triple(self, triples: list, prefixes: dict):
+    def insert_triple(self, triples: list, prefixes: dict = None):
         """
-        Inserts a new triple into the RDF* store and two additional (nested) triples labeling the newly inserted triple
-        with a valid_from and valid_until date.
+        Inserts a list of triples (must be in n3 syntax!) into the RDF* store and two additional (nested) triples
+        for each new triple labeling the newly inserted triple with a valid_from and valid_until date.
 
-        :param triples: A list with three elements - a subject, predicate and object.
+        :param triples: A list with three elements - a subject, predicate and object. The triple elements must be
+        provided in n3 syntax!
         Or: A list of lists with three elements.
         :param prefixes: Prefixes that are used within :param triples
         :return:
@@ -326,18 +327,9 @@ class TripleStoreEngine:
 
         for triple in trpls:
             if isinstance(triple, list) and len(triple) == 3:
-                if type(triple[0]) == Literal:
-                    s = "'" + triple[0] + "'"
-                else:
-                    s = triple[0]
-                if type(triple[1]) == Literal:
-                    p = "'" + triple[1] + "'"
-                else:
-                    p = triple[1]
-                if type(triple[2]) == Literal:
-                    o = "'" + triple[2] + "'"
-                else:
-                    o = triple[2]
+                s = triple[0]
+                p = triple[1]
+                o = triple[2]
 
                 statement = statement.format(sparql_prefixes, s, p, o)
                 self.sparql_post.setQuery(statement)
@@ -345,7 +337,7 @@ class TripleStoreEngine:
                 logging.info("Triple {0} successfully inserted: ".format(triple))
             else:
                 e = "Please provide either a list of lists with three elements - subject, predicate and object or a " \
-                    "single list with aforementioned three elements. "
+                    "single list with aforementioned three elements in n3 syntax. "
                 logging.error(e)
                 raise WrongInputFormatException(e)
 
@@ -385,36 +377,43 @@ class TripleStoreEngine:
 
         logging.info("{0} rows outdated".format(result))
 
-    def _delete_triples(self, triple, prefixes):
+    def _delete_triples(self, triples: list, prefixes: dict = None):
         """
         Deletes the triples and its version annotations from the history. Should be used with care
         as it is most of times not intended to delete triples but to outdate them. This way they will
         still appear in the history and will not appear when querying more recent versions.
 
-        :param triple:
-        :param prefixes:
+        :param triples: Triples in n3 syntax to be deleted
+        :param prefixes: Prefixes used in triples.
         :return:
         """
 
-        statement = open(self._template_location + "/_delete_triples.txt", "r").read()
-        sparql_prefixes = citation_prefixes(prefixes)
-        statement = sparql_prefixes + statement
+        statement = open(self._template_location + "/_delete_triple.txt", "r").read()
 
-        if type(triple[0]) == Literal:
-            s = "'" + triple[0] + "'"
-        else:
-            s = triple[0]
-        if type(triple[1]) == Literal:
-            p = "'" + triple[1] + "'"
-        else:
-            p = triple[1]
-        if type(triple[2]) == Literal:
-            o = "'" + triple[2] + "'"
-        else:
-            o = triple[2]
+        sparql_prefixes = ""
+        if prefixes:
+            sparql_prefixes = citation_prefixes(prefixes)
 
-        statement = statement.format(s, p, o)
-        self.sparql_post.setQuery(statement)
-        result = self.sparql_post.query()
+        # Handling input format
+        trpls = []
+        if not isinstance(triples[0], list) and len(triples) == 3:
+            triple = triples
+            trpls.append(triple)
+        else:
+            trpls = triples
 
-        return result
+        for triple in trpls:
+            if isinstance(triple, list) and len(triple) == 3:
+                s = triple[0]
+                p = triple[1]
+                o = triple[2]
+
+                statement = statement.format(sparql_prefixes, s, p, o)
+                self.sparql_post.setQuery(statement)
+                self.sparql_post.query()
+                logging.info("Triple {0} successfully deleted: ".format(triple))
+            else:
+                e = "Please provide either a list of lists with three elements - subject, predicate and object or a " \
+                    "single list with aforementioned three elements in n3 syntax. "
+                logging.error(e)
+                raise WrongInputFormatException(e)
