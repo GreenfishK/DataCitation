@@ -1,6 +1,6 @@
 from citation_utils import QueryUtils, RDFDataSetUtils, MetaData
 from _helper import template_path
-from exceptions import QueryExistsError
+from _exceptions import QueryExistsError
 import logging
 import sqlalchemy as sql
 from sqlalchemy import exc
@@ -84,6 +84,13 @@ class QueryStore:
             except Exception as e:
                 logging.error(e)
 
+    def get_timestamped_query(self, query_pid: str):
+        """
+        Retrieves the timestamped query by the query_pid from the query store.
+        :param query_pid:
+        :return: The timestamped query.
+        """
+
     def store(self, query_data: QueryUtils, rs_data: RDFDataSetUtils, meta_data: MetaData, yn_new_query=True):
         """
         R9 - Store Query
@@ -152,3 +159,5 @@ class QueryStore:
                 connection.execute(update_statement, query_checksum=query_data.checksum)
             except Exception:
                 logging.error("Could not update the last citation PID in query_hub.last_citation_pid")
+
+

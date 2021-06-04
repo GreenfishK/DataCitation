@@ -1,7 +1,7 @@
 from citation_utils import QueryUtils
 from _helper import template_path, citation_timestamp_format
 from prefixes import citation_prefixes, split_prefixes_query
-from exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
+from _exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
     WrongInputFormatException
 from urllib.error import URLError
 from enum import Enum

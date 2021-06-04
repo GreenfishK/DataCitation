@@ -1,6 +1,6 @@
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
-from src.rdf_data_citation.exceptions import MissingSortVariables, NoUniqueSortIndexError, ExpressionNotCoveredException
+from src.rdf_data_citation._exceptions import MissingSortVariables, NoUniqueSortIndexError, ExpressionNotCoveredException
 from src.rdf_data_citation.citation_utils import MetaData
 import logging
 from datetime import datetime, timedelta, timezone

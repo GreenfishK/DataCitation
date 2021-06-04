@@ -1,4 +1,4 @@
-from src.rdf_data_citation.exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
+from src.rdf_data_citation._exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
 from src.rdf_data_citation.rdf_star import TripleStoreEngine
 from tests.test_base import Test, TestExecution, format_text
 import src.rdf_data_citation.citation as ct

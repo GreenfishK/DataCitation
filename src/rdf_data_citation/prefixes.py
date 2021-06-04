@@ -1,4 +1,4 @@
-from exceptions import ReservedPrefixError
+from _exceptions import ReservedPrefixError
 from _helper import template_path
 import re
 
@@ -7,7 +7,7 @@ def _prefixes_to_sparql(prefixes: dict) -> str:
     """
     Converts a dict of prefixes to a string with SPARQL syntax for prefixes.
     :param prefixes:
-    :return: SPARQL prefixes as string
+    :return: SPARQL prologue (prefixes at the beginning of the query) as string.
     """
     if prefixes is None:
         return ""
@@ -20,11 +20,11 @@ def _prefixes_to_sparql(prefixes: dict) -> str:
 
 def attach_prefixes(query, prefixes: dict) -> str:
     """
-    Attaches prefixes in SPARQL syntax to the SPARQL query. The passed query should therefore have no prefixes.
+    Attaches the prologue in SPARQL syntax to the SPARQL query. The passed query should therefore have no prologue.
 
-    :param query:
-    :param prefixes:
-    :return:
+    :param query: A query without prologue (Prefixes at the beginning of the query)
+    :param prefixes: Prologue that comes before the query.
+    :return: A full query including the prologue
     """
     template = open(template_path("templates/query_utils/prefixes_query_wrapper.txt"), "r").read()
     sparql_prefixes = _prefixes_to_sparql(prefixes)
@@ -67,9 +67,9 @@ def citation_prefixes(prefixes: dict or str) -> str:
 
 def split_prefixes_query(query: str) -> list:
     """
-    Separates the prefixes from the actual query.
+    Separates the prologue (prefixes at the beginning of the query) from the actual query.
 
-    :param query: A query string with or without prefixes
+    :param query: A query string with or without prologue.
     :return: A list with the prefixes as the first element and the actual query string as the second element.
     """
     pattern = "PREFIX\\s*[a-zA-Z0-9_-]*:\\s*<.*>\\s*"

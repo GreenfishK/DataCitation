@@ -1,6 +1,6 @@
 from _helper import template_path, citation_timestamp_format
 from prefixes import split_prefixes_query, citation_prefixes
-from exceptions import MultipleSortIndexesError, NoUniqueSortIndexError, \
+from _exceptions import MultipleSortIndexesError, NoUniqueSortIndexError, \
     ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Variable, Identifier, URIRef

@@ -2,7 +2,7 @@ from query_store import QueryStore
 from rdf_star import TripleStoreEngine
 from citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
 from _helper import citation_timestamp_format
-from exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
+from _exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
     ExpressionNotCoveredException, NoUniqueSortIndexError
 import logging
 from copy import copy
@@ -156,4 +156,11 @@ class Citation:
 
         return self
 
+    def retrieve(self, query_pid: str):
+        """
+        Retrieves the data by requesting the timestamped query from the query store with the given query_pid
+        and executes the timestamped query against the RDF store.
+        :param query_pid:
+        :return: The cited (historic) dataset.
+        """
 
