@@ -1,16 +1,9 @@
-from typing import List
-
 from src.rdf_data_citation._helper import template_path
-from typing import NewType
-from datetime import datetime
 import rdflib
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
-from rdflib.term import Identifier
 from rdflib.paths import Path
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
-from nested_lookup import nested_lookup
-import re
 
 
 def query_triples(query, sparql_prefixes: str = None) -> dict:
