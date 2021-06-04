@@ -42,7 +42,7 @@ post_endpoint = http://192.168.0.241:7200/repositories/DataCitation_FHIR/stateme
 Make your RDF store ready for citation by initially versioning all triples. Depending on the versioning mode triples 
 get either annotated with an artificial end date only or also with a start date.
 ```python 
-rdf_engine = rdfs.TripleStoreEngine(get_endpoint, post_endpoint)
+rdf_engine = rdf_star.TripleStoreEngine(get_endpoint, post_endpoint)
 rdf_engine.version_all_rows()
 ```
 
