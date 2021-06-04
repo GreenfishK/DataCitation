@@ -1,10 +1,9 @@
-from rdf_data_citation.query_store import QueryStore
-from rdf_data_citation.rdf_star import TripleStoreEngine
-from rdf_data_citation.citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
-from rdf_data_citation.citation_utils import NoUniqueSortIndexError
-from rdf_data_citation._helper import citation_timestamp_format
-from rdf_data_citation.exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
-    ExpressionNotCoveredException
+from query_store import QueryStore
+from rdf_star import TripleStoreEngine
+from citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
+from _helper import citation_timestamp_format
+from exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
+    ExpressionNotCoveredException, NoUniqueSortIndexError
 import logging
 from copy import copy
 import datetime

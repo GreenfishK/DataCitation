@@ -1,6 +1,6 @@
-from rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, MetaData
-from rdf_data_citation._helper import template_path
-from rdf_data_citation.exceptions import QueryExistsError
+from citation_utils import QueryUtils, RDFDataSetUtils, MetaData
+from _helper import template_path
+from exceptions import QueryExistsError
 import logging
 import sqlalchemy as sql
 from sqlalchemy import exc

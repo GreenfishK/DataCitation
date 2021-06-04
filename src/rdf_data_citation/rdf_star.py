@@ -1,13 +1,12 @@
-from rdf_data_citation.citation_utils import QueryUtils
-from rdf_data_citation._helper import template_path, citation_timestamp_format
-from rdf_data_citation.prefixes import citation_prefixes, split_prefixes_query
-from rdf_data_citation.exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
+from citation_utils import QueryUtils
+from _helper import template_path, citation_timestamp_format
+from prefixes import citation_prefixes, split_prefixes_query
+from exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
     WrongInputFormatException
 from urllib.error import URLError
 from enum import Enum
 import logging
 from SPARQLWrapper import SPARQLWrapper, POST, DIGEST, GET, JSON, Wrapper
-from rdflib.term import Literal
 import pandas as pd
 from datetime import datetime
 
