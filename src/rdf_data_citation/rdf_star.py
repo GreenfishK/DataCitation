@@ -222,7 +222,8 @@ class TripleStoreEngine:
 
         :param yn_timestamp_query: If true, the select statement will be wrapped with the versioning template. This
         also means that the data must have already been versioned using version_all_rows(). Otherwise, the query
-        is executed as it is against the RDF store.
+        is executed as it is against the RDF store. Set this flag to 'False' if you are passing a timestamped query
+        via :select_statement and leaving :timestamp blank.
         :param timestamp:
         :param select_statement:
         :return:
