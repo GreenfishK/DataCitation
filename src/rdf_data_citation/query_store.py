@@ -188,7 +188,7 @@ class QueryStore:
                                    citation_snippet=meta_data.citation_snippet,
                                    citation_timestamp=query_data.citation_timestamp)
                 if not yn_new_query:
-                    logging.info("A new citation has been added to the existing query with checksum {0} ."
+                    logging.info("A new citation has been added to the existing query with checksum '{0}'. "
                                  "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
             except exc.IntegrityError:
