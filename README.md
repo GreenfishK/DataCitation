@@ -61,7 +61,7 @@ list_of_triples =
 "publishing:containsMention",
 "<http://data.ontotext.com/publishing#Mention-dbaa4de4563be5f6b927c87e09f90461c09451296f4b52b1f80dcb6e941a5acd>"]]
 
-rdf_engine.insert_triple(list_of_triples, prefixes)
+rdf_engine.insert_triples(list_of_triples, prefixes)
 ```
 
 // Example for update
