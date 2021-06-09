@@ -1266,7 +1266,7 @@ class MetaData:
     def to_json(self):
         meta_data = vars(self).copy()
         del meta_data['citation_snippet']
-        meta_data_json = json.dumps(meta_data, indent=4)
+        meta_data_json = json.dumps(meta_data)
 
         return meta_data_json
 

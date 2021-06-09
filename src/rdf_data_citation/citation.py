@@ -11,6 +11,7 @@ from copy import copy
 import datetime
 from datetime import datetime, timedelta, timezone
 import tzlocal
+import json
 
 
 class Citation:
@@ -158,7 +159,7 @@ class Citation:
             logging.info("A new query citation with PID {0} was stored in the query store.".format(query_to_cite.pid))
             query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
 
-    def retrieve(self, query_pid: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
+    def retrieve(self, query_pid: str) -> [pd.DataFrame, str]:
         """
         Retrieves query data, the dataset and its metadata, citation metadata and the citation snippet by the query_pid
         and returns it as a JSON file to foster machine actionability.
@@ -181,12 +182,31 @@ class Citation:
 
         query_store = QueryStore()
         try:
-            query_data, result_set_data, meta_data = query_store.get_cited_query(query_pid)
+            query_data, result_set_data, citation_metadata = query_store.get_cited_query(query_pid)
         except QueryDoesNotExistError as e:
             raise QueryDoesNotExistError("{0} The query and its metadata will not be retrieved.".format(e))
-        result_set_data.dataset = self.sparqlapi.get_data(query_data.timestamped_query)
+        result_set_data.dataset = self.sparqlapi.get_data(query_data.timestamped_query, yn_timestamp_query=False)
+        metadata = json.dumps({'query_data': {'query': query_data.query,
+                                              'timestamped_query': query_data.timestamped_query,
+                                              'prefixes': query_data.sparql_prefixes,
+                                              'normal_query_algebra': query_data.normal_query_algebra,
+                                              'normal_query': query_data.normal_query,
+                                              'citation_timestamp': query_data.citation_timestamp,
+                                              'pid': query_data.pid,
+                                              'checksum': query_data.checksum},
+                               'dataset_metadata': {'description': result_set_data.description,
+                                                    'sort_order': result_set_data.sort_order,
+                                                    'checksum': result_set_data.checksum},
+                               'citation_metadata': {'identifier': citation_metadata.identifier,
+                                                     'creator': citation_metadata.creator,
+                                                     'title': citation_metadata.title,
+                                                     'publisher': citation_metadata.publisher,
+                                                     'publication_year': citation_metadata.publication_year,
+                                                     'resource_type': citation_metadata.resource_type,
+                                                     'other_citation_data': citation_metadata.other_citation_data},
+                               'citation_snippet': citation_metadata.citation_snippet}, indent=4)
 
-        return [query_data, result_set_data, meta_data]
+        return [result_set_data.dataset, metadata]
 
 
 
