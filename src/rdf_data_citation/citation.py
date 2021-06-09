@@ -1,9 +1,11 @@
+import pandas as pd
+
 from query_store import QueryStore
 from rdf_star import TripleStoreEngine
 from citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
 from _helper import citation_timestamp_format
 from _exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
-    ExpressionNotCoveredException, NoUniqueSortIndexError
+    ExpressionNotCoveredException, NoUniqueSortIndexError, QueryDoesNotExistError
 import logging
 from copy import copy
 import datetime
@@ -72,7 +74,6 @@ class Citation:
         :return:
         """
 
-        logging.info("Citing... ")
         query_store = QueryStore()
 
         # Assign citation timestamp to query object
@@ -122,9 +123,9 @@ class Citation:
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()
 
-        # Lookup query by checksum
+        # Get latest query citation and its metadata by query checksum
         existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
-            = query_store.lookup(query_to_cite.checksum)
+            = query_store.get_latest_citation(query_to_cite.checksum)
 
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
             logging.info("Query was found in query store.")
@@ -140,7 +141,6 @@ class Citation:
                 self.yn_result_set_changed = True
 
         # Store new query data
-        logging.info("A new query citation will be made.")
         self.query_utils = query_to_cite
         self.result_set_utils = rdf_ds
         # TODO: assign identifier in citation_metadata.identifier
@@ -150,17 +150,45 @@ class Citation:
 
         if self.yn_query_exists:
             if self.yn_result_set_changed:
+                logging.info("The dataset changed since the last citation. The citation and dataset metadata of query "
+                             "with PID {0} were updated with the new PID {1}".format(existing_query_data.pid,
+                                                                                     query_to_cite.pid))
                 query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=False)
         else:
+            logging.info("A new query citation with PID {0} was stored in the query store.".format(query_to_cite.pid))
             query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
 
         return self
 
-    def retrieve(self, query_pid: str):
+    def retrieve(self, query_pid: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
-        Retrieves the data by requesting the timestamped query from the query store with the given query_pid
+        Retrieves query data, the dataset and its metadata and citation metadata by the query_pid. This is done by
+        first querying aforementioned data from the query store followed by an execution of the timestamped query
+        against the RDF store, thus, post_endpoint (post can carry more data then get and the timestamped queries
+        tend to be quiet long).
+
         and executes the timestamped query against the RDF store.
+        Use a landing page to display these data. (R11 and R12)
+        R11 – Landing Page: Make the PIDs resolve to a human readable landing page that provides the data
+        (via query re-execution) and metadata, including a link to the superset (PID of the data source)
+        and citation text snippet.[1]
+        R12  – Machine Actionability:  Provide  an  API  / machine actionable
+        landing page to access metadata and data via query re-execution.[1]
+
+        [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
+
         :param query_pid:
         :return: The cited (historic) dataset.
         """
+
+        query_store = QueryStore()
+        try:
+            query_data, result_set_data, meta_data = query_store.get_cited_query(query_pid)
+        except QueryDoesNotExistError as e:
+            raise QueryDoesNotExistError("{0} The query and its metadata will not be retrieved.".format(e))
+        result_set_data.dataset = self.sparqlapi.get_data(query_data.timestamped_query)
+
+        return [query_data, result_set_data, meta_data]
+
+
 

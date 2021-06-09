@@ -115,8 +115,12 @@ By executing citation.cite(...) a citation snippet is generated and stored withi
 citation_snippet = citation_data.citation_metadata.citation_snippet
 ```
 
-Last, the cited dataset can be retrieved by its query PID:
+Last, to get the cited dataset and all its associated metadata 
+(query data, citation and provenance metadata, citation snippet, dataset metadata) which then can be displayed on a
+human-readable landing page we execute following code snippet.
 ```python
 query_pid = citation_data.query_utils.pid
-dataset = citation.retrieve(query_pid)
+query_data, result_set_data, meta_data = citation.retrieve(query_pid)
+dataset = result_set_data.dataset
 ```
+The only input parameter, as we see, is the query PID.

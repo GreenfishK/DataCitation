@@ -34,6 +34,10 @@ class QueryExistsError(Exception):
     pass
 
 
+class QueryDoesNotExistError(Exception):
+    pass
+
+
 class NoQueryString(Exception):
     pass
 

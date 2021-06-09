@@ -1,6 +1,6 @@
 from citation_utils import QueryUtils, RDFDataSetUtils, MetaData
 from _helper import template_path
-from _exceptions import QueryExistsError
+from _exceptions import QueryExistsError, QueryDoesNotExistError
 import logging
 import sqlalchemy as sql
 from sqlalchemy import exc
@@ -40,10 +40,12 @@ class QueryStore:
             except Exception as e:
                 logging.error(e)
 
-    def lookup(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
+    def get_latest_citation(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
         Checks whether the query exists in the database. If yes, query data, dataset metadata and citation metadata
-        (including provenance data and the citation snippet) are returned.
+        (including provenance data and the citation snippet) belonging to its most recent citation are returned. Most
+        recent citation hereby means the most recent dataset version and metadata. If no, empty objects are returned
+        to the caller.
 
         :param query_checksum:
         :return:
@@ -60,15 +62,15 @@ class QueryStore:
 
                 df.columns = result.keys()
                 query_data = QueryUtils()
+                query_data.query = df.orig_query.loc[0]
                 query_data.checksum = df.query_checksum.loc[0]
                 query_data.pid = df.query_pid.loc[0]
                 query_data.normal_query_algebra = df.normal_query_algebra.loc[0]
-                query_data.normal_query_algebra = df.normal_query.loc[0]
+                query_data.normal_query = df.normal_query.loc[0]
                 query_data.sparql_prefixes = df.query_prefixes.loc[0]
                 query_data.citation_timestamp = df.citation_timestamp.loc[0]
 
                 result_set_data = RDFDataSetUtils()
-                result_set_data.dataset = df
                 result_set_data.checksum = df.result_set_checksum.loc[0]
                 result_set_data.description = df.result_set_description.loc[0]
                 result_set_data.sort_order = df.result_set_sort_order.loc[0]
@@ -84,12 +86,50 @@ class QueryStore:
             except Exception as e:
                 logging.error(e)
 
-    def get_timestamped_query(self, query_pid: str):
+    def get_cited_query(self, query_pid: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
-        Retrieves the timestamped query by the query_pid from the query store.
+        Retrieves the cited query by its :query_pid, query data, dataset metadata and citation metadata
+        (including provenance data and the citation snippet) from the query store.
+
         :param query_pid:
-        :return: The timestamped query.
+        :return: query data, dataset metadata, citation metadata
         """
+        select_timestamped_query = open("{0}/select_timestamped_query.sql".format(self.path_to_persistence), "r").read()
+        with self.engine.connect() as connection:
+            try:
+                result = connection.execute(select_timestamped_query, query_pid=query_pid)
+                df = pd.DataFrame(result.fetchall())
+
+                if df.empty:
+                    raise QueryDoesNotExistError("No query with PID {0} could "
+                                                 "be found in the query store.".format(query_pid))
+
+                df.columns = result.keys()
+                query_data = QueryUtils()
+                query_data.query = df.orig_query.loc[0]
+                query_data.timestamped_query = df.timestamped_query.loc[0]
+                query_data.checksum = df.query_checksum.loc[0]
+                query_data.pid = df.query_pid.loc[0]
+                query_data.normal_query_algebra = df.normal_query_algebra.loc[0]
+                query_data.normal_query = df.normal_query.loc[0]
+                query_data.sparql_prefixes = df.query_prefixes.loc[0]
+                query_data.citation_timestamp = df.citation_timestamp.loc[0]
+
+                result_set_data = RDFDataSetUtils()
+                result_set_data.checksum = df.result_set_checksum.loc[0]
+                result_set_data.description = df.result_set_description.loc[0]
+                result_set_data.sort_order = df.result_set_sort_order.loc[0]
+
+                meta_data = MetaData()
+                meta_data.set_metadata(df.citation_data.loc[0])
+                meta_data.citation_snippet = df.citation_snippet.loc[0]
+
+                logging.info("The cited query with PID {0} and its metadata are retrieved"
+                             " from the query store.".format(query_pid))
+
+                return [query_data, result_set_data, meta_data]
+            except Exception as e:
+                logging.error(e)
 
     def store(self, query_data: QueryUtils, rs_data: RDFDataSetUtils, meta_data: MetaData, yn_new_query=True):
         """
@@ -127,6 +167,7 @@ class QueryStore:
                     connection.execute(insert_statement,
                                        query_checksum=query_data.checksum,
                                        orig_query=query_data.query,
+                                       timestamped_query=query_data.timestamped_query,
                                        query_prefixes=query_data.sparql_prefixes,
                                        normal_query_algebra=str(query_data.normal_query_algebra.algebra),
                                        normal_query=query_data.normal_query)
