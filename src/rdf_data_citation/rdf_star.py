@@ -235,7 +235,8 @@ class TripleStoreEngine:
                 query_utils = QueryUtils(query=select_statement, citation_timestamp=timestamp)
 
             query = query_utils.timestamped_query
-            logging.info("Timestamped query with timestamp {0} being executed: \n {1}".format(timestamp, query))
+            logging.info("Timestamped query with timestamp {0} being executed:"
+                         " \n {1}".format(query_utils.citation_timestamp, query))
             self.sparql_get_with_post.setQuery(query)
         else:
             logging.info("Query being executed: \n {0}".format(select_statement))
