@@ -1292,6 +1292,9 @@ def generate_citation_snippet(query_pid: str, citation_data: MetaData) -> str:
     """
     R10 - Automated citation text
     Generates the citation snippet out of DataCite's mandatory attributes within its metadata schema.
+    In future this function will be more flexible offering the user a way to define of which citation data
+    should the snippet be comprised of.
+
     :param query_pid:
     :param citation_data:
     :return:

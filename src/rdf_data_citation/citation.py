@@ -161,8 +161,8 @@ class Citation:
 
     def retrieve(self, query_pid: str) -> [pd.DataFrame, str]:
         """
-        Retrieves query data, the dataset and its metadata, citation metadata and the citation snippet by the query_pid
-        and returns it as a JSON file to foster machine actionability.
+        Retrieves metadata (query data, dataset metadata, citation metadata, citation snippet) as a JSON representation
+        to foster machine actionability and the dataset as pandas dataframe.
         This is done by  first querying aforementioned data from the query store followed by an execution of
         the timestamped query against the RDF store, thus, post_endpoint (post can carry more data then get
         and the timestamped queries tend to be quiet long).
