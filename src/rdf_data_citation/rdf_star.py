@@ -299,7 +299,7 @@ class TripleStoreEngine:
 
         logging.info("{0} rows updated".format(result))
 
-    def insert_triple(self, triples: list, prefixes: dict = None):
+    def insert_triples(self, triples: list, prefixes: dict = None):
         """
         Inserts a list of triples (must be in n3 syntax!) into the RDF* store and two additional (nested) triples
         for each new triple labeling the newly inserted triple with a valid_from and valid_until date.
@@ -389,7 +389,7 @@ class TripleStoreEngine:
         :return:
         """
 
-        statement = open(self._template_location + "/_delete_triple.txt", "r").read()
+        statement = open(self._template_location + "/_delete_triples.txt", "r").read()
 
         if prefixes:
             sparql_prefixes = citation_prefixes(prefixes)

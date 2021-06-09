@@ -136,7 +136,7 @@ class Citation:
                 self.citation_metadata = existing_query_citation_data
                 logging.info("The result set has not changed since the last execution. "
                              "The existing citation snippet will be returned.")
-                return self
+                return
             else:
                 self.yn_result_set_changed = True
 
@@ -158,17 +158,15 @@ class Citation:
             logging.info("A new query citation with PID {0} was stored in the query store.".format(query_to_cite.pid))
             query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
 
-        return self
-
     def retrieve(self, query_pid: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
-        Retrieves query data, the dataset and its metadata and citation metadata by the query_pid. This is done by
-        first querying aforementioned data from the query store followed by an execution of the timestamped query
-        against the RDF store, thus, post_endpoint (post can carry more data then get and the timestamped queries
-        tend to be quiet long).
-
-        and executes the timestamped query against the RDF store.
+        Retrieves query data, the dataset and its metadata, citation metadata and the citation snippet by the query_pid
+        and returns it as a JSON file to foster machine actionability.
+        This is done by  first querying aforementioned data from the query store followed by an execution of
+        the timestamped query against the RDF store, thus, post_endpoint (post can carry more data then get
+        and the timestamped queries tend to be quiet long).
         Use a landing page to display these data. (R11 and R12)
+
         R11 – Landing Page: Make the PIDs resolve to a human readable landing page that provides the data
         (via query re-execution) and metadata, including a link to the superset (PID of the data source)
         and citation text snippet.[1]

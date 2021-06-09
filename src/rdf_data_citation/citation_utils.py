@@ -898,7 +898,7 @@ class QueryUtils:
 
         return q_algebra
 
-    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None):
+    def timestamp_query(self, query: str = None, citation_timestamp: datetime = None) -> str:
         """
         R7 - Query timestamping
         Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
