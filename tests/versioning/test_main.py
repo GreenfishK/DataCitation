@@ -45,7 +45,8 @@ class TestVersioning(TestExecution):
             test_query = open("test_data/{0}.txt".format(test_name), "r").read()
             self.df_test_query = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         except FileNotFoundError as e:
-            print("Prepared query does not exist for test {0}".format(test_name))
+            print("Prepared query does not exist for test {0}. This is just for info and does "
+                  "not bother the test.".format(test_name))
 
         df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         self.cnt_actual_triples = int(df['cnt'].item().split(" ")[0])
@@ -123,23 +124,23 @@ class TestVersioning(TestExecution):
                     expected_result="1_0")
         with open('test_data/single_triple_update.csv', mode='r') as infile:
             reader = csv.DictReader(infile, delimiter=';')
-            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows in reader}
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
-        test_query = open("test_data/test_update_single__delete_valid_until.txt", "r").read()
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
 
+        # Read
+        test_query = open("test_data/test_update_single__delete_valid_until.txt", "r").read()
         result_set_before_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         self.rdf_engine.update(triples_to_update, prefixes)
         result_set_after_update = self.rdf_engine.get_data(test_query, yn_timestamp_query=False)
         test.actual_result = str(len(result_set_before_update.index)) + "_" + str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        member = "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>"
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine._delete_triples([member, hasValue, party], prefixes)
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -151,9 +152,11 @@ class TestVersioning(TestExecution):
                     expected_result="1")
         # Update
         with open('test_data/single_triple_update.csv', mode='r') as infile:
-            reader = csv.reader(infile)
-            triples_to_update = {(rows[0], rows[1], rows[2]): rows[3] for rows in reader}
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
         self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
@@ -163,13 +166,10 @@ class TestVersioning(TestExecution):
         test.actual_result = str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        member = "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>"
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -183,8 +183,10 @@ class TestVersioning(TestExecution):
         # Update
         with open('test_data/single_triple_update.csv', mode='r') as infile:
             reader = csv.DictReader(infile, delimiter=';')
-            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows in reader}
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
         self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
@@ -194,13 +196,10 @@ class TestVersioning(TestExecution):
         test.actual_result = str(len(result_set_after_update.index)) + "_" + new_value
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        member = "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>"
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -215,7 +214,8 @@ class TestVersioning(TestExecution):
             reader = csv.DictReader(infile, delimiter=';')
             triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
                                  in reader}
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
         self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
@@ -224,13 +224,10 @@ class TestVersioning(TestExecution):
         test.actual_result = str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        member = "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>"
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -245,7 +242,8 @@ class TestVersioning(TestExecution):
             reader = csv.DictReader(infile, delimiter=';')
             triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
                                  in reader}
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
         self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
@@ -255,24 +253,21 @@ class TestVersioning(TestExecution):
                              + result_set_after_update['valid_until'].iloc[0]
 
         # Clean up - Delete newly added triple. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        member = "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>"
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
-    def x_test_update_multi__delete_valid_until(self):
+    def test_update_multi__delete_valid_until(self):
         test = Test(test_number=8,
                     tc_desc='For each triple matched in the SPARQL select statement the triples'' annotation, namely, '
                             '<<?s ?p ?o>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime '
                             'must not exist anymore. Before the update there should be three matches '
                             '(see multi_triples_update.csv) and after the update there must be no match anymore.',
                     expected_result="3_0")
-        with open('test_data/single_triple_update.csv', mode='r') as infile:
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
             reader = csv.DictReader(infile, delimiter=';')
             triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
                                  in reader}
@@ -287,10 +282,10 @@ class TestVersioning(TestExecution):
         test.actual_result = str(len(result_set_before_update.index)) + "_" + str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        with open('test_data/single_triple_update.csv', mode='r') as infile:
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
             reader = csv.DictReader(infile, delimiter=';')
             triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
-            self.rdf_engine._delete_triples(triples_to_delete, prefixes)
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -302,9 +297,13 @@ class TestVersioning(TestExecution):
                             'timestamp < "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime ',
                     expected_result="3")
         # Update
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
-        new_value = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine.update(triples_to_update, new_value)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
         test_query = open("test_data/test_update_multi__outdate.txt", "r").read()
@@ -312,19 +311,11 @@ class TestVersioning(TestExecution):
         print(result_set_after_update)
         test.actual_result = str(len(result_set_after_update.index))
 
-
-
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -337,8 +328,13 @@ class TestVersioning(TestExecution):
                             'One of them must be the new triple with the new object value. ',
                     expected_result="3_{0}".format(new_value[1:-1]))
         # Update
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
         test_query = open("test_data/test_update_multi__add_new_triple.txt", "r").read()
@@ -347,22 +343,14 @@ class TestVersioning(TestExecution):
         test.actual_result = str(len(result_set_after_update.index)) + "_" + new_value
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
     def test_update_multi__timestamp_new_triple_valid_from(self):
-        new_value = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-
         test = Test(test_number=11,
                     tc_desc='For each triple that is matched in the provided SPARQL select query (triples_to_update) '
                             'four additional triples must be added. '
@@ -370,8 +358,13 @@ class TestVersioning(TestExecution):
                             'timestamp that is in the past. ',
                     expected_result="3")
         # Update
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
         test_query = open("test_data/test_update_multi__timestamp_new_triple_valid_from.txt", "r").read()
@@ -379,22 +372,14 @@ class TestVersioning(TestExecution):
         test.actual_result = str(len(result_set_after_update.index))
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
     def test_update_multi__timestamp_new_triple_valid_until(self):
-        new_value = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-
         test = Test(test_number=12,
                     tc_desc='For each triple that is matched in the provided SPARQL select query (triples_to_update) '
                             'four additional triples must be added. '
@@ -402,8 +387,13 @@ class TestVersioning(TestExecution):
                             '"9999-12-31T00:00:00.000+02:00" stating that it is valid until further notice. ',
                     expected_result="3_9999-12-31T00:00:00.000+02:00 [http://www.w3.org/2001/XMLSchema#dateTime]")
         # Update
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
-        self.rdf_engine.update(triples_to_update, new_value)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
         test_query = open("test_data/test_update_multi__timestamp_new_triple_valid_until.txt", "r").read()
@@ -412,16 +402,10 @@ class TestVersioning(TestExecution):
                              + result_set_after_update['valid_until'].iloc[0]
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -429,10 +413,15 @@ class TestVersioning(TestExecution):
         new_value = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
 
         # Update
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                 in reader}
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        self.rdf_engine.update(triples_to_update, prefixes)
 
         # Read
-        self.rdf_engine.update(triples_to_update, new_value)
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_first_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
@@ -441,35 +430,35 @@ class TestVersioning(TestExecution):
                             'The number of rows must stay the same.',
                     expected_result=str(cnt_triples_after_first_update))
 
-        self.rdf_engine.update(triples_to_update, new_value)
+        self.rdf_engine.update(triples_to_update, prefixes)
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_second_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test.actual_result = str(cnt_triples_after_second_update)
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party), prefixes)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
     def test_update_multi__two_updates(self):
         # Read
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
+        # triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_before_first_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
 
         # Update 1
-        new_value_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine.update(triples_to_update, new_value_1)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update1 = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                  in reader}
+
+        self.rdf_engine.update(triples_to_update1, prefixes)
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_first_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
@@ -479,26 +468,26 @@ class TestVersioning(TestExecution):
                     expected_result=str(cnt_triples_after_first_update - cnt_triples_before_first_update))
 
         # Update 2
-        new_value_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
-        self.rdf_engine.update(triples_to_update, new_value_2)
+        with open('test_data/multi_triples_update2.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update2 = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                  in reader}
+
+        self.rdf_engine.update(triples_to_update2, prefixes)
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_triples_after_second_update = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         test.actual_result = str(cnt_triples_after_second_update - cnt_triples_after_first_update)
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        party_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party_1), prefixes)
-            self.rdf_engine._delete_triples((member, hasValue, party_2), prefixes)
+        with open('test_data/multi_triples_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete1 = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        with open('test_data/multi_triples_update2.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete2 = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        triples_to_delete = triples_to_delete1 + triples_to_delete2
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
 
         return test
 
@@ -518,16 +507,22 @@ class TestVersioning(TestExecution):
                             'with a newer citing:valid_until timestamp. The most recent one must have the value'
                             '"9999-12-31T00:00:00.000+02:00".',
                     expected_result=expected_result)
-        # Read
-        triples_to_update = open("test_data/multi_triples_update.csv", "r").read()
+
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        # Update 1
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update1 = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                  in reader}
+        self.rdf_engine.update(triples_to_update1, prefixes)
 
         # Update 1
-        new_value_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        self.rdf_engine.update(triples_to_update, new_value_1)
-
-        # Update 2
-        new_value_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
-        self.rdf_engine.update(triples_to_update, new_value_2)
+        with open('test_data/single_triple_update2.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_update2 = {(rows['subject'], rows['predicate'], rows['old_object']): rows['new_object'] for rows
+                                  in reader}
+        self.rdf_engine.update(triples_to_update2, prefixes)
 
         # Read
         test_query = open("test_data/test_update_multi__timeline_consistency.txt", "r").read()
@@ -544,19 +539,14 @@ class TestVersioning(TestExecution):
         test.actual_result = "valid_from_positive_deltas: {0}".format(str(valid_from_series_consistency.sum()))
 
         # Clean up - Delete newly added triples. The nested triples are deleted in after_single_test()
-        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
-                    'xsd': 'http://www.w3.org/2001/XMLSchema#',
-                    'publishing': 'http://ontology.ontotext.com/publishing#'}
-        members = ["<http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>",
-                   "<http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>",
-                   "<http://ontology.ontotext.com/resource/Q460035S071C8FD6-DA5F-4189-81A7-D589D13B2D09>"]
-        hasValue = "pub:hasValue"
-        party_1 = "<http://ontology.ontotext.com/resource/tsk8e8v43mrk>"
-        party_2 = "<http://ontology.ontotext.com/resource/tsk6i4bhsdfk>"
-        for member in members:
-            self.rdf_engine._delete_triples((member, hasValue, party_1), prefixes)
-            self.rdf_engine._delete_triples((member, hasValue, party_2), prefixes)
-
+        with open('test_data/single_triple_update.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete1 = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        with open('test_data/single_triple_update2.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_delete2 = [[rows['subject'], rows['predicate'], rows['new_object']] for rows in reader]
+        triples_to_delete = triples_to_delete1 + triples_to_delete2
+        self.rdf_engine._delete_triples(triples_to_delete, prefixes)
         return test
 
     def test_insert__two_consecutive_inserts(self):
@@ -565,39 +555,47 @@ class TestVersioning(TestExecution):
 
         # Data before insert
         dataset_query = open("test_data/test_insert__dataset_query.txt", "r").read()
-
         # +2 hours timezone because this is how graphDB sets it for the vienna timezone.
         vieTZObject = timezone(timedelta(hours=2))
-        timestamp_before_insert = datetime.now(vieTZObject)
 
-        mention = "<http://data.ontotext.com/publishing#newMention>"
-        hasInstance = "publishing:hasInstance"
-        person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
-        document = "<http://www.reuters.com/article/2021/01/01/newDocument>"
-        containsMention = "publishing:containsMention"
+        timestamp_before_insert1 = datetime.now(vieTZObject)
+        with open('test_data/insert_triples.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_insert1 = [[rows['subject'], rows['predicate'], rows['object']] for rows in reader]
+        self.rdf_engine.insert_triples(triples_to_insert1, prefixes)
 
-        self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
-        self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
-        dataset_before_insert = self.rdf_engine.get_data(dataset_query, timestamp_before_insert)
-        dataset_after_insert = self.rdf_engine.get_data(dataset_query)
+        timestamp_before_insert2 = datetime.now(vieTZObject)
+        with open('test_data/insert_triples2.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_insert2 = [[rows['subject'], rows['predicate'], rows['object']] for rows in reader]
+        self.rdf_engine.insert_triples(triples_to_insert2, prefixes)
+
+        dataset_before_insert1 = self.rdf_engine.get_data(dataset_query, timestamp_before_insert1)
+        dataset_before_insert2 = self.rdf_engine.get_data(dataset_query, timestamp_before_insert2)
+        dataset_after_insert2 = self.rdf_engine.get_data(dataset_query)
 
         test = Test(test_number=16,
                     tc_desc='Make two consecutive inserts and retrieve the dataset as it was before, between '
-                            'and after the inserts. Check that the datasets reflect the right information as of'
-                            'each timestamp. ',
-                    expected_result=str(len(dataset_before_insert.index) + 1),
-                    actual_result=str(len(dataset_after_insert.index)))
+                            'and after the inserts. Check that the datasets reflect the right information as of '
+                            'each timestamp.',
+                    expected_result=str(2),
+                    actual_result=str(len(dataset_before_insert2.index) - len(dataset_before_insert1.index)
+                                      + len(dataset_after_insert2.index) - len(dataset_before_insert2.index)))
 
         # Clean up
-        self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
-        self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+        self.rdf_engine._delete_triples(triples_to_insert1, prefixes)
+        self.rdf_engine._delete_triples(triples_to_insert2, prefixes)
 
         return test
 
     def test_outdate__outdate_triples(self):
         # Data before insert
         dataset_query = open("test_data/test_outdate__dataset_query.txt", "r").read()
-        triples_to_outdate = open("test_data/test_outdate__outdate_triples.txt", "r").read()
+        prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
+                    'publishing': 'http://ontology.ontotext.com/publishing#'}
+        with open('test_data/test_outdate__outdate_triples.csv', mode='r') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            triples_to_outdate = [(rows['subject'], rows['predicate'], rows['object']) for rows in reader]
 
         # +2 hours timezone because this is how graphDB sets it for the vienna timezone.
         vieTZObject = timezone(timedelta(hours=2))
@@ -608,14 +606,12 @@ class TestVersioning(TestExecution):
         cnt_before_outdate = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
         # Outdate
-        self.rdf_engine.outdate_triples(triples_to_outdate)
+        self.rdf_engine.outdate_triples(triples_to_outdate, prefixes)
 
         # Count triples after outdate
         cnt_triples_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         cnt_after_outdate = int(cnt_triples_df['cnt'].item().split(" ")[0])
 
-        dataset_before_outdate = self.rdf_engine.get_data(dataset_query, timestamp_before_outdate)
-        # data_set_before_outdate_non_empty = dataset_before_outdate.empty
         dataset_after_outdate = self.rdf_engine.get_data(dataset_query)
 
         test = Test(test_number=17,
@@ -679,6 +675,6 @@ class TestVersioning(TestExecution):
         return test
 
 
-t = TestVersioning(annotated_tests=True)
+t = TestVersioning(annotated_tests=False)
 t.run_tests()
 t.print_test_results()

@@ -1,0 +1,3 @@
+subject;predicate;object
+<http://data.ontotext.com/publishing#newMention1>;publishing:hasInstance;<http://ontology.ontotext.com/resource/tsk4wye1ftog>
+<http://www.reuters.com/article/2021/01/01/newDocument>;publishing:containsMention;<http://data.ontotext.com/publishing#newMention1>
