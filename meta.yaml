@@ -1,4 +1,4 @@
-{% set version = "0.9.6.5" %}
+{% set version = "0.9.7.0" %}
 {% set data = load_setup_py_data() %}
 package:
   name: rdf_data_citation

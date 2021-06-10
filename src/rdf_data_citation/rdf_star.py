@@ -254,23 +254,24 @@ class TripleStoreEngine:
         Only the most recent triples (those that are annotated with
         <<s p o >> citing_valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
 
-        :param triples: A dictionary with triples as key values and strings as values. All values must be provided
-        as strings and may also contain SPARQL prefixes. E.g. foaf:name
+        :param triples: A dictionary with triples as key values and strings as values. All triple elements
+        and corresponding new values must be provided as strings and may also contain SPARQL prefixes. E.g. foaf:name
         :param prefixes: Prefixes that are used within :param triples
         """
 
-        template = open(self._template_location + "/update_data.txt", "r").read()
-        for triple, new_value in enumerate(triples):
+        template = open(self._template_location + "/update_triples.txt", "r").read()
+        for i, (triple, new_value) in enumerate(triples.items()):
             if isinstance(triple, tuple) and isinstance(new_value, str):
                 sparql_prefixes = citation_prefixes(prefixes)
                 update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2], new_value)
+                logging.info(update_statement)
                 self.sparql_post.setQuery(update_statement)
                 result = self.sparql_post.query()
                 logging.info("{0} rows updated".format(result))
             else:
                 raise WrongInputFormatException("Wrong input format. The update statement will not be executed. "
-                                                "Please provide :triples.key() as a tuple with "
-                                                "three string values and :triples.value() as a string.")
+                                                "Please provide :triples.key() as a tuple (str, str, str) "
+                                                "and :triples.value() as a string.")
 
     def insert_triples(self, triples: list, prefixes: dict = None):
         """
@@ -284,7 +285,7 @@ class TripleStoreEngine:
         :return:
         """
 
-        statement = open(self._template_location + "/insert_triple.txt", "r").read()
+        statement = open(self._template_location + "/insert_triples.txt", "r").read()
 
         if prefixes:
             sparql_prefixes = citation_prefixes(prefixes)
@@ -315,41 +316,28 @@ class TripleStoreEngine:
                 logging.error(e)
                 raise WrongInputFormatException(e)
 
-    def outdate_triples(self, select_statement):
+    def outdate_triples(self, triples: list, prefixes: dict = None):
         """
-        Triples provided as input will be outdated and marked with an valid_until timestamp. Thus, they will
-        not appear in result sets queried from the most recent graph version or any other version that came after
-        their expiration.
-        The triples provided must exist in the triple store. They must be provided as select statement in the following
-        form:
+        Outdates all triples' that are provided in :triples by annotating them with a timestamp returned by
+        SPARQL's NOW() function. the triples provided must be in n3 syntax.
 
-        # Prefixes
-        <prefixes>
-
-        select ?subjectToOutdate ?predicateToOutdate ?objectToOutdate {
-            # Triple statements, filter, ...
-            <triple statement>
-            <triple statement>
-            ...
-
-            bind(<subject> as ?subjectToOutdate)
-            bind(<predicate> as ?predicateToOutdate)
-            bind(<object> as ?objectToOutdate)
-
-        } order by ?mention
-
-        :param select_statement:
-        :return:
+        :param triples: A list of tuples where each tuple is a triple (s, p, o) -> (str, str, str).
+        All triple elements must be provided  as strings and may also contain SPARQL prefixes. E.g. foaf:name
+        :param prefixes: Prefixes that are used within :param triples
         """
 
         template = open(self._template_location + "/outdate_triples.txt", "r").read()
-        query_prefixes, query = split_prefixes_query(select_statement)
-        final_prefixes = citation_prefixes(query_prefixes)
-        statement = template.format(final_prefixes, query)
-        self.sparql_post.setQuery(statement)
-        result = self.sparql_post.query()
-
-        logging.info("{0} rows outdated".format(result))
+        for triple in triples:
+            if isinstance(triple, tuple):
+                sparql_prefixes = citation_prefixes(prefixes)
+                update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2])
+                logging.info(update_statement)
+                self.sparql_post.setQuery(update_statement)
+                result = self.sparql_post.query()
+                logging.info("{0} rows outdated".format(result))
+            else:
+                raise WrongInputFormatException("Wrong input format. The update statement will not be executed. "
+                                                "Please provide :triples as a list of tuples (str, str, str). ")
 
     def _delete_triples(self, triples: list, prefixes: dict = None):
         """
