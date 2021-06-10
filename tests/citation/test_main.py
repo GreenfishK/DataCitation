@@ -1,9 +1,9 @@
-from src.rdf_data_citation._exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
-from src.rdf_data_citation.rdf_star import TripleStoreEngine
+from rdf_data_citation._exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
+from rdf_data_citation.rdf_star import TripleStoreEngine
+import rdf_data_citation.citation as ct
+from rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet, MetaData
+from rdf_data_citation.query_store import QueryStore
 from tests.test_base import Test, TestExecution, format_text
-import src.rdf_data_citation.citation as ct
-from src.rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet, MetaData
-from src.rdf_data_citation.query_store import QueryStore
 from datetime import datetime, timezone, timedelta
 import logging
 

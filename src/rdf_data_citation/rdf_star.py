@@ -264,7 +264,6 @@ class TripleStoreEngine:
             if isinstance(triple, tuple) and isinstance(new_value, str):
                 sparql_prefixes = citation_prefixes(prefixes)
                 update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2], new_value)
-                logging.info(update_statement)
                 self.sparql_post.setQuery(update_statement)
                 result = self.sparql_post.query()
                 logging.info("{0} rows updated".format(result))
@@ -331,7 +330,6 @@ class TripleStoreEngine:
             if isinstance(triple, tuple):
                 sparql_prefixes = citation_prefixes(prefixes)
                 update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2])
-                logging.info(update_statement)
                 self.sparql_post.setQuery(update_statement)
                 result = self.sparql_post.query()
                 logging.info("{0} rows outdated".format(result))

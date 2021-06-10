@@ -1,7 +1,6 @@
-import logging
-
+from rdf_data_citation.citation_utils import QueryUtils
 from tests.test_base import Test, TestExecution
-from src.rdf_data_citation.citation_utils import QueryUtils
+import logging
 
 
 class TestNormalization(TestExecution):

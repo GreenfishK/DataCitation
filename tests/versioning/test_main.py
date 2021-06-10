@@ -1,4 +1,4 @@
-from src.rdf_data_citation.rdf_star import TripleStoreEngine, VersioningMode
+from rdf_data_citation.rdf_star import TripleStoreEngine, VersioningMode
 from tests.test_base import Test, TestExecution, format_text
 from datetime import timezone, timedelta, datetime
 import logging
