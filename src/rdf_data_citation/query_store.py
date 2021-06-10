@@ -1,10 +1,10 @@
-from citation_utils import QueryUtils, RDFDataSetUtils, MetaData
-from _helper import template_path
-from _exceptions import QueryExistsError, QueryDoesNotExistError
-import logging
+from .citation_utils import QueryUtils, RDFDataSetUtils, MetaData
+from ._helper import template_path
+from ._exceptions import QueryExistsError, QueryDoesNotExistError
 import sqlalchemy as sql
 from sqlalchemy import exc
 import pandas as pd
+import logging
 
 
 class QueryStore:
