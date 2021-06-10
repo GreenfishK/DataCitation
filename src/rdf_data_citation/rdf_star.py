@@ -247,58 +247,30 @@ class TripleStoreEngine:
 
         return df
 
-    def update(self, select_statement, new_value):
+    def update(self, triples: dict, prefixes: dict = None):
         """
-        Updates all objects that are provided within the select_statement with new_value.
-        The caller must bind the subject, predicate and object of the triples to update to ?subjectToUpdate,
-        ?predicateToUpdate and ?objectToUpdate respectively. The result of this query must include only existing
-        triples. Only the most recent triples (those with
-        citing_valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
+        Updates all triples' objects that are provided in :triples as key values with the corresponding
+        values from the same dictionary.
+        Only the most recent triples (those that are annotated with
+        <<s p o >> citing_valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
 
-        The select_statement has to be provided in the following form:
-            PREFIXES
-
-            select  ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
-            <triple statements>
-
-            # Inputs to provide
-            bind(?subject as ?subjectToUpdate)
-            bind(?predicate as ?predicateToUpdate)
-            bind(?object as ?objectToUpdate)
-            }
-
-        Example:
-            PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-            PREFIX publishing: <http://ontology.ontotext.com/publishing#>
-
-            select distinct ?subjectToUpdate  ?predicateToUpdate ?objectToUpdate {
-            ?mention publishing:hasInstance ?person .
-            ?document publishing:containsMention ?mention .
-            ?person pub:memberOfPoliticalParty ?member .
-            ?person pub:preferredLabel ?personLabel .
-            ?member pub:hasValue ?party .
-            ?party pub:preferredLabel ?party_label
-            filter(?personLabel = "Judy Chu"@en)
-
-            # Inputs to provide
-            bind(?member as ?subjectToUpdate)
-            bind(pub:memberOfPoliticalParty as ?predicateToUpdate)
-            bind(?party as ?objectToUpdate)
-            }
-
-        :param select_statement: set of triples to update.
-        :param new_value: The new value which replaces the objects of the select statement's returned triples
-        :return:
+        :param triples: A dictionary with triples as key values and strings as values. All values must be provided
+        as strings and may also contain SPARQL prefixes. E.g. foaf:name
+        :param prefixes: Prefixes that are used within :param triples
         """
 
-        query_prefixes, query = split_prefixes_query(select_statement)
-        final_prefixes = citation_prefixes(query_prefixes)
         template = open(self._template_location + "/update_data.txt", "r").read()
-        update_statement = template.format(final_prefixes, query, new_value)
-        self.sparql_post.setQuery(update_statement)
-        result = self.sparql_post.query()
-
-        logging.info("{0} rows updated".format(result))
+        for triple, new_value in enumerate(triples):
+            if isinstance(triple, tuple) and isinstance(new_value, str):
+                sparql_prefixes = citation_prefixes(prefixes)
+                update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2], new_value)
+                self.sparql_post.setQuery(update_statement)
+                result = self.sparql_post.query()
+                logging.info("{0} rows updated".format(result))
+            else:
+                raise WrongInputFormatException("Wrong input format. The update statement will not be executed. "
+                                                "Please provide :triples.key() as a tuple with "
+                                                "three string values and :triples.value() as a string.")
 
     def insert_triples(self, triples: list, prefixes: dict = None):
         """

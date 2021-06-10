@@ -14,11 +14,10 @@ insert {{
                                                       citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
 }}
 where {{
-    # business logic - rows to update as select statement
-    {{
-        {1}
-    }}
-    bind({2} as ?newValue). #new Value
+    bind({1} as ?subjectToUpdate)
+    bind({2} as ?predicateToUpdate)
+    bind({3} as ?objectToUpdate)
+    bind({4} as ?newValue). #new Value
     # versioning
     <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until .
     BIND(xsd:dateTime(NOW()) AS ?newVersion).
