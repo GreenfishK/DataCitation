@@ -250,7 +250,7 @@ class TripleStoreEngine:
     def update(self, triples: dict, prefixes: dict = None):
         """
         Updates all triples' objects that are provided in :triples as key values with the corresponding
-        values from the same dictionary.
+        values from the same dictionary. the triples and the new value must be in n3 syntax.
         Only the most recent triples (those that are annotated with
         <<s p o >> citing_valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
 
