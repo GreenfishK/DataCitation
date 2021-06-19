@@ -25,7 +25,7 @@ them.
 
 [3] https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
 
-# UseCase diagram and modules
+# UseCase&#32;diagram&#32;and&#32;modules
 Following use case diagram should show a "use case to module" mapping which maps the use cases from a users
 (researcher, publisher, data curator) perspective to modules that correspond to actual modules in the 
 rdf_data_citation package. These use cases, and furthermore those that are linked via the "include" relationship are, 
