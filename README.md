@@ -26,11 +26,11 @@ them.
 [3] https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
 
 # UseCase&#32;diagram&#32;and&#32;modules
-Following use case diagram should show a "use case to module" mapping which maps the use cases from a users
-(researcher, publisher, data curator) perspective to modules that correspond to actual modules in the 
+Following use case diagram should show a "use case to module mapping" which maps the use cases from a users
+(researcher, publisher, data operator) perspective to modules that correspond to actual modules in the 
 rdf_data_citation package. These use cases, and furthermore those that are linked via the "include" relationship are, 
 in fact, functions from the rdf_data_citation package modules. Hence, we get a first indication which modules from 
-the package we must use to accomplish different use case goals for different roles.
+the package we must use to accomplish different use case goals for aforementioned user roles.
 In the next chapter we will see actual code snippets for each of these major use cases (the ones that are directly 
 linked to the actor) and their specializations.
 
