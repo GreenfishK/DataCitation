@@ -12,7 +12,7 @@ in [UseCase diagram and modules](#UseCase&#32;diagram&#32;and&#32;modules).
 However, these actors will most probably not interact with the rdf_data_citation package itself but rather use 
 GUIs to accomplish their use case goals. This python API can therefore be easily integrated into other projects, 
 such as landing pages or GUIs for querying and citing data. In [Usage](#Usage) we provide code snippets for all the 
-major use cases for all actors.
+major use cases and actors.
 This project can be built from scratch or installed directly from anaconda.org as shown 
 in [Installation](#Installation). 
 Last, if you notice any bugs or major issues please use https://github.com/GreenfishK/DataCitation/issues to report
@@ -165,3 +165,5 @@ dataset, meta_data = citation.retrieve(query_pid)
 These data can now be display on a human-readable landing page.
 
 # Installation
+To install this package first make sure that anaconda is installed on your system. 
+simply call conda install -c greenfish rdf_data_citation
