@@ -18,13 +18,6 @@ in [Installation](#Installation).
 Last, if you notice any bugs or major issues please use https://github.com/GreenfishK/DataCitation/issues to report
 them.
 
-
-[1] Rauber, A., Asmi, A., Van Uytvanck, D., & Proell, S. (2016). Identification of reproducible subsets for data citation, sharing and re-use. Bulletin of IEEE Technical Committee on Digital Libraries, Special Issue on Data Citation, 12(1), 6-15. 
-
-[2] Hartig, O. (2017). Foundations of RDF* and SPARQL*:(An alternative approach to statement-level metadata in RDF). In AMW 2017 11th Alberto Mendelzon International Workshop on Foundations of Data Management and the Web, Montevideo, Uruguay, June 7-9, 2017. (Vol. 1912). Juan Reutter, Divesh Srivastava.
-
-[3] https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
-
 # UseCase&#32;diagram&#32;and&#32;modules
 Following use case diagram should show a "use case to module mapping" which maps the use cases from a users
 (researcher, publisher, data operator) perspective to modules that correspond to actual modules in the 
@@ -173,3 +166,10 @@ Then, simply call following command from the terminal.
 ```
 conda install -c greenfish rdf_data_citation
 ```
+
+# References
+[1] Rauber, A., Asmi, A., Van Uytvanck, D., & Proell, S. (2016). Identification of reproducible subsets for data citation, sharing and re-use. Bulletin of IEEE Technical Committee on Digital Libraries, Special Issue on Data Citation, 12(1), 6-15. 
+
+[2] Hartig, O. (2017). Foundations of RDF* and SPARQL*:(An alternative approach to statement-level metadata in RDF). In AMW 2017 11th Alberto Mendelzon International Workshop on Foundations of Data Management and the Web, Montevideo, Uruguay, June 7-9, 2017. (Vol. 1912). Juan Reutter, Divesh Srivastava.
+
+[3] https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
