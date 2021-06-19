@@ -68,7 +68,7 @@ class TripleStoreEngine:
             self.user_name = user_name
             self.pw = pw
 
-    def __init__(self, query_endpoint, update_endpoint, credentials: Credentials = None):
+    def __init__(self, query_endpoint: str, update_endpoint: str, credentials: Credentials = None):
         """
         During initialization a few queries are executed against the RDF* store to test connection but also whether
         the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and

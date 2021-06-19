@@ -1,16 +1,8 @@
-class MultipleAliasesInBindError(Exception):
-    pass
-
-
 class NoUniqueSortIndexError(Exception):
     pass
 
 
 class MultipleSortIndexesError(Exception):
-    pass
-
-
-class NoDataSetError(Exception):
     pass
 
 
@@ -35,10 +27,6 @@ class QueryExistsError(Exception):
 
 
 class QueryDoesNotExistError(Exception):
-    pass
-
-
-class NoQueryString(Exception):
     pass
 
 

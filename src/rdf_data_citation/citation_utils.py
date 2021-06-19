@@ -97,7 +97,7 @@ def _order_by_variables(query: str, prefixes: str) -> dict:
     return order_by_variables
 
 
-def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None):
+def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None) -> str:
     """
 
     :param query_algebra: An algebra returned by the function call algebra.translateQuery(parse_tree)
@@ -1078,7 +1078,7 @@ class RDFDataSetUtils:
         else:
             return description
 
-    def compute_checksum(self, column_order_dependent: bool = False):
+    def compute_checksum(self, column_order_dependent: bool = False) -> str:
         """
         R6 - Result set verification
         A column order dependent or independent computation of the dataset checksum.
@@ -1205,7 +1205,7 @@ class RDFDataSetUtils:
 
         return sort_indexes
 
-    def sort(self, sort_index: tuple = None):
+    def sort(self, sort_index: tuple = None) -> pd.DataFrame:
         """
         R5 - Stable Sorting
         Sorts by the index that is derived from create_sort_index. As this method can return more than one possible
@@ -1263,7 +1263,7 @@ class MetaData:
 
         self.citation_snippet = None
 
-    def to_json(self):
+    def to_json(self) -> str:
         meta_data = vars(self).copy()
         del meta_data['citation_snippet']
         meta_data_json = json.dumps(meta_data)

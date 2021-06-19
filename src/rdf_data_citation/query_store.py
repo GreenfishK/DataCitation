@@ -15,9 +15,9 @@ class QueryStore:
         Tables: query_hub, query_citation
         """
 
-        self.path_to_persistence = template_path("persistence")
-        db_path = self.path_to_persistence + "/query_store.db"
-        self.engine = sql.create_engine("sqlite:///{0}".format(db_path))
+        self._path_to_persistence = template_path("persistence")
+        db_path = self._path_to_persistence + "/query_store.db"
+        self._engine = sql.create_engine("sqlite:///{0}".format(db_path))
 
     def _remove(self, query_checksum):
         """
@@ -30,7 +30,7 @@ class QueryStore:
         delete_query_citation = "Delete from query_citation where query_checksum = :query_checksum "
         delete_query = "Delete from query_hub where query_checksum = :query_checksum "
 
-        with self.engine.connect() as connection:
+        with self._engine.connect() as connection:
             try:
                 # Order is important due to referential integrity
                 connection.execute(delete_query_citation, query_checksum=query_checksum)
@@ -51,8 +51,8 @@ class QueryStore:
         :return:
         """
 
-        select_statement = open("{0}/lookup_select.sql".format(self.path_to_persistence), "r").read()
-        with self.engine.connect() as connection:
+        select_statement = open("{0}/lookup_select.sql".format(self._path_to_persistence), "r").read()
+        with self._engine.connect() as connection:
             try:
                 result = connection.execute(select_statement, query_checksum=query_checksum)
                 df = pd.DataFrame(result.fetchall())
@@ -94,8 +94,8 @@ class QueryStore:
         :param query_pid:
         :return: query data, dataset metadata, citation metadata
         """
-        select_timestamped_query = open("{0}/select_timestamped_query.sql".format(self.path_to_persistence), "r").read()
-        with self.engine.connect() as connection:
+        select_timestamped_query = open("{0}/select_timestamped_query.sql".format(self._path_to_persistence), "r").read()
+        with self._engine.connect() as connection:
             try:
                 result = connection.execute(select_timestamped_query, query_pid=query_pid)
                 df = pd.DataFrame(result.fetchall())
@@ -157,11 +157,11 @@ class QueryStore:
         :return:
         """
 
-        insert_statement = open("{0}/store_insert_query_hub.sql".format(self.path_to_persistence), "r").read()
-        insert_statement_2 = open("{0}/store_insert_query_citation.sql".format(self.path_to_persistence), "r").read()
-        update_statement = open("{0}/store_update_query_hub.sql".format(self.path_to_persistence), "r").read()
+        insert_statement = open("{0}/store_insert_query_hub.sql".format(self._path_to_persistence), "r").read()
+        insert_statement_2 = open("{0}/store_insert_query_citation.sql".format(self._path_to_persistence), "r").read()
+        update_statement = open("{0}/store_update_query_hub.sql".format(self._path_to_persistence), "r").read()
 
-        with self.engine.connect() as connection:
+        with self._engine.connect() as connection:
             if yn_new_query:
                 try:
                     connection.execute(insert_statement,

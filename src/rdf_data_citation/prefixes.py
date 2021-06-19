@@ -18,7 +18,7 @@ def _prefixes_to_sparql(prefixes: dict) -> str:
     return sparql_prefixes
 
 
-def attach_prefixes(query, prefixes: dict) -> str:
+def attach_prefixes(query: str, prefixes: dict) -> str:
     """
     Attaches the prologue in SPARQL syntax to the SPARQL query. The passed query should therefore have no prologue.
 
