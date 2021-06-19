@@ -165,5 +165,8 @@ dataset, meta_data = citation.retrieve(query_pid)
 These data can now be display on a human-readable landing page.
 
 # Installation
-To install this package first make sure that anaconda is installed on your system. 
-simply call conda install -c greenfish rdf_data_citation
+Warning: The installation process has so far only been tested on Linux Mint v20 (Ulyana). The installation command 
+(see below) might not work on Windows, however, the latest version of the package can be downloaded 
+here: https://anaconda.org/Greenfish/rdf_data_citation/files and installed manually.
+To install this package first make sure that conda and conda-env is installed on your system. 
+Then, simply call "conda install -c greenfish rdf_data_citation" from the terminal.
