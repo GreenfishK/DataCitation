@@ -29,8 +29,7 @@ Class diagram: standard user view
 Class diagram: explorer view
 
 # Modules
-![alt text](RDFDataCitation_usecase_diagram.png)
-
+![Alt text](RDFDataCitation_usecase_diagram.svg)
 # Usage
 Usage for the standard user.
 Parameters you need to set first.
