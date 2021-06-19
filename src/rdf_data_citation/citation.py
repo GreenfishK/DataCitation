@@ -160,8 +160,8 @@ class Citation:
 
     def retrieve(self, query_pid: str) -> [pd.DataFrame, str]:
         """
-        Retrieves metadata (query data, dataset metadata, citation metadata, citation snippet) as a JSON representation
-        to foster machine actionability and the dataset as pandas dataframe.
+        Retrieves metadata (query data, dataset metadata, citation metadata) including citation snippet
+        as a JSON representation to foster machine actionability and the dataset as pandas dataframe.
         This is done by  first querying aforementioned data from the query store followed by an execution of
         the timestamped query against the RDF store, thus, post_endpoint (post can carry more data then get
         and the timestamped queries tend to be quiet long).
@@ -181,6 +181,7 @@ class Citation:
 
         query_store = QueryStore()
         try:
+            # citation snippet is stored within the citation_metadata object
             query_data, result_set_data, citation_metadata = query_store.get_cited_query(query_pid)
         except QueryDoesNotExistError as e:
             raise QueryDoesNotExistError("{0} The query and its metadata will not be retrieved.".format(e))

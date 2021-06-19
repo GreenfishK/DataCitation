@@ -29,8 +29,7 @@ Class diagram: standard user view
 Class diagram: explorer view
 
 # Modules
-## Standard user view
-## Explorer view
+![alt text](RDFDataCitation_usecase_diagram.png)
 
 # Usage
 Usage for the standard user.
@@ -149,7 +148,7 @@ citation_snippet = citation_data.citation_metadata.citation_snippet
 
 ## Retrieve cited data
 To get a cited dataset and all its associated metadata 
-(query data, citation and provenance metadata, citation snippet, dataset metadata) by its query PID 
+(query data, dataset metadata, citation and provenance metadata) and citation snippet by its query PID 
 we execute following code snippet.
 ```python
 query_pid = citation_data.query_utils.pid
