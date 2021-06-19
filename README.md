@@ -169,4 +169,7 @@ Warning: The installation process has so far only been tested on Linux Mint v20 
 (see below) might not work on Windows, however, the latest version of the package can be downloaded 
 here: https://anaconda.org/Greenfish/rdf_data_citation/files and installed manually.
 To install this package first make sure that conda and conda-env is installed on your system. 
-Then, simply call "conda install -c greenfish rdf_data_citation" from the terminal.
+Then, simply call following command from the terminal.
+```
+conda install -c greenfish rdf_data_citation
+```
