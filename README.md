@@ -1,37 +1,43 @@
 # Introduction
-Citing RDF Data
-Citation Utils
-No need to be touched by the standard user except for the MetaData class
-Explorer might want to try out functions and experiment with them
+The RDF data citation API aims to enable data citation for RDF stores (also called graph databases or triple stores). It
+does so by implementing the data citation recommendations[1] to make datasets persistently identifiable and
+retrievable. It also makes clever use of the RDF* and SPARQL* concept[2] to timestamp data, thus version them,
+when a user, such as an ontology maintainer or data operator in general, performs write operations against 
+the triple store. Moreover, it uses the same principles to retrieve historical data. To identify semantically 
+identical queries and avoid double citations we use the W3C's SPARQL query algebra[3] to normalize the queries' algebra 
+trees and back-translate them into SPARQL queries. Then, we compute a checksum for each query in order to compare 
+them against each other. Our main target actors are RDF data operators and researchers including publishers,
+whereas latter make use of data provided by former. We illustrate their use cases 
+in [UseCase diagram and modules](#UseCase diagram and modules). 
+However, these actors will most probably not interact with the rdf_data_citation package itself but rather use 
+GUIs to accomplish their use case goals. This python API can therefore be easily integrated into other projects, 
+such as landing pages or GUIs for querying and citing data. In [Usage](#Usage) we provide code snippets for all the 
+major use cases for all actors.
+This project can be built from scratch or installed directly from anaconda.org as shown 
+in [Installation](#Installation). 
+Last, if you notice any bugs or major issues please use https://github.com/GreenfishK/DataCitation/issues to report
+them.
 
-Based on Data Citation Recommendations from https://www.rd-alliance.org/system/files/documents/RDA-Guidelines_TCDL_draft.pdf
-Includes important features like versioning triples with timestamps in performance or memory saving mode, normalizing 
-user queries with the help of W3C's 
-query algebra, computing query and dataset checksums for comparison with consecutive data citations,
-generating query PIDs based on checksum and citation timestamp, Uniquely sorting the dataset by requiring an order-by clause
-from the user which yields a unique sort and validating it, generating citation snippets using DataCite's mandatory attributes
-Special features: Computing unique sort index for a user query, Generating a dataset description from the dataset based 
-on descriptive statistics and heuristics
 
-Citation workflow
+[1] Rauber, A., Asmi, A., Van Uytvanck, D., & Proell, S. (2016). Identification of reproducible subsets for data citation, sharing and re-use. Bulletin of IEEE Technical Committee on Digital Libraries, Special Issue on Data Citation, 12(1), 6-15. 
 
-RDF API for querying live and historic data and writing versioned to the RDF store.
+[2] Hartig, O. (2017). Foundations of RDF* and SPARQL*:(An alternative approach to statement-level metadata in RDF). In AMW 2017 11th Alberto Mendelzon International Workshop on Foundations of Data Management and the Web, Montevideo, Uruguay, June 7-9, 2017. (Vol. 1912). Juan Reutter, Divesh Srivastava.
 
-Query_Store
-Used by citation module, no need to be touched by the standard user
-Explorer might want to delete data from the query store and use the _remove function. 
-
-prefixes
-Only to be used by the explorer. Acts as a helper class but with the focus on handling the query's prologue.
-
-Class diagram: standard user view
-
-Class diagram: explorer view
+[3] https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
 
 # UseCase diagram and modules
-In the following you can see a use case to modules mapping. This diagram shows the basic use cases all the involved 
-actors have but also 
+Following use case diagram should show a "use case to module" mapping which maps the use cases from a users
+(researcher, publisher, data curator) perspective to modules that correspond to actual modules in the 
+rdf_data_citation package. These use cases, and furthermore those that are linked via the "include" relationship are, 
+in fact, functions from the rdf_data_citation package modules. Hence, we get a first indication which modules from 
+the package we must use to accomplish different use case goals for different roles.
+In the next chapter we will see actual code snippets for each of these major use cases (the ones that are directly 
+linked to the actor) and their specializations.
+
 ![Alt text](RDFDataCitation_usecase_diagram.svg)
+
+// Add class diagram
+
 # Usage
 Usage for the standard user.
 Parameters you need to set first.
@@ -51,7 +57,7 @@ rdf_engine = rdf_star.TripleStoreEngine(get_endpoint, post_endpoint)
 rdf_engine.version_all_rows(versioning_mode="SAVE_MEM")
 ```
 
-## Write data to triple store
+## Update triple store or graph database
 Now you can use insert_triples, update_triples or outdate_triples to execute write operations against 
 the RDF store and thereby modify your graph. Each of these functions will add additional metadata/nested triples to the 
 RDF store and annotate the provided user triples with respective version timestamps. 
@@ -72,7 +78,7 @@ rdf_engine.insert_triples(list_of_triples, prefixes)
 ```
 
 ### Example for update
-```python
+```python 
 prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/'}
 triples_to_update = {('<http://ontology.ontotext.com/resource/tsk4wye1ftog>',
                       'pub:memberOfPoliticalParty', 
@@ -96,7 +102,7 @@ list_of_triples =
 
 rdf_engine.outdate_triples(list_of_triples, prefixes)
 ```
-## Read data from triple store
+## Query data from triple store or graph database
 If you are offering an interface, be it graphical or a console, to query data 
 and display the result like we know it from database management tools, you can use the function get_data.
 To see the result set is a step you certainly want to do before citing your day. Either use 
@@ -112,8 +118,9 @@ rdf_engine.get_data(select_statement, timestamp)
 ```
 ## Cite data
 To cite your dataset and make it persistently identifiable and retrievable we first provide all necessary citation data
-optionally including a result set description and the query to cite. Then we use a simple function call to cite 
-the dataset. 
+optionally including a result set description and the dataset's query. Then we use a simple function call to cite 
+the dataset and thereby persist query and query metadata, citation metadata, result set metadata and the citation snippet 
+within the query store. 
 ```python   
 citation_metadata = citation_utils.MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                                             title="Judy Chu occurences", publisher="Filip Kovacevic",
@@ -153,7 +160,8 @@ To get a cited dataset and all its associated metadata
 we execute following code snippet.
 ```python
 query_pid = citation_data.query_utils.pid
-query_data, result_set_data, meta_data = citation.retrieve(query_pid)
-dataset = result_set_data.dataset
+dataset, meta_data = citation.retrieve(query_pid)
 ```
 These data can now be display on a human-readable landing page.
+
+# Installation
