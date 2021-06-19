@@ -28,7 +28,9 @@ Class diagram: standard user view
 
 Class diagram: explorer view
 
-# Modules
+# UseCase diagram and modules
+In the following you can see a use case to modules mapping. This diagram shows the basic use cases all the involved 
+actors have but also 
 ![Alt text](RDFDataCitation_usecase_diagram.svg)
 # Usage
 Usage for the standard user.
