@@ -1,4 +1,13 @@
 # Introduction
+This wiki assumes that you are familiar with following domains:  
+Triple stores or RDF stores: https://en.wikipedia.org/wiki/Triplestore  
+Graph database: https://en.wikipedia.org/wiki/Graph_database  
+SPARQL:  
+https://www.w3.org/TR/sparql11-overview/
+https://en.wikipedia.org/wiki/SPARQL  
+Data citation: https://en.wikipedia.org/wiki/Data_citation  
+SPARQL algebra: https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
+
 The RDF data citation API aims to enable data citation for RDF stores (also called graph databases or triple stores). It
 does so by implementing the data citation recommendations[1] to make datasets persistently identifiable and
 retrievable. It also makes clever use of the RDF* and SPARQL* concept[2] to timestamp data, thus version them,
