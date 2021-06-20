@@ -38,13 +38,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/tests/versioning/test_data/sinlge_triple_update.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value=":" />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/tests/versioning/test_data/test_outdate__outdate_triples.csv">
           <value>
             <Attribute>

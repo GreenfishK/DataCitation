@@ -18,18 +18,37 @@ in [Installation](#Installation).
 Last, if you notice any bugs or major issues please use https://github.com/GreenfishK/DataCitation/issues to report
 them.
 
-# UseCase&#32;diagram&#32;and&#32;modules
-Following use case diagram should show a "use case to module mapping" which maps the use cases from a users
-(researcher, publisher, data operator) perspective to modules that correspond to actual modules in the 
-rdf_data_citation package. These use cases, and furthermore those that are linked via the "include" relationship are, 
-in fact, functions from the rdf_data_citation package modules. Hence, we get a first indication which modules from 
-the package we must use to accomplish different use case goals for aforementioned user roles.
-In the next chapter we will see actual code snippets for each of these major use cases (the ones that are directly 
-linked to the actor) and their specializations.
+# UseCase&#32;diagram&#32;and&#32;components
+Following use case diagram should give an overview of the involved actors and use cases for RDF data citation.
+On the one side we have researchers who are interested in retrieving cited RDF datasets which they might want to use 
+to reproduce a study or do their own research. A cited dataset implies that someone must have published it before. 
+This is what a publisher does, which might but does not have to be a researcher, when he/she wants to preserve his/her
+research data and get credits for it. Hence, the publisher must have at least once queried the RDF store for the 
+dataset. This might not always hold true because the data could be downloaded from somewhere else, however, in the 
+system we are assuming (see component diagram) querying the dataset before citing it, cannot be circumvented. 
+On the other side, we deal with RDF data operators, such as ontology maintainers, who are constantly updating graphs 
+(inserting, updating, deleting) from the RDF store but also checking older versions and comparing to actual ones. Thus, 
+they also need to query live but also historical data.
+![Alt text](RDFDataCitation_UseCase_simplified.svg)
 
-![Alt text](RDFDataCitation_usecase_diagram.svg)
-
-// Add class diagram
+The use cases we discussed are met by our rdf_data_citation package (also referred to as RDF Data Citation API). In 
+the component diagram below we see what services are offered by the Data Citation API to meet the use case goals. 
+It also shows how the system we are assuming looks like, what additional components next to our API it needs and 
+how these components interact with each other. 
+We see the same actors again as in the use case diagram. In the case of a publisher, we now also see what he/she must 
+provide to the Citation API. The data can be provided through a web interface which also makes use of the offered 
+services "Get live data", "Cite dataset" and "Citation snippet" from the Citation API. The publisher should first 
+query the live data he/she wants to cite using a SPARQL query, then cite the dataset and get the citation snippet 
+in return. To retrieve the cited dataset along with its metadata (query metadata, dataset metadata, 
+citation and provenance metadata) researchers can use the query PID within the citation snippet which should resolve
+to a human-readable landing page. 
+Again, on the other side, the data operator has an interface, too, which he uses to make read and write operations 
+to the RDF store. This interface can come in any shape or form and uses the provided service functions to query 
+live and historical data and make write operations against the underlying RDF store. In case of write statements, 
+the user does not need to worry about versioning data. This is what the RDF Data Citation API does implicitly
+when using the "update Graph" service. There are a few functions behind this service. Find more details about it  
+in chapter [Usage](#Usage).
+![Alt text](Component_diagram_level_1.svg)
 
 # Usage
 Usage for the standard user.
