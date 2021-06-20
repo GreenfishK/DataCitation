@@ -3,7 +3,7 @@ This wiki assumes that you are familiar with following domains:
 Triple stores or RDF stores: https://en.wikipedia.org/wiki/Triplestore  
 Graph database: https://en.wikipedia.org/wiki/Graph_database  
 SPARQL:  
-https://www.w3.org/TR/sparql11-overview/
+https://www.w3.org/TR/sparql11-overview/  
 https://en.wikipedia.org/wiki/SPARQL  
 Data citation: https://en.wikipedia.org/wiki/Data_citation  
 SPARQL algebra: https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
