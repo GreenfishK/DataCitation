@@ -1,7 +1,7 @@
 # Introduction
 This wiki assumes that you are familiar with following domains:  
 Triple stores or RDF stores: https://en.wikipedia.org/wiki/Triplestore  
-Graph database: https://en.wikipedia.org/wiki/Graph_database  
+Graph Database: https://en.wikipedia.org/wiki/Graph_database  
 SPARQL:  
 https://www.w3.org/TR/sparql11-overview/  
 https://en.wikipedia.org/wiki/SPARQL  
