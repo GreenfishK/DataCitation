@@ -17,7 +17,7 @@ identical queries and avoid double citations we use the W3C's SPARQL query algeb
 trees and back-translate them into SPARQL queries. Then, we compute a checksum for each query in order to compare 
 them against each other. Our main target actors are RDF data operators and researchers including publishers,
 whereas latter make use of data provided by former. We illustrate their use cases 
-in [Use Cases and system components](Use&#32;Cases&#32;and&#32;system&#32;components). 
+in [Use Cases and system components](#Use&#32;Cases&#32;and&#32;system&#32;components). 
 However, these actors will most probably not interact with the rdf_data_citation package itself but rather use 
 GUIs to accomplish their use case goals. This python API can therefore be easily integrated into other projects, 
 such as landing pages or GUIs for querying and citing data. In [Usage](#Usage) we provide code snippets for all the 
