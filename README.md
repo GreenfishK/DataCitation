@@ -55,7 +55,7 @@ Again, on the other side, the data operator has an interface, too, which he uses
 to the RDF store. This interface can come in any shape or form and uses the provided service functions to query 
 live and historical data and make write operations against the underlying RDF store. In case of write statements, 
 the user does not need to worry about versioning data. This is what the RDF Data Citation API does implicitly
-when using the "update Graph" service. There are a few functions behind this service. Find more details about it  
+when using the "update Graph" service. There are a few functions behind this service. Find more details about it 
 in chapter [Usage](#Usage).
 ![Alt text](Component_diagram_level_1.svg)
 
