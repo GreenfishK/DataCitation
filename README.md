@@ -8,7 +8,7 @@ https://en.wikipedia.org/wiki/SPARQL
 Data citation: https://en.wikipedia.org/wiki/Data_citation  
 SPARQL algebra: https://www.w3.org/2001/sw/DataAccess/rq23/rq24-algebra.html
 
-The RDF data citation API aims to enable data citation for RDF stores (also called graph databases or triple stores). It
+The RDF data citation API aims to enable data citation for RDF stores (also triple stores). It
 does so by implementing the data citation recommendations[1] to make datasets persistently identifiable and
 retrievable. It also makes clever use of the RDF* and SPARQL* concept[2] to timestamp data, thus version them,
 when a user, such as an ontology maintainer or data operator in general, performs write operations against 
@@ -19,9 +19,11 @@ them against each other. Our main target actors are RDF data operators and resea
 whereas latter make use of data provided by former. We illustrate their use cases 
 in [Use Cases and system components](#Use&#32;Cases&#32;and&#32;system&#32;components). 
 However, these actors will most probably not interact with the rdf_data_citation package itself but rather use 
-GUIs to accomplish their use case goals. This python API can therefore be easily integrated into other projects, 
+(graphical) interfaces, which make use of the RDF Data Citation API services, to accomplish their use case goals 
+(see component diagram in chapter [Use Cases and system components](#Use&#32;Cases&#32;and&#32;system&#32;components)). 
+This python API can therefore be easily integrated into other projects, 
 such as landing pages or GUIs for querying and citing data. In [Usage](#Usage) we provide code snippets for all the 
-major use cases and actors.
+previously described use cases.
 This project can be built from scratch or installed directly from anaconda.org as shown 
 in [Installation](#Installation). 
 Last, if you notice any bugs or major issues please use https://github.com/GreenfishK/DataCitation/issues to report
@@ -78,7 +80,7 @@ rdf_engine = rdf_star.TripleStoreEngine(get_endpoint, post_endpoint)
 rdf_engine.version_all_rows(versioning_mode="SAVE_MEM")
 ```
 
-## Update triple store or graph database
+## Update triple store 
 Now you can use insert_triples, update_triples or outdate_triples to execute write operations against 
 the RDF store and thereby modify your graph. Each of these functions will add additional metadata/nested triples to the 
 RDF store and annotate the provided user triples with respective version timestamps. 
@@ -123,11 +125,11 @@ list_of_triples =
 
 rdf_engine.outdate_triples(list_of_triples, prefixes)
 ```
-## Query data from triple store or graph database
+## Query data from triple store 
 If you are offering an interface, be it graphical or a console, to query data 
 and display the result like we know it from database management tools, you can use the function get_data.
 To see the result set is a step you certainly want to do before citing your day. Either use 
-get_data combined with your own interface or an existing "graph database management tool", such as GraphDB, to do so.
+get_data combined with your own interface or an existing "triple store management tool", such as GraphDB, to do so.
 ```python 
 rdf_engine.get_data(select_statement)
 ```
