@@ -1039,7 +1039,7 @@ class RDFDataSetUtils:
         else:
             self.checksum = None
 
-    def describe(self, description: str = None):
+    def describe(self, description: str = None, query: str = None):
         """
         Generates a description from the dataset. If a description is provided, the description will be returned.
 
