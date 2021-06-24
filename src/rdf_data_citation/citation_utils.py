@@ -1121,9 +1121,10 @@ class RDFDataSetUtils:
         will yield a different order of key attributes if one or more composite keys are suggested.
         Two datasets with differently re-mapped column names that would result into a different order when sorted
         will not affect the composition of the keys and therefore also not affect the sorting.
-        A reduction of suggested composite keys will be made if there are two or more suggested composite keys and
-        the number of "distinct summed key attribute values" of each of these composite keys differ from each other.
-        In fact, the composite keys with the minimum sum of distinct key attribute values will be returned.
+        A reduction of suggested composite keys might be made if there are two or more suggested composite keys. For
+        each composite key the following will be done: 1. Count the number of distinct values for each key attribute
+        (column); 2. Sum up all the counted distinct values.
+        The composite keys with the minimum sum of distinct key attribute values will be returned.
 
         :return: A list of suggested indexes to use for sorting the dataset.
         """
