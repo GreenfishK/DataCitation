@@ -68,7 +68,8 @@ class TripleStoreEngine:
             self.user_name = user_name
             self.pw = pw
 
-    def __init__(self, query_endpoint: str, update_endpoint: str, credentials: Credentials = None):
+    def __init__(self, query_endpoint: str, update_endpoint: str, credentials: Credentials = None,
+                 skip_connection_test=False):
         """
         During initialization a few queries are executed against the RDF* store to test connection but also whether
         the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and
@@ -106,51 +107,54 @@ class TripleStoreEngine:
             self.sparql_post.setCredentials(credentials.user_name, credentials.pw)
             self.sparql_get.setCredentials(credentials.user_name, credentials.pw)
 
-        # Test connection. Execute one read and one write statement
-        try:
-            self.sparql_get.setQuery(open(self._template_location +
-                                          "/test_connection/test_connection_select.txt", "r").read())
+        if not skip_connection_test:
+            # Test connection. Execute one read and one write statement
+            try:
+                self.sparql_get.setQuery(open(self._template_location +
+                                              "/test_connection/test_connection_select.txt", "r").read())
 
-            insert_statement = open(self._template_location +
-                                    "/test_connection/test_connection_insert.txt", "r").read()
-            self.sparql_post.setQuery(insert_statement)
-            self.sparql_post.query()
+                insert_statement = open(self._template_location +
+                                        "/test_connection/test_connection_insert.txt", "r").read()
+                self.sparql_post.setQuery(insert_statement)
+                self.sparql_post.query()
 
-            delete_statement = open(self._template_location +
-                                    "/test_connection/test_connection_delete.txt", "r").read()
-            self.sparql_post.setQuery(delete_statement)
-            self.sparql_post.query()
+                delete_statement = open(self._template_location +
+                                        "/test_connection/test_connection_delete.txt", "r").read()
+                self.sparql_post.setQuery(delete_statement)
+                self.sparql_post.query()
 
-        except URLError:
-            raise NoConnectionToRDFStore("No connection to the RDF* store could be established. "
-                                         "Check whether your RDF* store is running.")
+            except URLError:
+                raise NoConnectionToRDFStore("No connection to the RDF* store could be established. "
+                                             "Check whether your RDF* store is running.")
 
-        try:
-            test_prefixes = citation_prefixes("")
-            template = open(self._template_location +
-                            "/test_connection/test_connection_nested_select.txt", "r").read()
-            select_statement = template.format(test_prefixes)
-            self.sparql_get.setQuery(select_statement)
-            self.sparql_get.query()
+            try:
+                test_prefixes = citation_prefixes("")
+                template = open(self._template_location +
+                                "/test_connection/test_connection_nested_select.txt", "r").read()
+                select_statement = template.format(test_prefixes)
+                self.sparql_get.setQuery(select_statement)
+                self.sparql_get.query()
 
-            template = open(self._template_location +
-                            "/test_connection/test_connection_nested_insert.txt", "r").read()
-            insert_statement = template.format(test_prefixes)
-            self.sparql_post.setQuery(insert_statement)
-            self.sparql_post.query()
+                template = open(self._template_location +
+                                "/test_connection/test_connection_nested_insert.txt", "r").read()
+                insert_statement = template.format(test_prefixes)
+                self.sparql_post.setQuery(insert_statement)
+                self.sparql_post.query()
 
-            template = open(self._template_location +
-                            "/test_connection/test_connection_nested_delete.txt", "r").read()
-            delete_statement = template.format(test_prefixes)
-            self.sparql_post.setQuery(delete_statement)
-            self.sparql_post.query()
+                template = open(self._template_location +
+                                "/test_connection/test_connection_nested_delete.txt", "r").read()
+                delete_statement = template.format(test_prefixes)
+                self.sparql_post.setQuery(delete_statement)
+                self.sparql_post.query()
 
-        except Exception:
-            raise RDFStarNotSupported("Your RDF store might not support the 'star' extension. "
-                                      "Make sure that it is a RDF* store.")
+            except Exception:
+                raise RDFStarNotSupported("Your RDF store might not support the 'star' extension. "
+                                          "Make sure that it is a RDF* store.")
 
-        logging.info("Connection to RDF query and update endpoints "
-                     "{0} and {1} established".format(query_endpoint, update_endpoint))
+            logging.info("Connection to RDF query and update endpoints "
+                         "{0} and {1} established".format(query_endpoint, update_endpoint))
+        else:
+            logging.info("Connection test has been skipped")
 
     def reset_all_versions(self):
         """
@@ -242,6 +246,9 @@ class TripleStoreEngine:
         else:
             logging.info("Query being executed: \n {0}".format(select_statement))
             self.sparql_get_with_post.setQuery(select_statement)
+        # The query sometimes gets recognized as LOAD even though it is a SELECT statement. this results into
+        # a failed execution as we are using an get endpoint which is not allowed with LOAD
+        self.sparql_get_with_post.queryType = 'SELECT'
         result = self.sparql_get_with_post.query()
         df = _to_df(result)
 
