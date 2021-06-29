@@ -148,11 +148,11 @@ class TestCitation(TestExecution):
         mention = "<http://data.ontotext.com/publishing#newMention>"
         hasInstance = "publishing:hasInstance"
         person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
-        self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
+        self.rdf_engine.insert_triples([mention, hasInstance, person], prefixes)
 
         document = "<http://www.reuters.com/article/2021/01/01/newDocument>"
         containsMention = "publishing:containsMention"
-        self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
+        self.rdf_engine.insert_triples([document, containsMention, mention], prefixes)
 
         # Citation2
         vie_tz = timezone(timedelta(hours=2))
@@ -180,8 +180,8 @@ class TestCitation(TestExecution):
         expected_result = citation_snippet1 + "\n" + citation_snippet2
 
         # Clean up
-        self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
-        self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+        self.rdf_engine._delete_triples([mention, hasInstance, person], prefixes)
+        self.rdf_engine._delete_triples([document, containsMention, mention], prefixes)
 
         test = Test(test_number=3,
                     tc_desc='Test if a new query PID is created if the dataset has changed since the last citation and'
@@ -274,7 +274,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__non_unique_sort(self):
+    def test_citation__non_unique_sort(self):
         # Actual results
         citation = self.citation
 
@@ -293,7 +293,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__sort_var_not_in_select(self):
+    def test_citation__sort_var_not_in_select(self):
         # Actual results
         citation = self.citation
 
@@ -315,7 +315,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__missing_order_by(self):
+    def test_citation__missing_order_by(self):
         # Actual results
         citation = self.citation
 
@@ -335,7 +335,7 @@ class TestCitation(TestExecution):
 
         return test
 
-    def x_test_citation__aggregated_dataset(self):
+    def test_citation__aggregated_dataset(self):
         citation1 = self.citation
         citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Count Obama mentions with Democratic party."
@@ -352,11 +352,11 @@ class TestCitation(TestExecution):
         mention = "<http://data.ontotext.com/publishing#newMention>"
         hasInstance = "publishing:hasInstance"
         person = "<http://ontology.ontotext.com/resource/tsk4wye1ftog>"
-        self.rdf_engine.insert_triple((mention, hasInstance, person), prefixes)
+        self.rdf_engine.insert_triples([mention, hasInstance, person], prefixes)
 
         document = "<http://www.reuters.com/article/2021/01/01/newDocument>"
         containsMention = "publishing:containsMention"
-        self.rdf_engine.insert_triple((document, containsMention, mention), prefixes)
+        self.rdf_engine.insert_triples([document, containsMention, mention], prefixes)
 
         # Citation2
         vie_tz = timezone(timedelta(hours=2))
@@ -384,8 +384,8 @@ class TestCitation(TestExecution):
         expected_result = citation_snippet1 + "\n" + citation_snippet2
 
         # Clean up
-        self.rdf_engine._delete_triples((mention, hasInstance, person), prefixes)
-        self.rdf_engine._delete_triples((document, containsMention, mention), prefixes)
+        self.rdf_engine._delete_triples([mention, hasInstance, person], prefixes)
+        self.rdf_engine._delete_triples([document, containsMention, mention], prefixes)
 
         test = Test(test_number=9,
                     tc_desc='Test if a query that uses aggregation functions yields the right result before '
@@ -396,7 +396,7 @@ class TestCitation(TestExecution):
         return test
 
 
-t = TestCitation(annotated_tests=True)
+t = TestCitation(annotated_tests=False)
 t.run_tests()
 t.print_test_results()
 
