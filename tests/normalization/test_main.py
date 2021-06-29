@@ -217,7 +217,7 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def test_normalization__nested_paths(self):
+    def x_test_normalization__nested_paths(self):
         # Not implemented yet
         test = Test(test_number=17,
                     tc_desc="Test if two queries with a combination of sequence and alternative paths is given in one "
