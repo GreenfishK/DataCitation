@@ -169,7 +169,6 @@ class QueryStore:
                     connection.execute(insert_statement,
                                        query_checksum=query_data.checksum,
                                        orig_query=query_data.query,
-                                       timestamped_query=query_data.timestamped_query,
                                        query_prefixes=query_data.sparql_prefixes,
                                        normal_query_algebra=str(query_data.normal_query_algebra.algebra),
                                        normal_query=query_data.normal_query)
@@ -183,6 +182,7 @@ class QueryStore:
                 connection.execute(insert_statement_2,
                                    query_pid=query_data.pid,
                                    query_checksum=query_data.checksum,
+                                   timestamped_query=query_data.timestamped_query,
                                    result_set_checksum=rs_data.checksum,
                                    result_set_description=rs_data.description,
                                    result_set_sort_order=", ".join(rs_data.sort_order),

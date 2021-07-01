@@ -15,14 +15,14 @@ import logging
 
 class Citation:
 
-    def __init__(self, get_endpoint: str, post_endpoint: str):
+    def __init__(self, get_endpoint: str, post_endpoint: str, credentials: TripleStoreEngine.Credentials = None):
         """
         Initializes the Citation class.
 
         :param get_endpoint: RDF* store URL for get/read statements.
         :param post_endpoint:  RDF* store URL for post/write statements.
         """
-        self.sparqlapi = TripleStoreEngine(get_endpoint, post_endpoint)
+        self.sparqlapi = TripleStoreEngine(get_endpoint, post_endpoint, credentials)
 
         self.yn_query_exists = False
         self.yn_result_set_changed = False
