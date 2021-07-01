@@ -161,6 +161,8 @@ class QueryStore:
         insert_statement_2 = open("{0}/store_insert_query_citation.sql".format(self._path_to_persistence), "r").read()
         update_statement = open("{0}/store_update_query_hub.sql".format(self._path_to_persistence), "r").read()
 
+        # TODO: does timestamped_query belong to query_citation because it gets another timestamp if the result set
+        #  changed?
         with self._engine.connect() as connection:
             if yn_new_query:
                 try:
