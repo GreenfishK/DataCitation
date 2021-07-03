@@ -147,7 +147,7 @@ within the query store.
 ```python   
 def create_identifier(query_pid: str):
     # Write your own code to create an URL out of a query PID
-    identifier = query_pid
+    identifier = "http://www.mylandingpage.com/" + query_pid
     return identifier
 citation_metadata = citation_utils.MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                                             title="Judy Chu occurences", publisher="Filip Kovacevic",

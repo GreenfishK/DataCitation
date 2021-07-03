@@ -1,3 +1,6 @@
+from typing import Callable
+
+
 def generate_citation_snippet(**kwargs) -> str:
     """
     R10 - Automated citation text
@@ -20,5 +23,22 @@ def generate_citation_snippet(**kwargs) -> str:
     return snippet
 
 
-citation_snippet = generate_citation_snippet(creator='creator1', identifier='id1', nonexistingattribute='test')
-print(citation_snippet)
+#citation_snippet = generate_citation_snippet(creator='creator1', identifier='id1', nonexistingattribute='test')
+#print(citation_snippet)
+
+
+def cite(create_identifier: Callable[[str], str] = None):
+    if create_identifier:
+        identifier = create_identifier("123")
+    else:
+        identifier = "123"
+    print(identifier)
+
+
+def create_identifier(query_pid: str):
+    # Write your own code to create an URL out of a query PID
+    identifier = "http://www.mylandingpage.com/" + query_pid
+    return identifier
+
+
+cite(create_identifier)
