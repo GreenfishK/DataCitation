@@ -145,6 +145,10 @@ optionally including a result set description and the dataset's query. Then we u
 the dataset and thereby persist query and query metadata, citation metadata, result set metadata and the citation snippet 
 within the query store. 
 ```python   
+def create_identifier(query_pid: str):
+    # Write your own code to create an URL out of a query PID
+    identifier = query_pid
+    return identifier
 citation_metadata = citation_utils.MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                                             title="Judy Chu occurences", publisher="Filip Kovacevic",
                                             publication_year="2021", resource_type="Dataset/RDF data",
@@ -166,7 +170,8 @@ select ?personLabel ?party_label ?document ?mention where {
     filter(?personLabel = "Barack Obama"@en)
 }
 """
-citation_data = citation.cite(query_text, citation_metadata)
+citation_data = citation.cite(select_statement=query_text, citation_metadata=citation_metadata, 
+                              create_identifier=create_identifier)
 
 ```
 The parameters in citation_utils.Metadata are all optional, but recommended by DataCite and us :). If you do not provide 
