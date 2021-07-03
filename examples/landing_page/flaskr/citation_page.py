@@ -14,7 +14,7 @@ config.read('../../../config.ini')
 logging.getLogger().setLevel(int(config.get('TEST', 'log_level')))
 
 # Example citation data and result set description
-citation_metadata = MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
+citation_metadata = MetaData(creator="Filip Kovacevic",
                              title="Judy Chu occurences", publisher="Filip Kovacevic",
                              publication_year="2021", resource_type="Dataset/RDF data",
                              other_citation_data={"Contributor": "Tomasz Miksa"},
