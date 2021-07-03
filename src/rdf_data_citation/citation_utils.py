@@ -749,7 +749,7 @@ class QueryUtils:
 
         """
         #10
-        Sequence paths can reduce the number of triplets in the query statement and are commonly used. They can be
+        Sequence paths can reduce the number of triples in the query statement and are commonly used. They can be
         resolved to 'normal' triple statements.
         """
         try:
@@ -767,18 +767,24 @@ class QueryUtils:
         # Solved by translating the query into the query algebra. Prefixes get resolved.
 
         """
-        #3
-        In case of an asterisk in the select-clause, all variables will be projected. However, this does not mean that 
-        a query with explicitly stated variables will be equivalent to a query that uses the asterisk as a shortcut 
-        to select all variables. This is due to the importance of the variables' order in the select clause.
-        
+        #1
+        A where clause will always be inserted.
         """
         pass
         # Solved by translating the query into the query algebra.
 
         """
-        #1
-        A where clause will always be inserted
+        #2
+        rdf:type" predicate can be replaced by "a".
+        """
+        pass
+        # Solved by translating the query into the query algebra.
+
+        """
+        #3
+        In case of an asterisk in the select-clause, all variables will be projected. However, this does not mean that 
+        a query with explicitly stated variables will be equivalent to a query that uses the asterisk as a shortcut 
+        to select all variables. This is due to the importance of the variables' order in the select clause.
         """
         pass
         # Solved by translating the query into the query algebra.
@@ -1024,13 +1030,14 @@ class QueryUtils:
 
 class RDFDataSetUtils:
 
-    def __init__(self, dataset: pd.DataFrame = None, description: str = None,
-                 unique_sort_index: tuple = None):
+    def __init__(self, dataset: pd.DataFrame = None, description: str = None, unique_sort_index: tuple = None):
         """
 
+        :param dataset:
         :param description:
-        :param sort_order:
+        :param unique_sort_index:
         """
+
         self.dataset = dataset
         self.description = description
         self.sort_order = unique_sort_index
@@ -1244,9 +1251,10 @@ class MetaData:
 
     def __init__(self, identifier: str = None, creator: str = None, title: str = None, publisher: str = None,
                  publication_year: str = None, resource_type: str = None,
-                 other_citation_data: dict = None):
+                 other_citation_data: dict = None, result_set_description: str = None):
         """
-        Initialize the mandatory fields from DataCite's metadata model version 4.3
+        Initialize the mandatory fields from DataCite's metadata model version 4.3 and additional metadata
+        that the user can provide.
         """
         # TODO: Data operator defines which metadata to store. The user is able to change the description
         #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
@@ -1261,6 +1269,7 @@ class MetaData:
 
         # Other user-defined provenance data and other metadata
         self.other_citation_data = other_citation_data
+        self.result_set_description = result_set_description
 
         self.citation_snippet = None
 
@@ -1286,27 +1295,27 @@ class MetaData:
         self.publisher = meta_data_dict['publisher']
         self.publication_year = meta_data_dict['publication_year']
         self.resource_type = meta_data_dict['resource_type']
+        self.result_set_description = meta_data_dict['result_set_description']
         self.other_citation_data = meta_data_dict['other_citation_data']
 
 
-def generate_citation_snippet(query_pid: str, citation_data: MetaData) -> str:
+def generate_citation_snippet(**kwargs) -> str:
     """
     R10 - Automated citation text
-    Generates the citation snippet out of DataCite's mandatory attributes within its metadata schema.
-    In future this function will be more flexible offering the user a way to define of which citation data
-    should the snippet be comprised of.
+    Generates the citation snippet out of DataCite's mandatory attributes. Thus, following key parameters must be
+    provided in an arbitrary order. The order will be reflected in the citation snippet:
+    * identifier (DOI of query_pid)
+    * creator
+    * title
+    * publisher
+    * publication_year
+    * resource type
 
-    :param query_pid:
-    :param citation_data:
     :return:
     """
     # TODO: Let the order of data within the snippet be defined by the user
     #  also: the user should be able to define which attributes are to be used in the citation snippet
-    snippet = "{0}, {1}, {2}, {3}, {4}, {5}, pid: {6} \n".format(citation_data.identifier,
-                                                                 citation_data.creator,
-                                                                 citation_data.title,
-                                                                 citation_data.publisher,
-                                                                 citation_data.publication_year,
-                                                                 citation_data.resource_type,
-                                                                 query_pid)
+    mandatory_attributes = ['identifier', 'creator', 'title', 'publisher', 'publication_year', 'resource_type']
+    snippet = ", ".join(v for k, v in kwargs.items() if k in mandatory_attributes)
+
     return snippet

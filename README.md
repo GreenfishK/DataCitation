@@ -148,8 +148,9 @@ within the query store.
 citation_metadata = citation_utils.MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                                             title="Judy Chu occurences", publisher="Filip Kovacevic",
                                             publication_year="2021", resource_type="Dataset/RDF data",
-                                            other_citation_data={"Contributor": "Tomasz Miksa"})
-result_set_description = "All news articles where Obama has been mentioned."
+                                            other_citation_data={"Contributor": "Tomasz Miksa"}, 
+                                            result_set_description = "All news articles where Obama has been mentioned.")
+
 query_test = 
 """
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
@@ -165,7 +166,7 @@ select ?personLabel ?party_label ?document ?mention where {
     filter(?personLabel = "Barack Obama"@en)
 }
 """
-citation_data = citation.cite(query_text, citation_metadata, result_set_description)
+citation_data = citation.cite(query_text, citation_metadata)
 
 ```
 The parameters in citation_utils.Metadata are all optional, but recommended by DataCite and us :). If you do not provide 

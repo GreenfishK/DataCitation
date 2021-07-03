@@ -91,8 +91,12 @@ class TestCitation(TestExecution):
 
         # Expected results
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
-                                                     citation_data=self.citation_metadata)
+        citation_snippet = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
         expected_result = "This is an empty dataset. We cannot infer any description from it.\n" + citation_snippet
 
         # Test object
@@ -116,8 +120,12 @@ class TestCitation(TestExecution):
 
         # Expected results
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet = generate_citation_snippet(query_pid=query_utils.pid,
-                                                     citation_data=self.citation_metadata)
+        citation_snippet = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
         result_set = self.rdf_engine.get_data(self.select_statement, self.citation_timestamp)
         dataset_utils = RDFDataSetUtils(dataset=result_set)
         dataset_description = dataset_utils.describe()
@@ -170,12 +178,20 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
-                                                      citation_data=self.citation_metadata)
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
         # Citation2
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
-        citation_snippet2 = generate_citation_snippet(query_pid=query_utils.pid,
-                                                      citation_data=self.citation_metadata)
+        citation_snippet2 = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
 
         expected_result = citation_snippet1 + "\n" + citation_snippet2
 
@@ -218,8 +234,12 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
-                                                      citation_data=self.citation_metadata)
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
 
         expected_result = citation_snippet1 + "\n" + citation_snippet1
 
@@ -260,8 +280,12 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
-                                                      citation_data=self.citation_metadata)
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
 
         expected_result = citation_snippet1 + "\n" + citation_snippet1
         test = Test(test_number=5,
@@ -374,12 +398,20 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(query_pid=query_utils.pid,
-                                                      citation_data=self.citation_metadata)
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
         # Citation2
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
-        citation_snippet2 = generate_citation_snippet(query_pid=query_utils.pid,
-                                                      citation_data=self.citation_metadata)
+        citation_snippet2 = generate_citation_snippet(identifier=query_utils.pid,
+                                                     creator=self.citation_metadata.creator,
+                                                     title=self.citation_metadata.title,
+                                                     publisher=self.citation_metadata.publisher,
+                                                     pulication_year=self.citation_metadata.publication_year,
+                                                     resource_type=self.citation_metadata.resource_type)
 
         expected_result = citation_snippet1 + "\n" + citation_snippet2
 

@@ -1,13 +1,7 @@
-PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX publishing: <http://ontology.ontotext.com/publishing#>
+PREFIX foaf:   <http://xmlns.com/foaf/0.1/>
 
-select ?x ?mention ?personLabel ?value where {
-    ?x publishing:containsMention ?mention .
-    ?person pub:memberOfPoliticalParty ?party .
-    ?person pub:preferredLabel ?personLabel .
-    ?mention publishing:hasInstance ?person .
-    ?party pub:hasValue ?value .
-    ?value pub:preferredLabel ?preflab .
-    filter(?preflab = "Democratic Party"@en)
-    filter(?personLabel = "Judy Chu"@en)
-} order by ?x ?mention ?person
+select ?x ?y {
+    ?x foaf:knows / ^foaf:knows ?y
+    FILTER(?x != ?y)
+    bind(?x as ?u)
+}

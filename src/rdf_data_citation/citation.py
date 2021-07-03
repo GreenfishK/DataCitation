@@ -32,8 +32,7 @@ class Citation:
         self.result_set_utils = RDFDataSetUtils()
         self.citation_metadata = MetaData()
 
-    def cite(self, select_statement: str, citation_metadata: MetaData, result_set_description: str = None,
-             citation_timestamp: datetime = None):
+    def cite(self, select_statement: str, citation_metadata: MetaData, citation_timestamp: datetime = None):
         """
         Persistently Identify Specific Data Sets
 
@@ -68,7 +67,6 @@ class Citation:
 
         :param citation_timestamp: If this parameter is left out the current system datetime will be used as citation
         timestamp.
-        :param result_set_description:
         :param citation_metadata:
         :param select_statement:
         :return:
@@ -118,7 +116,7 @@ class Citation:
         rdf_ds = RDFDataSetUtils(dataset=result_set)
         # # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
-        rdf_ds.description = rdf_ds.describe(result_set_description)
+        rdf_ds.description = rdf_ds.describe(citation_metadata.result_set_description)
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()
@@ -143,8 +141,13 @@ class Citation:
         # Store new query data
         self.query_utils = query_to_cite
         self.result_set_utils = rdf_ds
-        # TODO: assign identifier in citation_metadata.identifier
-        citation_snippet = generate_citation_snippet(query_to_cite.pid, citation_metadata)
+        # TODO: Think of how the query PID will be converted into an URL (e.g. DOI) and passed via the identifier
+        citation_snippet = generate_citation_snippet(identifier=citation_metadata.identifier,
+                                                     creator=citation_metadata.creator,
+                                                     title=citation_metadata.title,
+                                                     publisher=citation_metadata.publisher,
+                                                     pulication_year=citation_metadata.publication_year,
+                                                     resource_type=citation_metadata.resource_type)
         self.citation_metadata = copy(citation_metadata)
         self.citation_metadata.citation_snippet = citation_snippet
 

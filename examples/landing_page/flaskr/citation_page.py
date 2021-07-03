@@ -1,6 +1,7 @@
 import src.rdf_data_citation.rdf_star as rdfs
 from src.rdf_data_citation.citation import Citation
-from src.rdf_data_citation._exceptions import MissingSortVariables, NoUniqueSortIndexError, ExpressionNotCoveredException
+from src.rdf_data_citation._exceptions import MissingSortVariables, NoUniqueSortIndexError, \
+    ExpressionNotCoveredException
 from src.rdf_data_citation.citation_utils import MetaData
 import logging
 from datetime import datetime, timedelta, timezone
@@ -16,9 +17,10 @@ logging.getLogger().setLevel(int(config.get('TEST', 'log_level')))
 citation_metadata = MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                              title="Judy Chu occurences", publisher="Filip Kovacevic",
                              publication_year="2021", resource_type="Dataset/RDF data",
-                             other_citation_data={"Contributor": "Tomasz Miksa"})
+                             other_citation_data={"Contributor": "Tomasz Miksa"},
+                             result_set_description="Result set description: All documents "
+                                                    "where Judy Chu was mentioned with every mention listed")
 
-result_set_description = "Result set description: All documents where Judy Chu was mentioned with every mention listed"
 
 bp = Blueprint('citation_page', __name__, url_prefix='/datacenter_sample_page_1')
 
@@ -78,10 +80,9 @@ def cite_query():
 
     citation = Citation(config.get('RDFSTORE', 'get'), config.get('RDFSTORE', 'post'))
     query_text = request.form['query_text']
-    logging.info(query_text, citation_metadata, result_set_description)
+    logging.info(query_text, citation_metadata)
     try:
-        citation_data = citation.cite(query_text, citation_metadata=citation_metadata,
-                                      result_set_description=result_set_description)
+        citation_data = citation.cite(query_text, citation_metadata=citation_metadata)
         citation_snippet = citation_data.citation_metadata.citation_snippet
 
         html_response = render_template('datacenter_sample_page_1/citation_page.html',
