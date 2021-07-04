@@ -119,9 +119,12 @@ class Citation:
 
         # Sort result set
         rdf_ds = RDFDataSetUtils(dataset=result_set)
-        # # sort() will create an unique sort index if no unique user sort index is provided.
+        # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
-        rdf_ds.description = rdf_ds.describe(citation_metadata.result_set_description)
+        if citation_metadata.result_set_description is None:
+            rdf_ds.description = rdf_ds.describe()
+        else:
+            rdf_ds.description = citation_metadata.result_set_description
 
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum()

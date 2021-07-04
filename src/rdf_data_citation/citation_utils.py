@@ -1046,46 +1046,48 @@ class RDFDataSetUtils:
         else:
             self.checksum = None
 
-    def describe(self, description: str = None, query: str = None):
+    def describe(self, dataset: pd.DataFrame = None, query: str = None):
         """
         Generates a description from the dataset. If a description is provided, the description will be returned.
 
         :return:
         """
-
-        if description is None:
-            # TODO: Use a natural language processor for RDF data to generate a description
-            #  for the dataset which will be suggested.
+        if self.dataset and dataset is None:
+            raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
+                               "pass a dataset")
+        if dataset is None:
             dataset = self.dataset.copy()
-            if dataset.empty:
-                return "This is an empty dataset. We cannot infer any description from it."
-            dataset_description = dataset.describe()
-            desc = ""
-            if isinstance(dataset_description, pd.DataFrame):
-                dataset_description = dataset_description.stack()
-                dataset_description = dataset_description.sort_index()
 
-                cnt_freq = pd.concat([dataset_description['count'], dataset_description['freq']],
-                                     axis=1, join="inner")
-                cnt_freq.rename(columns={0: 'count', 1: 'freq'}, inplace=True)
-                cols_most_freq = cnt_freq.query("count == freq").index
-                if len(cols_most_freq) > 0:
-                    desc += "This dataset is about: "
-                    desc += ", ".join(dataset[col].iloc[0] for col in cols_most_freq) + "\n"
+        # TODO: Use a natural language processor for RDF data to generate a description
+        #  from the dataset and query
+        if dataset.empty:
+            return "This is an empty dataset. We cannot infer any description from it."
+        dataset_description = dataset.describe()
+        desc = ""
+        if isinstance(dataset_description, pd.DataFrame):
+            dataset_description = dataset_description.stack()
+            dataset_description = dataset_description.sort_index()
 
-                desc += "Each column has following number of non-empty values: \n"
-                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['count'].items()) + "\n"
-                desc += "For each column following frequencies were observed: "
-                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['freq'].items()) + "\n"
-                desc += "Each column has following max/top values: "
-                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['top'].items()) + "\n"
-                desc += "For each column following unique values were observed (opposite of frequencies): "
-                desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['unique'].items()) + "\n"
-            return desc
-        else:
-            return description
+            cnt_freq = pd.concat([dataset_description['count'], dataset_description['freq']],
+                                 axis=1, join="inner")
+            cnt_freq.rename(columns={0: 'count', 1: 'freq'}, inplace=True)
+            cols_most_freq = cnt_freq.query("count == freq").index
+            if len(cols_most_freq) > 0:
+                desc += "This dataset is about: "
+                desc += ", ".join(dataset[col].iloc[0] for col in cols_most_freq) + "\n"
 
-    def compute_checksum(self, column_order_dependent: bool = False) -> str:
+            desc += "Each column has following number of non-empty values: \n"
+            desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['count'].items()) + "\n"
+            desc += "For each column following frequencies were observed: "
+            desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['freq'].items()) + "\n"
+            desc += "Each column has following max/top values: "
+            desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['top'].items()) + "\n"
+            desc += "For each column following unique values were observed (opposite of frequencies): "
+            desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['unique'].items()) + "\n"
+        return desc
+
+
+    def compute_checksum(self, dataset: pd.DataFrame = None, column_order_dependent: bool = False) -> str:
         """
         R6 - Result set verification
         A column order dependent or independent computation of the dataset checksum.
@@ -1095,13 +1097,19 @@ class RDFDataSetUtils:
         checksum computation independent of the column order. Last, the vector of row sums is hashed again
         and the mean is taken.
 
+        :param dataset:
         :param column_order_dependent: Tells the algorithm whether to make the checksum computation dependent or
         independent of the column order.
         :return:
         """
+        if self.dataset and dataset is None:
+            raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
+                               "pass a dataset")
+        if dataset is None:
+            dataset = self.dataset.copy()
 
         if column_order_dependent:
-            row_hashsum_series = hash_pandas_object(self.dataset)
+            row_hashsum_series = hash_pandas_object(dataset)
         else:
             def cell_hash_value(cell):
                 checksum = hashlib.sha256()
@@ -1121,7 +1129,7 @@ class RDFDataSetUtils:
         checksum = checksum.hexdigest()
         return checksum
 
-    def create_sort_index(self) -> list:
+    def create_sort_index(self, dataset: pd.DataFrame = None) -> list:
         """
         Infers the primary key from a dataset.
         Two datasets with differently permuted columns but otherwise identical
@@ -1135,8 +1143,11 @@ class RDFDataSetUtils:
 
         :return: A list of suggested indexes to use for sorting the dataset.
         """
-        if self.dataset is None:
-            raise InputMissing("No dataset was provided. This function needs self.dataset as an input")
+        if self.dataset and dataset is None:
+            raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
+                               "pass a dataset")
+        if dataset is None:
+            dataset = self.dataset.copy()
 
         # TODO: Think about whether the order of columns should yield a different permutation of key attributes
         #  within composite keys, thus, meaning a different sorting or not.
@@ -1175,7 +1186,7 @@ class RDFDataSetUtils:
             combination_util(combos, arr, n, tuple_size, data, index, i + 1)
 
         sufficient_tuple_size = False
-        df_key_finder = self.dataset.copy()
+        df_key_finder = dataset.copy()
         df_key_finder.drop_duplicates(inplace=True)
         cnt_columns = len(df_key_finder.columns)
         columns = df_key_finder.columns
@@ -1213,18 +1224,23 @@ class RDFDataSetUtils:
 
         return sort_indexes
 
-    def sort(self, sort_index: tuple = None) -> pd.DataFrame:
+    def sort(self, sort_index: tuple = None, dataset: pd.DataFrame = None) -> pd.DataFrame:
         """
         R5 - Stable Sorting
-        Sorts by the index that is derived from create_sort_index. As this method can return more than one possible
-        unique indexes, the first one will be taken.
+        Sorts the dataset by sort_index. If none is given, a sort_index will be derived with the create_sort_index
+        function.
 
-        :sort_order: A user defined sort order for the dataset. If nothing is provided, the sort index will be derived
+        :sort_index: A user defined sort order for the dataset. If nothing is provided, the sort index will be derived
         from the dataset. Sometimes, this can yield ambiguous multi-indexes in which case the first multi-index will
         be taken from the list of possible unique indexes.
-        :return:
+        :return: A sorted dataset
         """
-        dataset = self.dataset.copy()
+        if self.dataset and dataset is None:
+            raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
+                               "pass a dataset")
+        if dataset is None:
+            dataset = self.dataset.copy()
+
         if sort_index is None:
             sort_index_used = self.create_sort_index()
             if len(sort_index_used) != 1:
