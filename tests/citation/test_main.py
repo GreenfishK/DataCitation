@@ -91,7 +91,7 @@ class TestCitation(TestExecution):
 
         # Expected results
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet = generate_citation_snippet(identifier=query_utils.pid,
                                                      creator=self.citation_metadata.creator,
                                                      title=self.citation_metadata.title,
                                                      publisher=self.citation_metadata.publisher,
@@ -120,7 +120,7 @@ class TestCitation(TestExecution):
 
         # Expected results
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet = generate_citation_snippet(identifier=query_utils.pid,
                                                      creator=self.citation_metadata.creator,
                                                      title=self.citation_metadata.title,
                                                      publisher=self.citation_metadata.publisher,
@@ -178,7 +178,7 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
@@ -186,7 +186,7 @@ class TestCitation(TestExecution):
                                                       resource_type=self.citation_metadata.resource_type)
         # Citation2
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
-        citation_snippet2 = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet2 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
@@ -234,7 +234,7 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
@@ -280,7 +280,7 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
@@ -398,7 +398,7 @@ class TestCitation(TestExecution):
         # Expected results
         # Citation1
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
-        citation_snippet1 = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
@@ -406,7 +406,7 @@ class TestCitation(TestExecution):
                                                       resource_type=self.citation_metadata.resource_type)
         # Citation2
         query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
-        citation_snippet2 = generate_citation_snippet(identifier=self.citation_metadata.identifier,
+        citation_snippet2 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,

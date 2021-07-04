@@ -119,6 +119,7 @@ class Citation:
 
         # Sort result set
         rdf_ds = RDFDataSetUtils(dataset=result_set)
+
         # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
         if citation_metadata.result_set_description is None:
@@ -127,7 +128,7 @@ class Citation:
             rdf_ds.description = citation_metadata.result_set_description
 
         # Compute result set checksum
-        rdf_ds.checksum = rdf_ds.compute_checksum()
+        rdf_ds.checksum = rdf_ds.compute_checksum(column_order_dependent=True)
 
         # Get latest query citation and its metadata by query checksum
         existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \

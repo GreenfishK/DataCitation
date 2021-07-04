@@ -1052,7 +1052,7 @@ class RDFDataSetUtils:
 
         :return:
         """
-        if self.dataset and dataset is None:
+        if self.dataset is None and dataset is None:
             raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
                                "pass a dataset")
         if dataset is None:
@@ -1086,7 +1086,6 @@ class RDFDataSetUtils:
             desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['unique'].items()) + "\n"
         return desc
 
-
     def compute_checksum(self, dataset: pd.DataFrame = None, column_order_dependent: bool = False) -> str:
         """
         R6 - Result set verification
@@ -1102,7 +1101,8 @@ class RDFDataSetUtils:
         independent of the column order.
         :return:
         """
-        if self.dataset and dataset is None:
+
+        if self.dataset is None and dataset is None:
             raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
                                "pass a dataset")
         if dataset is None:
@@ -1143,7 +1143,7 @@ class RDFDataSetUtils:
 
         :return: A list of suggested indexes to use for sorting the dataset.
         """
-        if self.dataset and dataset is None:
+        if self.dataset is None and dataset is None:
             raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
                                "pass a dataset")
         if dataset is None:
@@ -1235,7 +1235,7 @@ class RDFDataSetUtils:
         be taken from the list of possible unique indexes.
         :return: A sorted dataset
         """
-        if self.dataset and dataset is None:
+        if self.dataset is None and dataset is None:
             raise InputMissing("No dataset was provided. Either use self.dataset or this function's parameter to "
                                "pass a dataset")
         if dataset is None:
