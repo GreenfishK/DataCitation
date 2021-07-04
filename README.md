@@ -181,6 +181,7 @@ statistics and possibly additional natural language sentences if certain heurist
 will be generated and stored within MetaData object (see above).
 ```python
 citation_snippet = citation_data.citation_metadata.citation_snippet
+landing_page_url = citation_data.citation_metadata.identifier
 ```
 
 ## Retrieve cited data

@@ -119,7 +119,6 @@ class Citation:
 
         # Sort result set
         rdf_ds = RDFDataSetUtils(dataset=result_set)
-
         # sort() will create an unique sort index if no unique user sort index is provided.
         rdf_ds.dataset = rdf_ds.sort(tuple(order_by_variables))
         if citation_metadata.result_set_description is None:
