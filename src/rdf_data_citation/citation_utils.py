@@ -1139,7 +1139,7 @@ class RDFDataSetUtils:
         A reduction of suggested composite keys might be made if there are two or more suggested composite keys. For
         each composite key the following will be done: 1. Count the number of distinct values for each key attribute
         (column); 2. Sum up all the counted distinct values.
-        The composite keys with the minimum sum of distinct key attribute values will be returned.
+        The composite keys with the maximum sum of distinct key attribute values will be returned.
 
         :return: A list of suggested indexes to use for sorting the dataset.
         """
@@ -1190,7 +1190,7 @@ class RDFDataSetUtils:
         df_key_finder.drop_duplicates(inplace=True)
         cnt_columns = len(df_key_finder.columns)
         columns = df_key_finder.columns
-
+        logging.debug(columns)
         distinct_occurrences = {}
         for column in columns:
             distinct_occurrences[column] = len(df_key_finder[column].unique().flat)
@@ -1331,6 +1331,7 @@ def generate_citation_snippet(**kwargs) -> str:
     """
     # TODO: Let the order of data within the snippet be defined by the user
     #  also: the user should be able to define which attributes are to be used in the citation snippet
+    # TODO: Also allow other attributes next to the DateCite ones
     mandatory_attributes = ['identifier', 'creator', 'title', 'publisher', 'publication_year', 'resource_type']
     snippet = ", ".join(v for k, v in kwargs.items() if k in mandatory_attributes)
 
