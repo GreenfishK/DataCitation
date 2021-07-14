@@ -1,4 +1,4 @@
-from rdf_data_citation.citation_utils import QueryUtils
+from src.rdf_data_citation.citation_utils import QueryUtils
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
 
