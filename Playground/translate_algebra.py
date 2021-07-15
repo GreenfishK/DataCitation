@@ -1,3 +1,4 @@
+import rdflib
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
 from rdflib.term import Identifier
 from rdflib.paths import Path, SequencePath, NegatedPath, AlternativePath, MulPath, ZeroOrOne, ZeroOrMore, OneOrMore, \
@@ -338,11 +339,17 @@ def to_sparql_query_text(query_algebra):
             elif node.name.endswith('Builtin_STRLEN'):
                 replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_SUBSTR'):
-                args = [node.arg.n3(), node.start]
-                if node.length:
-                    args.append(node.length)
-                expr = "SUBSTR(" + ", ".join(args) + ")"
-                replace("{Builtin_SUBSTR}", expr)
+                if isinstance(node.arg, Identifier):
+                    args = [node.arg.n3(), node.start]
+                    if node.length:
+                        args.append(node.length)
+                    expr = "SUBSTR(" + ", ".join(args) + ")"
+                    replace("{Builtin_SUBSTR}", expr)
+                else:
+                    replace("{Builtin_SUBSTR}", "SUBSTR(" + "{" + node.arg.name + "}," + node.start + ")" )
+                    algebra.traverse(node.arg, visitPre=sparql_query_text)
+                    return node.arg
+                # TODO: node.end
             elif node.name.endswith('Builtin_UCASE'):
                 replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_LCASE'):

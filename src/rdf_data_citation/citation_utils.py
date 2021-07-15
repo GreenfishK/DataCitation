@@ -396,11 +396,17 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
             elif node.name.endswith('Builtin_STRLEN'):
                 replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_SUBSTR'):
-                args = [node.arg.n3(), node.start]
-                if node.length:
-                    args.append(node.length)
-                expr = "SUBSTR(" + ", ".join(args) + ")"
-                replace("{Builtin_SUBSTR}", expr)
+                if isinstance(node.arg, Identifier):
+                    args = [node.arg.n3(), node.start]
+                    if node.length:
+                        args.append(node.length)
+                    expr = "SUBSTR(" + ", ".join(args) + ")"
+                    replace("{Builtin_SUBSTR}", expr)
+                else:
+                    replace("{Builtin_SUBSTR}", "SUBSTR(" + "{" + node.arg.name + "}," + node.start + ")" )
+                    algebra.traverse(node.arg, visitPre=sparql_query_text)
+                    return node.arg
+                # TODO: node.end
             elif node.name.endswith('Builtin_UCASE'):
                 replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_LCASE'):
@@ -825,7 +831,7 @@ class QueryUtils:
                 q_vars_mapped.setdefault(node.var, chr(len(q_vars_mapped) + 97))
 
         def replace_variable_names_with_letters(node):
-            if isinstance(node, Variable):
+            if isinstance(node, Variable) and not node.startswith("__agg_"):
                 try:
                     var = Variable(q_vars_mapped.get(node))
                     return var
