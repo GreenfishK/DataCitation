@@ -4,4 +4,4 @@ select distinct ?x (count(distinct ?y) as ?cnt)  where
     ?x (rdf:type|^rdf:type) ?y
 }
 group by ?x
-order by ?x
+order by desc(?x)

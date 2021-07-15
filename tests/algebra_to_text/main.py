@@ -943,7 +943,7 @@ class TestAlgebraToTest(TestExecution):
 
         return test
 
-    def test_solution_modifiers__order_by(self):
+    def x_test_solution_modifiers__order_by(self):
         query_tree = parser.parseQuery(self.query_text)
         query_algebra = algebra.translateQuery(query_tree)
         self.query_from_algebra = _translate_algebra(query_algebra)
@@ -1075,6 +1075,6 @@ class TestAlgebraToTest(TestExecution):
         return test
 
 
-t = TestAlgebraToTest(annotated_tests=False)
+t = TestAlgebraToTest(annotated_tests=True)
 t.run_tests()
 t.print_test_results()

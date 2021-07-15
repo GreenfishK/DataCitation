@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 import tzlocal
 import os
 import logging
+import collections
 
 
 def _query_algebra(query: str, sparql_prefixes: str) -> rdflib.plugins.sparql.algebra.Query:
@@ -136,7 +137,11 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
 
     def convert_node_arg(node_arg):
         if isinstance(node_arg, Identifier):
-            return node_arg.n3()
+            if node_arg in aggr_vars.keys():
+                grp_var = aggr_vars[node_arg].pop(0)
+                return grp_var.n3()
+            else:
+                return node_arg.n3()
         elif isinstance(node_arg, CompValue):
             return "{" + node_arg.name + "}"
         elif isinstance(node_arg, Expr):
@@ -146,6 +151,8 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
         else:
             raise ExpressionNotCoveredException(
                 "The expression {0} might not be covered yet.".format(node_arg))
+
+    aggr_vars = collections.defaultdict(list)
 
     def sparql_query_text(node):
         """
@@ -226,6 +233,8 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                         identifier = agg_func.res.n3()
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
+
+                    aggr_vars[agg_func.res].append(agg_func.vars)
                     agg_func_name = agg_func.name.split('_')[1]
                     distinct = ""
                     if agg_func.distinct:
@@ -257,7 +266,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     if isinstance(c.expr, Identifier):
                         var = c.expr.n3()
                         if c.order is not None:
-                            cond = var + "(" + c.order + ")"
+                            cond = c.order + "(" + var + ")"
                         else:
                             cond = var
                         order_conditions.append(cond)
@@ -396,17 +405,11 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
             elif node.name.endswith('Builtin_STRLEN'):
                 replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_SUBSTR'):
-                if isinstance(node.arg, Identifier):
-                    args = [node.arg.n3(), node.start]
-                    if node.length:
-                        args.append(node.length)
-                    expr = "SUBSTR(" + ", ".join(args) + ")"
-                    replace("{Builtin_SUBSTR}", expr)
-                else:
-                    replace("{Builtin_SUBSTR}", "SUBSTR(" + "{" + node.arg.name + "}," + node.start + ")" )
-                    algebra.traverse(node.arg, visitPre=sparql_query_text)
-                    return node.arg
-                # TODO: node.end
+                args = [convert_node_arg(node.arg), node.start]
+                if node.length:
+                    args.append(node.length)
+                expr = "SUBSTR(" + ", ".join(args) + ")"
+                replace("{Builtin_SUBSTR}", expr)
             elif node.name.endswith('Builtin_UCASE'):
                 replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_LCASE'):
@@ -429,7 +432,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
             elif node.name.endswith('Builtin_ENCODE_FOR_URI'):
                 replace("{Builtin_ENCODE_FOR_URI}", "ENCODE_FOR_URI(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_CONCAT'):
-                expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
+                expr = 'CONCAT({vars})'.format(vars=", ".join(convert_node_arg(elem) for elem in node.arg))
                 replace("{Builtin_CONCAT}", expr)
             elif node.name.endswith('Builtin_LANGMATCHES'):
                 replace("{Builtin_LANGMATCHES}", "LANGMATCHES(" + convert_node_arg(node.arg1)

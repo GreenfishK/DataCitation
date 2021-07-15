@@ -5,13 +5,20 @@ from rdflib.paths import Path, SequencePath, NegatedPath, AlternativePath, MulPa
     InvPath
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra
+import collections
 
 
 class ExpressionNotCoveredException(Exception):
     pass
 
 
-def to_sparql_query_text(query_algebra):
+def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None) -> str:
+    """
+
+    :param query_algebra: An algebra returned by the function call algebra.translateQuery(parse_tree)
+    from the rdflib library.
+    :return: The query form of the algebra.
+    """
 
     def overwrite(text):
         file = open("query.txt", "w+")
@@ -21,7 +28,7 @@ def to_sparql_query_text(query_algebra):
     def replace(old, new, search_from_match: str = None, search_from_match_occurrence: int = None, count: int = 1):
         # Read in the file
         with open('query.txt', 'r') as file:
-            filedata = file.read()
+            query = file.read()
 
         def find_nth(haystack, needle, n):
             start = haystack.lower().find(needle)
@@ -31,20 +38,24 @@ def to_sparql_query_text(query_algebra):
             return start
 
         if search_from_match and search_from_match_occurrence:
-            position = find_nth(filedata, search_from_match, search_from_match_occurrence)
-            filedata_pre = filedata[:position]
-            filedata_post = filedata[position:].replace(old, new, count)
-            filedata = filedata_pre + filedata_post
+            position = find_nth(query, search_from_match, search_from_match_occurrence)
+            query_pre = query[:position]
+            query_post = query[position:].replace(old, new, count)
+            query = query_pre + query_post
         else:
-            filedata = filedata.replace(old, new, count)
+            query = query.replace(old, new, count)
 
         # Write the file out again
         with open('query.txt', 'w') as file:
-            file.write(filedata)
+            file.write(query)
 
     def convert_node_arg(node_arg):
         if isinstance(node_arg, Identifier):
-            return node_arg.n3()
+            if node_arg in aggr_vars.keys():
+                grp_var = aggr_vars[node_arg].pop(0)
+                return grp_var.n3()
+            else:
+                return node_arg.n3()
         elif isinstance(node_arg, CompValue):
             return "{" + node_arg.name + "}"
         elif isinstance(node_arg, Expr):
@@ -55,6 +66,8 @@ def to_sparql_query_text(query_algebra):
             raise ExpressionNotCoveredException(
                 "The expression {0} might not be covered yet.".format(node_arg))
 
+    aggr_vars = collections.defaultdict(list)
+
     def sparql_query_text(node):
         """
          https://www.w3.org/TR/sparql11-query/#sparqlSyntax
@@ -62,40 +75,6 @@ def to_sparql_query_text(query_algebra):
         :param node:
         :return:
         """
-        if isinstance(node, Path):
-
-            def resolve_path(path: Path):
-                """
-                Resolves the paths to explicit triple statements.
-
-                :param path:
-                :return:
-                """
-                if isinstance(path, SequencePath):
-                    print("Sequence Path")
-                    resolved_path_triples = []
-                    for arg in node.args:
-                        if isinstance(arg, Path):
-                            raise ExpressionNotCoveredException("This expression might not be covered yet.")
-                        else:
-                            print(arg)
-                            print(type(arg))
-
-                if isinstance(path, NegatedPath):
-                    print("Negated Path")
-                if isinstance(path, AlternativePath):
-                    print("Alternative Path")
-                if isinstance(path, InvPath):
-                    print("Inverse Path")
-                if isinstance(path, MulPath):
-                    if path.mod == ZeroOrOne:
-                        print("ZeroOrOne")
-                    if path.mod == ZeroOrMore:
-                        print("ZeroOrMore")
-                    if path.mod == OneOrMore:
-                        print("OneOrMore")
-
-            resolve_path(node)
 
         if isinstance(node, CompValue):
             # 18.2 Query Forms
@@ -168,6 +147,8 @@ def to_sparql_query_text(query_algebra):
                         identifier = agg_func.res.n3()
                     else:
                         raise ExpressionNotCoveredException("This expression might not be covered yet.")
+
+                    aggr_vars[agg_func.res].append(agg_func.vars)
                     agg_func_name = agg_func.name.split('_')[1]
                     distinct = ""
                     if agg_func.distinct:
@@ -176,7 +157,8 @@ def to_sparql_query_text(query_algebra):
                         replace(identifier, "GROUP_CONCAT" + "(" + distinct
                                 + agg_func.vars.n3() + ";SEPARATOR=" + agg_func.separator.n3() + ")")
                     else:
-                        replace(identifier, agg_func_name.upper() + "(" + distinct + convert_node_arg(agg_func.vars) + ")")
+                        replace(identifier, agg_func_name.upper() + "(" + distinct
+                                + convert_node_arg(agg_func.vars) + ")")
                     # For non-aggregated variables the aggregation function "sample" is automatically assigned.
                     # However, we do not want to have "sample" wrapped around non-aggregated variables. That is
                     # why we replace it. If "sample" is used on purpose it will not be replaced as the alias
@@ -186,9 +168,8 @@ def to_sparql_query_text(query_algebra):
             elif node.name == "GroupGraphPatternSub":
                 replace("GroupGraphPatternSub", " ".join([convert_node_arg(pattern) for pattern in node.part]))
             elif node.name == "TriplesBlock":
-                print("triplesblock")
                 replace("{TriplesBlock}", "".join(triple[0].n3() + " " + triple[1].n3() + " " + triple[2].n3() + "."
-                                                   for triple in node.triples))
+                                                  for triple in node.triples))
 
             # 18.2 Solution modifiers
             elif node.name == "ToList":
@@ -199,7 +180,7 @@ def to_sparql_query_text(query_algebra):
                     if isinstance(c.expr, Identifier):
                         var = c.expr.n3()
                         if c.order is not None:
-                            cond = var + "(" + c.order + ")"
+                            cond = c.order + "(" + var + ")"
                         else:
                             cond = var
                         order_conditions.append(cond)
@@ -292,7 +273,6 @@ def to_sparql_query_text(query_algebra):
                 # According to https://www.w3.org/TR/2013/REC-sparql11-query-20130321/#rNotExistsFunc
                 # NotExistsFunc can only have a GroupGraphPattern as parameter. However, when we print the query algebra
                 # we get a GroupGraphPatternSub
-                print(node.graph.name)
                 replace("{Builtin_NOTEXISTS}", "NOT EXISTS " + "{{" + node.graph.name + "}}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
                 return node.graph
@@ -339,17 +319,11 @@ def to_sparql_query_text(query_algebra):
             elif node.name.endswith('Builtin_STRLEN'):
                 replace("{Builtin_STRLEN}", "STRLEN(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_SUBSTR'):
-                if isinstance(node.arg, Identifier):
-                    args = [node.arg.n3(), node.start]
-                    if node.length:
-                        args.append(node.length)
-                    expr = "SUBSTR(" + ", ".join(args) + ")"
-                    replace("{Builtin_SUBSTR}", expr)
-                else:
-                    replace("{Builtin_SUBSTR}", "SUBSTR(" + "{" + node.arg.name + "}," + node.start + ")" )
-                    algebra.traverse(node.arg, visitPre=sparql_query_text)
-                    return node.arg
-                # TODO: node.end
+                args = [convert_node_arg(node.arg), node.start]
+                if node.length:
+                    args.append(node.length)
+                expr = "SUBSTR(" + ", ".join(args) + ")"
+                replace("{Builtin_SUBSTR}", expr)
             elif node.name.endswith('Builtin_UCASE'):
                 replace("{Builtin_UCASE}", "UCASE(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_LCASE'):
@@ -372,7 +346,7 @@ def to_sparql_query_text(query_algebra):
             elif node.name.endswith('Builtin_ENCODE_FOR_URI'):
                 replace("{Builtin_ENCODE_FOR_URI}", "ENCODE_FOR_URI(" + convert_node_arg(node.arg) + ")")
             elif node.name.endswith('Builtin_CONCAT'):
-                expr = 'CONCAT({vars})'.format(vars=", ".join(elem.n3() for elem in node.arg))
+                expr = 'CONCAT({vars})'.format(vars=", ".join(convert_node_arg(elem) for elem in node.arg))
                 replace("{Builtin_CONCAT}", expr)
             elif node.name.endswith('Builtin_LANGMATCHES'):
                 replace("{Builtin_LANGMATCHES}", "LANGMATCHES(" + convert_node_arg(node.arg1)
@@ -437,7 +411,7 @@ def to_sparql_query_text(query_algebra):
                         columns.append(key.n3())
                     else:
                         raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(key))
-                values = "VALUES (" + " ".join(columns) +")"
+                values = "VALUES (" + " ".join(columns) + ")"
 
                 rows = ""
                 for elem in node.res:
@@ -458,11 +432,14 @@ def to_sparql_query_text(query_algebra):
                         + "{" + node.graph.name + "}")
                 algebra.traverse(node.graph, visitPre=sparql_query_text)
                 return node.graph
-
             # else:
             #     raise ExpressionNotCoveredException("The expression {0} might not be covered yet.".format(node.name))
 
     algebra.traverse(query_algebra.algebra, visitPre=sparql_query_text)
+    query_from_algebra = open("query.txt", "r").read()
+    # os.remove("query.txt")
+
+    return query_from_algebra
 
 q1 = open("test_query.txt", "r").read()
 # q1 = open("test_property_path__alternative_path.txt", "r").read()
@@ -475,8 +452,9 @@ q1 = open("test_query.txt", "r").read()
 
 query_tree = parser.parseQuery(q1)
 query_algebra = algebra.translateQuery(query_tree)
-to_sparql_query_text(query_algebra)
 algebra.pprintAlgebra(query_algebra)
+_translate_algebra(query_algebra)
+
 
 query = open("query.txt", "r").read()
 p = '{'
