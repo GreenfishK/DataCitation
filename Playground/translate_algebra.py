@@ -441,20 +441,12 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
 
     return query_from_algebra
 
-q1 = open("test_query.txt", "r").read()
-# q1 = open("test_property_path__alternative_path.txt", "r").read()
-# q1 = open("test_property_path__inverse_path.txt", "r").read()
-# q1 = open("test_property_path__negated_property_set.txt", "r").read()
-# q1 = open("test_property_path__sequence_path.txt", "r").read()
-# q1 = open("test_property_path__one_or_more_path.txt", "r").read()
-# q1 = open("test_property_path__zero_or_more_path.txt", "r").read()
-# q1 = open("test_property_path__zero_or_one_path.txt", "r").read()
 
+q1 = open("test_query.txt", "r").read()
 query_tree = parser.parseQuery(q1)
 query_algebra = algebra.translateQuery(query_tree)
-algebra.pprintAlgebra(query_algebra)
 _translate_algebra(query_algebra)
-
+# algebra.pprintAlgebra(query_algebra)
 
 query = open("query.txt", "r").read()
 p = '{'

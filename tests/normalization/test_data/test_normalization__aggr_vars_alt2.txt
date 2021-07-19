@@ -28,5 +28,3 @@ where {
     }
 } group by ?s ?x ?y
 order by desc(?cnt_b)
-# order by desc(count(?b))
-# order by ?s ?x

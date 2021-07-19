@@ -1,4 +1,4 @@
-from rdf_data_citation.citation_utils import QueryUtils
+from src.rdf_data_citation.citation_utils import QueryUtils
 from tests.test_base import Test, TestExecution
 import logging
 
@@ -218,12 +218,32 @@ class TestNormalization(TestExecution):
         return test
 
     def x_test_normalization__nested_paths(self):
-        # Not implemented yet
+        # Alternative paths not implemented yet
         test = Test(test_number=17,
                     tc_desc="Test if two queries with a combination of sequence and alternative paths is given in one "
                             "query and the alternative statement (resolved alternative path using UNION) "
                             "is given in the second query yields the same query checksum. "
                             "The bind must be explicitly used via BIND keyword.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def test_normalization__aggr_vars(self):
+        test = Test(test_number=18,
+                    tc_desc="Test if two queries with different aliases for variables used in the group by clause "
+                            "or different aliases for aggregation functions in the select clause yield the "
+                            "same checksum.",
+                    expected_result=self.query_data_alt1.checksum,
+                    actual_result=self.query_data_alt2.checksum)
+
+        return test
+
+    def test_normalization__aggr_fx(self):
+        # Not implemented yet
+        test = Test(test_number=19,
+                    tc_desc="Test if an aggregation function can be used in the order by clause instead of its alias. "
+                            "e.g ?cnt_a instead of count(?a) if the projection is (count(?a) as ?cnt_a).",
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
 

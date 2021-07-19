@@ -9,24 +9,22 @@
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-select distinct ?s ?x (concat(substr(str(?y),0,5), substr(str(?y),5,10)) as ?first_ten) (count(?a) as ?cnt_a) (count(?b) as ?cnt_b)
+select distinct ?aaa ?x (concat(substr(str(?y),0,5), substr(str(?y),5,10)) as ?first_ten) (count(?a) as ?cnt_a) (count(?b) as ?cnt_b)
 where {
     {
-        ?s rdfs:subClassOf / rdf:type ?x .
+        ?aaa rdfs:subClassOf / rdf:type ?x .
         optional {
             rdf:type ?a ?b
         }
-        filter(?s = rdf:XMLLiteral)
+        filter(?aaa = rdf:XMLLiteral)
     }
     union
     {
-        ?s rdfs:subClassOf / rdf:type ?y .
+        ?aaa rdfs:subClassOf / rdf:type ?y .
         optional {
             rdf:type ?a ?b
         }
-        filter(?s = rdf:XMLLiteral)
+        filter(?aaa = rdf:XMLLiteral)
     }
-} group by ?s ?x ?y
-order by desc(?cnt_b)
-# order by desc(count(?b))
-# order by ?s ?x
+} group by ?aaa ?x ?y
+order by desc(count(?b))

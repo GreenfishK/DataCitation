@@ -137,7 +137,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
 
     def convert_node_arg(node_arg):
         if isinstance(node_arg, Identifier):
-            if node_arg in aggr_vars.keys():
+            if node_arg in aggr_vars.keys() and len(aggr_vars[node_arg]) > 0:
                 grp_var = aggr_vars[node_arg].pop(0)
                 return grp_var.n3()
             else:
@@ -245,6 +245,7 @@ def _translate_algebra(query_algebra: rdflib.plugins.sparql.sparql.Query = None)
                     else:
                         replace(identifier, agg_func_name.upper() + "(" + distinct
                                 + convert_node_arg(agg_func.vars) + ")")
+
                     # For non-aggregated variables the aggregation function "sample" is automatically assigned.
                     # However, we do not want to have "sample" wrapped around non-aggregated variables. That is
                     # why we replace it. If "sample" is used on purpose it will not be replaced as the alias
@@ -694,19 +695,19 @@ class QueryUtils:
         aliases = {}
 
         def remove_alias(node):
-            if isinstance(node, CompValue):
-                if node.name == "Extend":
-                    if isinstance(node.expr, Variable):
-                        aliases[node.var] = node.expr
-                        return node.p
+            if isinstance(node, CompValue) and node.name == "Extend" and isinstance(node.expr, Variable):
+                if node.expr.n3().startswith('?__agg_'):
+                    aliases[node.expr] = node.var
+                else:
+                    aliases[node.var] = node.expr
+                return node.p
 
-        def overwrite_aliases_with_orig_var(n):
-            if isinstance(n, CompValue) and n.get('PV') and type(n.get('PV')) == list:
-                for idx, pv in enumerate(n.get('PV')):
-                    if aliases.get(pv):
-                        n.get('PV')[idx] = aliases.get(pv)
-                return n
+        def overwrite_aliases_with_orig_var(node):
+            if isinstance(node, Variable):
+                if aliases.get(node):
+                    return aliases.get(node)
 
+        algebra.pprintAlgebra(q_algebra)
         algebra.traverse(q_algebra.algebra, visitPost=remove_alias)
         algebra.traverse(q_algebra.algebra, visitPost=overwrite_aliases_with_orig_var)
 
@@ -844,9 +845,9 @@ class QueryUtils:
                                                         "went wrong prior to this step or the variable is not part "
                                                         "of any triple statement.".format(node))
 
+        algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
         algebra.traverse(q_algebra.algebra, retrieve_pv_vars)
         algebra.traverse(q_algebra.algebra, retrieve_bgp_vars)
-        algebra.traverse(q_algebra.algebra, retrieve_bind_vars)
 
         try:
             algebra.traverse(q_algebra.algebra, visitPost=replace_variable_names_with_letters)
