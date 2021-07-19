@@ -707,7 +707,6 @@ class QueryUtils:
                 if aliases.get(node):
                     return aliases.get(node)
 
-        algebra.pprintAlgebra(q_algebra)
         algebra.traverse(q_algebra.algebra, visitPost=remove_alias)
         algebra.traverse(q_algebra.algebra, visitPost=overwrite_aliases_with_orig_var)
 
