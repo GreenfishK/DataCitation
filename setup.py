@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     # Metadata
     name="rdf_data_citation",
-    version="1.0.0.1",
+    version="1.0.0.2",
     author="Filip Kovacevic",
     author_email="f.kovacevic@gmx.at",
     description="A package for versioning and citing RDF data.",

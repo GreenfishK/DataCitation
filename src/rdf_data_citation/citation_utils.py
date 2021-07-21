@@ -1083,7 +1083,7 @@ class RDFDataSetUtils:
             cols_most_freq = cnt_freq.query("count == freq").index
             if len(cols_most_freq) > 0:
                 desc += "This dataset is about: "
-                desc += ", ".join(dataset[col].iloc[0] for col in cols_most_freq) + "\n"
+                desc += ", ".join(str(dataset[col].iloc[0]) for col in cols_most_freq) + "\n"
 
             desc += "Each column has following number of non-empty values: \n"
             desc += ", ".join(": ".join((str(k), str(v))) for k, v in dataset_description['count'].items()) + "\n"
