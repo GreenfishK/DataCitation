@@ -167,13 +167,13 @@ class Citation:
 
         if self.yn_query_exists:
             if self.yn_result_set_changed:
+                query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=False)
                 logging.info("The dataset changed since the last citation. The citation and dataset metadata of query "
                              "with PID {0} were updated with the new PID {1}".format(existing_query_data.pid,
                                                                                      query_to_cite.pid))
-                query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=False)
         else:
-            logging.info("A new query citation with PID {0} was stored in the query store.".format(query_to_cite.pid))
             query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
+            logging.info("A new query citation with PID {0} was stored in the query store.".format(query_to_cite.pid))
 
     def retrieve(self, query_pid: str) -> [pd.DataFrame, str]:
         """
