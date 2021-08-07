@@ -10,9 +10,9 @@ insert {{
     <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until ?newVersion.
 }}
 where {{
-    bind({1} as ?subjectToUpdate)
-    bind({2} as ?predicateToUpdate)
-    bind({3} as ?objectToUpdate)
+    bind({1} as ?subjectToOutdate)
+    bind({2} as ?predicateToOutdate)
+    bind({3} as ?objectToOutdate)
     # versioning
     <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime .
     BIND(xsd:dateTime(NOW()) AS ?newVersion).
