@@ -13,6 +13,8 @@ import pandas as pd
 import logging
 from typing import Callable
 
+# TODO:  Reconsider role "publisher" in Readme.md and change it to researcher
+
 
 class Citation:
 
