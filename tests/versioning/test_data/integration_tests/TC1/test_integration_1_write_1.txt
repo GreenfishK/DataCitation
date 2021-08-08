@@ -1,0 +1,13 @@
+# Prefixes
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.com/>
+# Insert statement
+insert {{
+    ex:Obama ex:occupation "author".
+    <<ex:Obama ex:occupation "author">>  citing:valid_from ?newVersion.
+    <<ex:Obama ex:occupation "author">>  citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
+}}
+where {{
+    BIND(xsd:dateTime(NOW()) AS ?newVersion).
+}}

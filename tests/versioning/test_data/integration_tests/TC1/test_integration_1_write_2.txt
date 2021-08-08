@@ -1,6 +1,7 @@
 # prefixes
-{0}
-
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.com/>
 delete {{
     <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
 }}
@@ -8,17 +9,19 @@ insert {{
     # outdate old triple with date as of now()
     <<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?newVersion.
     # update new row with value and timestamp as of now()
-    ?subjectToUpdate ?predicateToUpdate ?newValue. # new value
-    # assign new version. if variable is used, multiple ?newVersion are retrieved leading to multiple updates. TODO: fix this
+    ?subjectToUpdate ?predicateToUpdate ?newValue.
+    # new value
+    # assign new version.
     <<?subjectToUpdate ?predicateToUpdate ?newValue>> citing:valid_from ?newVersion ;
                                                       citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime.
 }}
 where {{
-    bind({1} as ?subjectToUpdate)
-    bind({2} as ?predicateToUpdate)
-    bind({3} as ?objectToUpdate)
-    bind({4} as ?newValue). #new Value
-    # versioning
+    bind(ex:Obama as ?subjectToUpdate)
+    bind(ex:occupation as ?predicateToUpdate)
+    bind("president" as ?objectToUpdate)
+    bind("film_producer" as ?newValue).
+
+    # versioning - update only triples which have an artificial end date or don't have one at all
     optional {{<<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . }}
     filter(!bound(?valid_until) || ?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
     # nothing should be changed if old and new value are the same

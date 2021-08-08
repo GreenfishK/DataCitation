@@ -1,20 +1,22 @@
 # prefixes
-{0}
-
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.com/>
 # Delete and insert statements
-delete {{
+delete {
     <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime
-}}
-insert {{
+}
+insert {
     # outdate old triples with date as of now()
     <<?subjectToOutdate ?predicateToOutdate ?objectToOutdate>> citing:valid_until ?newVersion.
-}}
-where {{
-    bind({1} as ?subjectToOutdate)
-    bind({2} as ?predicateToOutdate)
-    bind({3} as ?objectToOutdate)
+}
+where {
+    bind(ex:Obama as ?subjectToOutdate)
+    bind(ex:occupation as ?predicateToOutdate)
+    bind("film_producer" as ?objectToOutdate)
+
     # versioning
-    optional {{<<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . }}
+    optional {<<?subjectToUpdate ?predicateToUpdate ?objectToUpdate>> citing:valid_until ?valid_until . }
     filter(!bound(?valid_until) || ?valid_until = "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime)
     BIND(xsd:dateTime(NOW()) AS ?newVersion).
-}}
+}

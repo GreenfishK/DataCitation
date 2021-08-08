@@ -1,4 +1,4 @@
-from rdf_data_citation.rdf_star import TripleStoreEngine, VersioningMode
+from src.rdf_data_citation.rdf_star import TripleStoreEngine, VersioningMode
 from tests.test_base import Test, TestExecution, format_text
 from datetime import timezone, timedelta, datetime
 import logging
@@ -32,7 +32,7 @@ class TestVersioning(TestExecution):
                                             self.test_config.get('RDFSTORE', 'post'))
         self.initial_df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         self.cnt_initial_triples = int(self.initial_df['cnt'].item().split(" ")[0])
-        self.rdf_engine.reset_all_versions()
+        # self.rdf_engine.reset_all_versions()
 
     def before_single_test(self, test_name: str):
         """
@@ -50,7 +50,7 @@ class TestVersioning(TestExecution):
 
         df = self.rdf_engine.get_data(self.query_cnt_triples, yn_timestamp_query=False)
         self.cnt_actual_triples = int(df['cnt'].item().split(" ")[0])
-        self.rdf_engine.version_all_rows(self.initial_timestamp)
+        # self.rdf_engine.version_all_rows(self.initial_timestamp)
 
     def after_single_test(self):
         """
@@ -59,7 +59,7 @@ class TestVersioning(TestExecution):
         """
 
         print("Executing after_single_tests ...")
-        self.rdf_engine.reset_all_versions()
+        # self.rdf_engine.reset_all_versions()
 
     def after_all_tests(self):
         """
@@ -69,9 +69,9 @@ class TestVersioning(TestExecution):
 
         print("Executing after_tests ...")
         rdf_engine = self.rdf_engine
-        rdf_engine.reset_all_versions()
+        # rdf_engine.reset_all_versions()
 
-    def test_version__init_reset(self):
+    def x_test_version__init_reset(self):
         test = Test(test_number=1,
                     tc_desc="The number of triples after calling version_all_triples and then reset_all_triples "
                             "consecutively must equal the initial number of triples.",
@@ -89,7 +89,7 @@ class TestVersioning(TestExecution):
 
         return test
 
-    def test_version__init(self):
+    def x_test_version__init(self):
         versioning_mode = self.test_config.get('VERSIONING', 'versioning_mode')
         if versioning_mode == "Q_PERF":
             expected_result = str(self.cnt_initial_triples * 3)
@@ -672,6 +672,19 @@ class TestVersioning(TestExecution):
                     expected_result=str(len(self.df_test_query.index)),
                     actual_result=str(len(df.index)))
 
+        return test
+
+    def x_test_integration_1(self):
+        test = Test(test_number=22,
+                    tc_desc='Test if executing all test_integration_1_write_<number>.txt queries consecutively '
+                            'produce the expected result sets as prepared in the '
+                            'files test_integration_1_vers<version_number>_res.csv. '
+                            'A check should be performed between each write operation and once again after the last '
+                            'write operation. Latter check must ensure that all result sets are reproducible by '
+                            'using test_integration_1_read.txt with the timestamps passed as they were saved '
+                            'before the first and after each subsequent write operation.',
+                    expected_result="",
+                    actual_result="")
         return test
 
 

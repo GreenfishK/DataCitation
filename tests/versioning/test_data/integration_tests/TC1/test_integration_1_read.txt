@@ -1,0 +1,14 @@
+PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.com/>
+select ?s ?p ?o ?triple_statement_0_valid_from ?triple_statement_0_valid_until ?TimeOfCitingBGP_0 where {{
+    ?s ?p ?o .
+    filter(?s = <http://example.com/Obama>)
+    # versioned triples
+    <<?s ?p ?o>> citing:valid_until ?triple_statement_0_valid_until.
+    filter(?TimeOfCitingBGP_0 < ?triple_statement_0_valid_until)
+    optional {{<<?s ?p ?o>> citing:valid_from ?triple_statement_0_valid_from.}}
+    filter (!bound(?triple_statement_0_valid_from) || ?triple_statement_0_valid_from <= ?TimeOfCitingBGP_0)
+
+    bind("{0}"^^xsd:dateTime as ?TimeOfCitingBGP_0)
+}}
