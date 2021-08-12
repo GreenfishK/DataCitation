@@ -1,5 +1,5 @@
-from rdf_data_citation import rdf_star
-from rdf_data_citation.citation_utils import _translate_algebra, _pprint_query
+from src.rdf_data_citation import rdf_star
+from src.rdf_data_citation.persistent_id_utils import _translate_algebra, _pprint_query
 from tests.test_base import Test, TestExecution, format_text
 import rdflib.plugins.sparql.parser as parser
 import rdflib.plugins.sparql.algebra as algebra

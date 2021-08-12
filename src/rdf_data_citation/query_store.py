@@ -1,4 +1,4 @@
-from .citation_utils import QueryUtils, RDFDataSetUtils, MetaData
+from .persistent_id_utils import QueryUtils, RDFDataSetUtils, MetaData
 from ._helper import template_path
 from ._exceptions import QueryExistsError, QueryDoesNotExistError
 import sqlalchemy as sql
@@ -15,8 +15,9 @@ class QueryStore:
         Tables: query_hub, query_citation
         """
 
-        self._path_to_persistence = template_path("persistence")
-        db_path = self._path_to_persistence + "/query_store.db"
+        self._path_to_templates = template_path("templates/query_store")
+        db_path = template_path("persistence/query_store.db")
+        logging.debug(db_path)
         self._engine = sql.create_engine("sqlite:///{0}".format(db_path))
 
     def _remove(self, query_checksum):
@@ -27,31 +28,31 @@ class QueryStore:
         :param query_checksum:
         :return:
         """
-        delete_query_citation = "Delete from query_citation where query_checksum = :query_checksum "
+        delete_query_satellite = "Delete from query_satellite where query_checksum = :query_checksum "
         delete_query = "Delete from query_hub where query_checksum = :query_checksum "
 
         with self._engine.connect() as connection:
             try:
                 # Order is important due to referential integrity
-                connection.execute(delete_query_citation, query_checksum=query_checksum)
+                connection.execute(delete_query_satellite, query_checksum=query_checksum)
                 connection.execute(delete_query, query_checksum=query_checksum)
                 logging.info("QueryData with checksum {0} removed from query store".format(query_checksum))
 
             except Exception as e:
                 logging.error(e)
 
-    def get_latest_citation(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
+    def get_last_execution(self, query_checksum: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
-        Checks whether the query exists in the database. If yes, query data, dataset metadata and citation metadata
-        (including provenance data and the citation snippet) belonging to its most recent citation are returned. Most
-        recent citation hereby means the most recent dataset version and metadata. If no, empty objects are returned
+        Checks whether the query exists in the database. If yes, query data, dataset metadata and q_handler metadata
+        (including provenance data and the q_handler snippet) belonging to its most recent execution are returned. Most
+        recent execution hereby means the most recent dataset version and metadata. If no, empty objects are returned
         to the caller.
 
         :param query_checksum:
         :return:
         """
 
-        select_statement = open("{0}/lookup_select.sql".format(self._path_to_persistence), "r").read()
+        select_statement = open("{0}/lookup_select.sql".format(self._path_to_templates), "r").read()
         with self._engine.connect() as connection:
             try:
                 result = connection.execute(select_statement, query_checksum=query_checksum)
@@ -68,7 +69,7 @@ class QueryStore:
                 query_data.normal_query_algebra = df.normal_query_algebra.loc[0]
                 query_data.normal_query = df.normal_query.loc[0]
                 query_data.sparql_prefixes = df.query_prefixes.loc[0]
-                query_data.citation_timestamp = df.citation_timestamp.loc[0]
+                query_data.execution_timestamp = df.execution_timestamp.loc[0]
 
                 result_set_data = RDFDataSetUtils()
                 result_set_data.checksum = df.result_set_checksum.loc[0]
@@ -86,15 +87,15 @@ class QueryStore:
             except Exception as e:
                 logging.error(e)
 
-    def get_cited_query(self, query_pid: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
+    def get_query(self, query_pid: str) -> [QueryUtils, RDFDataSetUtils, MetaData]:
         """
-        Retrieves the cited query by its :query_pid, query data, dataset metadata and citation metadata
-        (including provenance data and the citation snippet) from the query store.
+        Retrieves the stored query by its :query_pid, query data, dataset metadata and q_handler metadata
+        (including provenance data and the q_handler snippet) from the query store.
 
         :param query_pid:
-        :return: query data, dataset metadata, citation metadata
+        :return: query data, dataset metadata, q_handler metadata
         """
-        select_timestamped_query = open("{0}/select_timestamped_query.sql".format(self._path_to_persistence), "r").read()
+        select_timestamped_query = open("{0}/select_timestamped_query.sql".format(self._path_to_templates), "r").read()
         with self._engine.connect() as connection:
             try:
                 result = connection.execute(select_timestamped_query, query_pid=query_pid)
@@ -113,7 +114,7 @@ class QueryStore:
                 query_data.normal_query_algebra = df.normal_query_algebra.loc[0]
                 query_data.normal_query = df.normal_query.loc[0]
                 query_data.sparql_prefixes = df.query_prefixes.loc[0]
-                query_data.citation_timestamp = df.citation_timestamp.loc[0]
+                query_data.execution_timestamp = df.execution_timestamp.loc[0]
 
                 result_set_data = RDFDataSetUtils()
                 result_set_data.checksum = df.result_set_checksum.loc[0]
@@ -124,7 +125,7 @@ class QueryStore:
                 meta_data.set_metadata(df.citation_data.loc[0])
                 meta_data.citation_snippet = df.citation_snippet.loc[0]
 
-                logging.info("The cited query with PID {0} and its metadata are retrieved"
+                logging.info("The stored query with PID {0} and its metadata are retrieved"
                              " from the query store.".format(query_pid))
 
                 return [query_data, result_set_data, meta_data]
@@ -147,7 +148,7 @@ class QueryStore:
         persistent URI: query checksum
         location
 
-        reference: Theory and Practice of Data Citation, Silvello et al.
+        reference: Theory and Practice of Data QueryHandler, Silvello et al.
 
         :param query_data:
         :param rs_data:
@@ -157,12 +158,10 @@ class QueryStore:
         :return:
         """
 
-        insert_statement = open("{0}/store_insert_query_hub.sql".format(self._path_to_persistence), "r").read()
-        insert_statement_2 = open("{0}/store_insert_query_citation.sql".format(self._path_to_persistence), "r").read()
-        update_statement = open("{0}/store_update_query_hub.sql".format(self._path_to_persistence), "r").read()
+        insert_statement = open("{0}/store_insert_query_hub.sql".format(self._path_to_templates), "r").read()
+        insert_statement_2 = open("{0}/store_insert_query_satellite.sql".format(self._path_to_templates), "r").read()
+        update_statement = open("{0}/store_update_query_hub.sql".format(self._path_to_templates), "r").read()
 
-        # TODO: does timestamped_query belong to query_citation because it gets another timestamp if the result set
-        #  changed?
         with self._engine.connect() as connection:
             if yn_new_query:
                 try:
@@ -188,19 +187,19 @@ class QueryStore:
                                    result_set_sort_order=", ".join(rs_data.sort_order),
                                    citation_data=meta_data.to_json(),
                                    citation_snippet=meta_data.citation_snippet,
-                                   citation_timestamp=query_data.citation_timestamp)
+                                   execution_timestamp=query_data.execution_timestamp)
                 if not yn_new_query:
-                    logging.info("A new citation has been added to the existing query with checksum '{0}'. "
+                    logging.info("A new execution has been added to the existing query with checksum '{0}'. "
                                  "The new entry carries the PID {1}".format(query_data.checksum, query_data.pid))
 
             except exc.IntegrityError:
                 raise QueryExistsError("A query is trying to be inserted that already exists. The query PID {0} "
                                        "of the executed query is found within the "
-                                       "query_citation table".format(query_data.pid))
+                                       "query_satellite table".format(query_data.pid))
 
             try:
                 connection.execute(update_statement, query_checksum=query_data.checksum)
             except Exception:
-                logging.error("Could not update the last citation PID in query_hub.last_citation_pid")
+                logging.error("Could not update the last execution PID in query_hub.last_execution_pid")
 
 

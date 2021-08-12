@@ -6,7 +6,7 @@ Select {1} where {{
     {2}
 }}
 # citation timestamp
-bind("{3}"^^xsd:dateTime as ?TimeOfCiting)
+bind("{3}"^^xsd:dateTime as ?TimeOfExecution)
 
 # data versioning query extension
 {4}

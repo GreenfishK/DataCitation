@@ -1,6 +1,6 @@
-from .citation_utils import QueryUtils
-from ._helper import template_path, citation_timestamp_format
-from .prefixes import citation_prefixes, split_prefixes_query
+from .persistent_id_utils import QueryUtils
+from ._helper import template_path, versioning_timestamp_format
+from .prefixes import versioning_prefixes, split_prefixes_query
 from ._exceptions import RDFStarNotSupported, NoConnectionToRDFStore, NoVersioningMode, \
     WrongInputFormatException
 from urllib.error import URLError
@@ -75,7 +75,7 @@ class TripleStoreEngine:
         the RDF* store in fact supports the 'star' extension. During the execution a side effect may occur and
         additional triples may be added by the RDF* store. These triples are pure meta data triples and reflect
         classes and properties (like rdf:type and rdfs:subPropertyOf) of RDF itself. This happens due to a new prefix,
-        namely, citing: <https://github.com/GreenfishK/DataCitation/citing/>' which is used in the write statements.
+        namely, vers: <https://github.com/GreenfishK/DataCitation/versioning/>' which is used in the write statements.
         Upon execution, this prefix gets embedded into the RDF class hierarchy by the RDF store, thus, new triples
         are written to the store.
 
@@ -128,7 +128,7 @@ class TripleStoreEngine:
                                              "Check whether your RDF* store is running.")
 
             try:
-                test_prefixes = citation_prefixes("")
+                test_prefixes = versioning_prefixes("")
                 template = open(self._template_location +
                                 "/test_connection/test_connection_nested_select.txt", "r").read()
                 select_statement = template.format(test_prefixes)
@@ -158,13 +158,13 @@ class TripleStoreEngine:
 
     def reset_all_versions(self):
         """
-        Delete all triples with citing:valid_from and citing:valid_until as predicate.
+        Delete all triples with vers:valid_from and vers:valid_until as predicate.
 
         :return:
         """
 
         template = open(self._template_location + "/reset_all_versions.txt", "r").read()
-        delete_statement = template.format(citation_prefixes(""))
+        delete_statement = template.format(versioning_prefixes(""))
         self.sparql_post.setQuery(delete_statement)
         self.sparql_post.query()
 
@@ -186,12 +186,12 @@ class TripleStoreEngine:
         :return:
         """
 
-        final_prefixes = citation_prefixes("")
+        final_prefixes = versioning_prefixes("")
         versioning_mode_dir1 = self._template_location + "/../rdf_star_store/versioning_modes"
         versioning_mode_dir2 = self._template_location + "/../query_utils/versioning_modes"
 
         if versioning_mode == VersioningMode.Q_PERF and initial_timestamp is not None:
-            version_timestamp = citation_timestamp_format(initial_timestamp)
+            version_timestamp = versioning_timestamp_format(initial_timestamp)
 
             versioning_mode_template1 = open(versioning_mode_dir1 + "/version_all_rows_q_perf.txt", "r").read()
             versioning_mode_template2 = \
@@ -237,11 +237,11 @@ class TripleStoreEngine:
             if timestamp is None:
                 query_utils = QueryUtils(query=select_statement)
             else:
-                query_utils = QueryUtils(query=select_statement, citation_timestamp=timestamp)
+                query_utils = QueryUtils(query=select_statement, execution_timestamp=timestamp)
 
             query = query_utils.timestamped_query
             logging.info("Timestamped query with timestamp {0} being executed:"
-                         " \n {1}".format(query_utils.citation_timestamp, query))
+                         " \n {1}".format(query_utils.execution_timestamp, query))
             self.sparql_get_with_post.setQuery(query)
         else:
             logging.info("Query being executed: \n {0}".format(select_statement))
@@ -259,7 +259,7 @@ class TripleStoreEngine:
         Updates all triples' objects that are provided in :triples as key values with the corresponding
         values from the same dictionary. the triples and the new value must be in n3 syntax.
         Only the most recent triples (those that are annotated with
-        <<s p o >> citing_valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
+        <<s p o >> vers:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime) will be updated.
 
         :param triples: A dictionary with triples as key values and strings as values. All triple elements
         and corresponding new values must be provided as strings and may also contain SPARQL prefixes. E.g. foaf:name
@@ -269,7 +269,7 @@ class TripleStoreEngine:
         template = open(self._template_location + "/update_triples.txt", "r").read()
         for i, (triple, new_value) in enumerate(triples.items()):
             if isinstance(triple, tuple) and isinstance(new_value, str):
-                sparql_prefixes = citation_prefixes(prefixes)
+                sparql_prefixes = versioning_prefixes(prefixes)
                 update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2], new_value)
                 self.sparql_post.setQuery(update_statement)
                 result = self.sparql_post.query()
@@ -294,9 +294,9 @@ class TripleStoreEngine:
         statement = open(self._template_location + "/insert_triples.txt", "r").read()
 
         if prefixes:
-            sparql_prefixes = citation_prefixes(prefixes)
+            sparql_prefixes = versioning_prefixes(prefixes)
         else:
-            sparql_prefixes = citation_prefixes("")
+            sparql_prefixes = versioning_prefixes("")
 
         # Handling input format
         trpls = []
@@ -335,7 +335,7 @@ class TripleStoreEngine:
         template = open(self._template_location + "/outdate_triples.txt", "r").read()
         for triple in triples:
             if isinstance(triple, tuple):
-                sparql_prefixes = citation_prefixes(prefixes)
+                sparql_prefixes = versioning_prefixes(prefixes)
                 update_statement = template.format(sparql_prefixes, triple[0], triple[1], triple[2])
                 self.sparql_post.setQuery(update_statement)
                 result = self.sparql_post.query()
@@ -358,9 +358,9 @@ class TripleStoreEngine:
         statement = open(self._template_location + "/_delete_triples.txt", "r").read()
 
         if prefixes:
-            sparql_prefixes = citation_prefixes(prefixes)
+            sparql_prefixes = versioning_prefixes(prefixes)
         else:
-            sparql_prefixes = citation_prefixes("")
+            sparql_prefixes = versioning_prefixes("")
 
         # Handling input format
         trpls = []

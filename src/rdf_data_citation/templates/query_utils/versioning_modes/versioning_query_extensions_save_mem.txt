@@ -1,4 +1,4 @@
-<<{0}>> citing:valid_until {2}.
-filter(?TimeOfCiting{3} < {2})
-optional {{<<{0}>> citing:valid_from {1}.}}
-filter (!bound({1}) || {1} <= ?TimeOfCiting{3})
+<<{0}>> vers:valid_until {2}.
+filter(?TimeOfExecution{3} < {2})
+optional {{<<{0}>> vers:valid_from {1}.}}
+filter (!bound({1}) || {1} <= ?TimeOfExecution{3})

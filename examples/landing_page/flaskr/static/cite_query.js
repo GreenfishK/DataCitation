@@ -1,5 +1,5 @@
 ﻿$(function cite_query() {
-    $('button#cite').on('click', function(e) {
+    $('button#mint_query_pid').on('click', function(e) {
         var text_area_value = document.getElementById("query_editor").value
         $.ajax({
             type : "POST",

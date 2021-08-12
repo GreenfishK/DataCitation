@@ -32,7 +32,7 @@ def attach_prefixes(query: str, prefixes: dict) -> str:
     return query_with_prefixes
 
 
-def citation_prefixes(prefixes: dict or str) -> str:
+def versioning_prefixes(prefixes: dict or str) -> str:
     """
     Extends the given prefixes by citing: <http://ontology.ontotext.com/citing/>
     and xsd: <http://www.w3.org/2001/XMLSchema#>. While citing is reserved and cannot be overwritten by a user prefix
@@ -41,28 +41,28 @@ def citation_prefixes(prefixes: dict or str) -> str:
     :return:
     """
     error_message = 'The prefix "citing" is reserved. Please choose another one.'
-    prefix_citing = 'PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>'
+    prefix_citing = 'PREFIX vers: <https://github.com/GreenfishK/DataCitation/versioning/>'
     prefix_xsd = 'PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>'
 
     if isinstance(prefixes, dict):
         sparql_prefixes = _prefixes_to_sparql(prefixes)
-        if "citing" in prefixes:
+        if "vers" in prefixes:
             raise ReservedPrefixError(error_message)
         if "xsd" in prefixes:
-            citation_prfx = prefix_citing + "\n"
+            vers_prfx = prefix_citing + "\n"
         else:
-            citation_prfx = prefix_citing + "\n" + prefix_xsd + "\n"
-        return sparql_prefixes + "\n" + citation_prfx
+            vers_prfx = prefix_citing + "\n" + prefix_xsd + "\n"
+        return sparql_prefixes + "\n" + vers_prfx
 
     if isinstance(prefixes, str):
         sparql_prefixes = prefixes
-        if prefixes.find("citing:") > -1:
+        if prefixes.find("vers:") > -1:
             raise ReservedPrefixError(error_message)
         if prefixes.find("xsd:") > -1:
-            citation_prfx = prefix_citing + "\n"
+            vers_prfx = prefix_citing + "\n"
         else:
-            citation_prfx = prefix_citing + "\n" + prefix_xsd + "\n"
-        return sparql_prefixes + "\n" + citation_prfx
+            vers_prfx = prefix_citing + "\n" + prefix_xsd + "\n"
+        return sparql_prefixes + "\n" + vers_prfx
 
 
 def split_prefixes_query(query: str) -> list:

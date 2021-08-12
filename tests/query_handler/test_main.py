@@ -1,22 +1,22 @@
-from rdf_data_citation._exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
-from rdf_data_citation.rdf_star import TripleStoreEngine
-import rdf_data_citation.citation as ct
-from rdf_data_citation.citation_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet, MetaData
-from rdf_data_citation.query_store import QueryStore
+from src.rdf_data_citation._exceptions import NoUniqueSortIndexError, SortVariablesNotInSelectError, MissingSortVariables
+from src.rdf_data_citation.rdf_star import TripleStoreEngine
+import src.rdf_data_citation.query_handler as qh
+from src.rdf_data_citation.persistent_id_utils import QueryUtils, RDFDataSetUtils, generate_citation_snippet, MetaData
+from src.rdf_data_citation.query_store import QueryStore
 from tests.test_base import Test, TestExecution, format_text
 from datetime import datetime, timezone, timedelta
 import logging
 
 
-class TestCitation(TestExecution):
+class TestQueryHandler(TestExecution):
 
     def __init__(self, annotated_tests: bool = False):
         super().__init__(annotated_tests)
         self.rdf_engine = None
         self.citation_metadata = None
-        self.citation = None
+        self.q_handler = None
         self.initial_timestamp = None
-        self.citation_timestamp = None
+        self.execution_timestamp = None
         self.select_statement = None
         self.rdf_engine = None
         # self.dataset_utils = None
@@ -36,10 +36,10 @@ class TestCitation(TestExecution):
                                           resource_type="Dataset/RDF data",
                                           other_citation_data={'Contributor': 'Tomasz Miksa'})
 
-        self.citation = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+        self.q_handler = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         vie_tz = timezone(timedelta(hours=2))
-        citation_timestamp = datetime(2021, 4, 30, 12, 11, 21, 941000, vie_tz)
-        self.citation_timestamp = citation_timestamp
+        execution_timestamp = datetime(2021, 4, 30, 12, 11, 21, 941000, vie_tz)
+        self.execution_timestamp = execution_timestamp
         initial_timestamp = datetime(2020, 9, 1, 12, 11, 21, 941000, vie_tz)
         self.initial_timestamp = initial_timestamp
         self.rdf_engine = TripleStoreEngine(self.test_config.get('RDFSTORE', 'get'),
@@ -67,7 +67,7 @@ class TestCitation(TestExecution):
 
         # Clean up
         query_store = QueryStore()
-        query_store._remove(self.citation.query_utils.checksum)
+        query_store._remove(self.q_handler.query_utils.checksum)
 
     def after_all_tests(self):
         """
@@ -78,19 +78,19 @@ class TestCitation(TestExecution):
         print("Executing after_tests ...")
         self.rdf_engine.reset_all_versions()
 
-    def test_citation__empty_dataset(self):
-        citation = self.citation
+    def test_qh__empty_dataset(self):
+        handler = self.q_handler
         self.citation_metadata.title = "Obama occurrences as Republican"
 
         # Actual results
-        citation.cite(select_statement=self.select_statement,
-                      citation_metadata=self.citation_metadata,
-                      citation_timestamp=self.citation_timestamp)
-        actual_result = citation.result_set_utils.description + "\n" + citation.citation_metadata.citation_snippet
-        self.citation = citation
+        handler.mint_query_pid(select_statement=self.select_statement,
+                                citation_metadata=self.citation_metadata,
+                                timestamp=self.execution_timestamp)
+        actual_result = handler.result_set_utils.description + "\n" + handler.citation_metadata.citation_snippet
+        self.q_handler = handler
 
         # Expected results
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=self.execution_timestamp)
         citation_snippet = generate_citation_snippet(identifier=query_utils.pid,
                                                      creator=self.citation_metadata.creator,
                                                      title=self.citation_metadata.title,
@@ -101,54 +101,54 @@ class TestCitation(TestExecution):
 
         # Test object
         test = Test(test_number=1,
-                    tc_desc='Test if an empty dataset can be cited and a citation snippet is returned.',
+                    tc_desc='Test if an empty dataset can be cited and a q_handler snippet is returned.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_citation__non_empty_dataset(self):
-        citation = self.citation
+    def test_qh__non_empty_dataset(self):
+        handler = self.q_handler
         self.citation_metadata.title = "Obama occurrences"
 
         # Actual results
-        citation.cite(select_statement=self.select_statement,
-                      citation_metadata=self.citation_metadata,
-                      citation_timestamp=self.citation_timestamp)
-        actual_result = citation.result_set_utils.description + "\n" + citation.citation_metadata.citation_snippet
-        self.citation = citation
+        handler.mint_query_pid(select_statement=self.select_statement,
+                                citation_metadata=self.citation_metadata,
+                                timestamp=self.execution_timestamp)
+        actual_result = handler.result_set_utils.description + "\n" + handler.citation_metadata.citation_snippet
+        self.q_handler = handler
 
         # Expected results
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=self.execution_timestamp)
         citation_snippet = generate_citation_snippet(identifier=query_utils.pid,
                                                      creator=self.citation_metadata.creator,
                                                      title=self.citation_metadata.title,
                                                      publisher=self.citation_metadata.publisher,
                                                      pulication_year=self.citation_metadata.publication_year,
                                                      resource_type=self.citation_metadata.resource_type)
-        result_set = self.rdf_engine.get_data(self.select_statement, self.citation_timestamp)
+        result_set = self.rdf_engine.get_data(self.select_statement, self.execution_timestamp)
         dataset_utils = RDFDataSetUtils(dataset=result_set)
         dataset_description = dataset_utils.describe()
         expected_result = dataset_description + "\n" + citation_snippet
 
         # Test object
         test = Test(test_number=2,
-                    tc_desc='Test if a non-empty dataset can be cited and a citation snippet is returned.',
+                    tc_desc='Test if a non-empty dataset can be cited and a q_handler snippet is returned.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_citation__changed_dataset(self):
-        citation1 = self.citation
-        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+    def test_qh__changed_dataset(self):
+        handler1 = self.q_handler
+        handler2 = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
 
         # Actual results
-        # Citation1
-        citation1.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=self.citation_timestamp)
+        # Execution1
+        handler1.mint_query_pid(select_statement=self.select_statement,
+                                 citation_metadata=self.citation_metadata,
+                                 timestamp=self.execution_timestamp)
 
         # Insert two new triple
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
@@ -162,30 +162,30 @@ class TestCitation(TestExecution):
         containsMention = "publishing:containsMention"
         self.rdf_engine.insert_triples([document, containsMention, mention], prefixes)
 
-        # Citation2
+        # Execution2
         vie_tz = timezone(timedelta(hours=2))
-        citation_timestamp2 = datetime.now(vie_tz)
-        citation2.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=citation_timestamp2)
+        execution_timestamp2 = datetime.now(vie_tz)
+        handler2.mint_query_pid(select_statement=self.select_statement,
+                                 citation_metadata=self.citation_metadata,
+                                 timestamp=execution_timestamp2)
 
-        # Concat Citation1 + Citation2 into actual results
-        actual_result = citation1.citation_metadata.citation_snippet \
-                        + "\n" + citation2.citation_metadata.citation_snippet
+        # Concat snippet1 + snippet2 into actual results
+        actual_result = handler1.citation_metadata.citation_snippet \
+                        + "\n" + handler2.citation_metadata.citation_snippet
 
-        self.citation = citation1
+        self.q_handler = handler1
 
         # Expected results
-        # Citation1
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        # Execution1
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=self.execution_timestamp)
         citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
                                                       pulication_year=self.citation_metadata.publication_year,
                                                       resource_type=self.citation_metadata.resource_type)
-        # Citation2
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
+        # Execution2
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=execution_timestamp2)
         citation_snippet2 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
@@ -200,40 +200,39 @@ class TestCitation(TestExecution):
         self.rdf_engine._delete_triples([document, containsMention, mention], prefixes)
 
         test = Test(test_number=3,
-                    tc_desc='Test if a new query PID is created if the dataset has changed since the last citation and'
-                            'the query stayed the same. Check also if the query checksum must stayed the same.',
+                    tc_desc='Test if a new query PID is created if the dataset has changed since the last q_handler and'
+                            'the query stayed the same (=same query checksum).',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_citation__recite_unchanged_dataset(self):
-        citation1 = self.citation
-        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+    def test_qh__recite_unchanged_dataset(self):
+        handler1 = self.q_handler
+        handler2 = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
 
         # Actual results
-        # Citation1
-        citation1.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=self.citation_timestamp)
+        # Execution1
+        handler1.mint_query_pid(select_statement=self.select_statement,
+                                citation_metadata=self.citation_metadata,
+                                timestamp=self.execution_timestamp)
 
-        # Citation2
+        # Execution2
         vie_tz = timezone(timedelta(hours=2))
-        citation_timestamp2 = datetime.now(vie_tz)
-        citation2.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=citation_timestamp2)
+        execution_timestamp2 = datetime.now(vie_tz)
+        handler2.mint_query_pid(select_statement=self.select_statement,
+                                citation_metadata=self.citation_metadata,
+                                timestamp=execution_timestamp2)
 
-        # Concat Citation1 + Citation2 into actual results
-        actual_result = citation1.citation_metadata.citation_snippet \
-                          + "\n" + citation2.citation_metadata.citation_snippet
+        # Concat snippet1 + snippet2 into actual results
+        actual_result = handler1.citation_metadata.citation_snippet \
+                          + "\n" + handler2.citation_metadata.citation_snippet
 
-        self.citation = citation1
+        self.q_handler = handler1
 
         # Expected results
-        # Citation1
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=self.execution_timestamp)
         citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
@@ -244,42 +243,41 @@ class TestCitation(TestExecution):
         expected_result = citation_snippet1 + "\n" + citation_snippet1
 
         test = Test(test_number=4,
-                    tc_desc='Test if reciting a query where the dataset has not changed since the last citation '
-                            'returns the citation snippet as of last citation where the query was either new '
+                    tc_desc='Test if reciting a query where the dataset has not changed since the last q_handler '
+                            'returns the q_handler snippet as of last q_handler where the query was either new '
                             'or the dataset changed.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_citation__recite_semantically_identical(self):
-        citation1 = self.citation
-        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+    def test_qh__recite_semantically_identical(self):
+        handler1 = self.q_handler
+        handler2 = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
 
         # Actual results
-        # Citation1
-        citation1.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=self.citation_timestamp)
+        # Execution1
+        handler1.mint_query_pid(select_statement=self.select_statement,
+                                 citation_metadata=self.citation_metadata,
+                                 timestamp=self.execution_timestamp)
 
-        # Citation2
+        # Execution2
         vie_tz = timezone(timedelta(hours=2))
-        citation_timestamp2 = datetime.now(vie_tz)
-        select_statement2 = open("test_data/test_citation__recite_semantically_identical2.txt", "r").read()
-        citation2.cite(select_statement=select_statement2,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=citation_timestamp2)
+        execution_timestamp2 = datetime.now(vie_tz)
+        select_statement2 = open("test_data/test_qh__recite_semantically_identical2.txt", "r").read()
+        handler2.mint_query_pid(select_statement=select_statement2,
+                                 citation_metadata=self.citation_metadata,
+                                 timestamp=execution_timestamp2)
 
-        # Concat Citation1 + Citation2 into actual results
-        actual_result = citation1.citation_metadata.citation_snippet \
-                          + "\n" + citation2.citation_metadata.citation_snippet
+        # Concat snippet1 + snippet2 into actual results
+        actual_result = handler1.citation_metadata.citation_snippet \
+                          + "\n" + handler2.citation_metadata.citation_snippet
 
-        self.citation = citation1
+        self.q_handler = handler1
 
         # Expected results
-        # Citation1
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=self.execution_timestamp)
         citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
@@ -290,7 +288,7 @@ class TestCitation(TestExecution):
         expected_result = citation_snippet1 + "\n" + citation_snippet1
         test = Test(test_number=5,
                     tc_desc='Test if citing a query which is semantically equivalent to an existing query in the '
-                            'query store will return the existing citation snippet. The test needs to pass only '
+                            'query store will return the existing q_handler snippet. The test needs to pass only '
                             'for covered normalization measures where two queries would be transformed to the same '
                             'normal query and thus recognized as semantically identical.',
                     expected_result=expected_result,
@@ -298,9 +296,9 @@ class TestCitation(TestExecution):
 
         return test
 
-    def test_citation__non_unique_sort(self):
+    def test_qh__non_unique_sort(self):
         # Actual results
-        citation = self.citation
+        handler = self.q_handler
 
         test = Test(test_number=6,
                     tc_desc='Test if a query with a non-unique order by clause written by the user will throw a '
@@ -309,17 +307,17 @@ class TestCitation(TestExecution):
                                     'Please provide a primary key or another unique sort index',
                     actual_result="No exception thrown")
         try:
-            citation.cite(select_statement=self.select_statement,
-                          citation_metadata=self.citation_metadata,
-                          citation_timestamp=self.citation_timestamp)
+            handler.mint_query_pid(select_statement=self.select_statement,
+                                   citation_metadata=self.citation_metadata,
+                                   timestamp=self.execution_timestamp)
         except NoUniqueSortIndexError as e:
             test.actual_result = str(e)
 
         return test
 
-    def test_citation__sort_var_not_in_select(self):
+    def test_qh__sort_var_not_in_select(self):
         # Actual results
-        citation = self.citation
+        handler = self.q_handler
 
         test = Test(test_number=7,
                     tc_desc='Test if a query that contains a variable in the order by clause which is not in the '
@@ -331,17 +329,17 @@ class TestCitation(TestExecution):
                     actual_result="No exception thrown")
 
         try:
-            citation.cite(select_statement=self.select_statement,
-                          citation_metadata=self.citation_metadata,
-                          citation_timestamp=self.citation_timestamp)
+            handler.mint_query_pid(select_statement=self.select_statement,
+                                   citation_metadata=self.citation_metadata,
+                                   timestamp=self.execution_timestamp)
         except SortVariablesNotInSelectError as e:
             test.actual_result = str(e)
 
         return test
 
-    def test_citation__missing_order_by(self):
+    def test_qh__missing_order_by(self):
         # Actual results
-        citation = self.citation
+        handler = self.q_handler
 
         test = Test(test_number=8,
                     tc_desc='Test if a query that does not have an "order by" clause throws '
@@ -351,24 +349,24 @@ class TestCitation(TestExecution):
                     actual_result="No exception thrown")
 
         try:
-            citation.cite(select_statement=self.select_statement,
-                          citation_metadata=self.citation_metadata,
-                          citation_timestamp=self.citation_timestamp)
+            handler.mint_query_pid(select_statement=self.select_statement,
+                                   citation_metadata=self.citation_metadata,
+                                   timestamp=self.execution_timestamp)
         except MissingSortVariables as e:
             test.actual_result = str(e)
 
         return test
 
-    def test_citation__aggregated_dataset(self):
-        citation1 = self.citation
-        citation2 = ct.Citation(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
+    def test_qh__aggregated_dataset(self):
+        handler1 = self.q_handler
+        handler2 = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Count Obama mentions with Democratic party."
 
         # Actual results
-        # Citation1
-        citation1.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=self.citation_timestamp)
+        # Execution1
+        handler1.mint_query_pid(select_statement=self.select_statement,
+                                citation_metadata=self.citation_metadata,
+                                timestamp=self.execution_timestamp)
 
         # Insert two new triple
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
@@ -382,30 +380,30 @@ class TestCitation(TestExecution):
         containsMention = "publishing:containsMention"
         self.rdf_engine.insert_triples([document, containsMention, mention], prefixes)
 
-        # Citation2
+        # Execution2
         vie_tz = timezone(timedelta(hours=2))
-        citation_timestamp2 = datetime.now(vie_tz)
-        citation2.cite(select_statement=self.select_statement,
-                       citation_metadata=self.citation_metadata,
-                       citation_timestamp=citation_timestamp2)
+        execution_timestamp2 = datetime.now(vie_tz)
+        handler2.mint_query_pid(select_statement=self.select_statement,
+                                citation_metadata=self.citation_metadata,
+                                timestamp=execution_timestamp2)
 
-        # Concat Citation1 + Citation2 into actual results
-        actual_result = citation1.citation_metadata.citation_snippet \
-                        + "\n" + citation2.citation_metadata.citation_snippet
+        # Concat snippet1 + snippet2 into actual results
+        actual_result = handler1.citation_metadata.citation_snippet \
+                        + "\n" + handler2.citation_metadata.citation_snippet
 
-        self.citation = citation1
+        self.q_handler = handler1
 
         # Expected results
-        # Citation1
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=self.citation_timestamp)
+        # Execution1
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=self.execution_timestamp)
         citation_snippet1 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
                                                       publisher=self.citation_metadata.publisher,
                                                       pulication_year=self.citation_metadata.publication_year,
                                                       resource_type=self.citation_metadata.resource_type)
-        # Citation2
-        query_utils = QueryUtils(query=self.select_statement, citation_timestamp=citation_timestamp2)
+        # Execution2
+        query_utils = QueryUtils(query=self.select_statement, execution_timestamp=execution_timestamp2)
         citation_snippet2 = generate_citation_snippet(identifier=query_utils.pid,
                                                       creator=self.citation_metadata.creator,
                                                       title=self.citation_metadata.title,
@@ -427,18 +425,18 @@ class TestCitation(TestExecution):
 
         return test
 
-    def test_citation__aggregated_dataset_2(self):
+    def x_test_qh__aggregated_dataset_2(self):
         pass
         # TODO implement
 
-    def test_citation__complex_query1(self):
+    def x_test_qh__complex_query1(self):
         pass
         # TODO implement
 
     # TODO: Tests for retrieving minted datasets
 
 
-t = TestCitation(annotated_tests=False)
+t = TestQueryHandler(annotated_tests=False)
 t.run_tests()
 t.print_test_results()
 

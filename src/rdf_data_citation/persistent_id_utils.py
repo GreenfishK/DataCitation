@@ -1,5 +1,5 @@
-from ._helper import template_path, citation_timestamp_format
-from .prefixes import split_prefixes_query, citation_prefixes
+from ._helper import template_path, versioning_timestamp_format
+from .prefixes import split_prefixes_query, versioning_prefixes
 from ._exceptions import MultipleSortIndexesError, NoUniqueSortIndexError, \
     ExpressionNotCoveredException, InputMissing
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
@@ -613,12 +613,12 @@ def _resolve_paths(node: CompValue):
 
 class QueryUtils:
 
-    def __init__(self, query: str = None, citation_timestamp: datetime = None):
+    def __init__(self, query: str = None, execution_timestamp: datetime = None):
         """
         Initializes the QueryData object and presets most of the variables by calling functions from this class.
 
         :param query: The SPARQL select statement that is used to retrieve the data set for citing.
-        :param citation_timestamp: The timestamp as of citation.
+        :param execution_timestamp: The timestamp as of q_handler.
         """
 
         if query is not None:
@@ -632,14 +632,14 @@ class QueryUtils:
                 raise ExpressionNotCoveredException(e)
             self.checksum = self.compute_checksum()
 
-            if citation_timestamp is not None:
-                self.citation_timestamp = citation_timestamp_format(citation_timestamp)  # -> str
+            if execution_timestamp is not None:
+                self.execution_timestamp = versioning_timestamp_format(execution_timestamp)  # -> str
             else:
                 current_datetime = datetime.now()
                 timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
                 execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
-                execution_timestamp = citation_timestamp_format(execution_datetime)
-                self.citation_timestamp = execution_timestamp
+                execution_timestamp = versioning_timestamp_format(execution_datetime)
+                self.execution_timestamp = execution_timestamp
             self.timestamped_query = self.timestamp_query()
             self.pid = self.generate_query_pid()
         else:
@@ -916,8 +916,8 @@ class QueryUtils:
     def timestamp_query(self, query: str = None, citation_timestamp: datetime = None) -> str:
         """
         R7 - Query timestamping
-        Binds a citation timestamp to the variable ?TimeOfCiting and wraps it around the query. Also extends
-        the query with a code snippet that ensures that a snapshot of the data as of citation
+        Binds a q_handler timestamp to the variable ?TimeOfExecution and wraps it around the query. Also extends
+        the query with a code snippet that ensures that a snapshot of the data as of q_handler
         time gets returned when the query is executed. Optionally, but recommended, the order by clause
         is attached to the query to ensure a unique sort of the data.
 
@@ -939,9 +939,9 @@ class QueryUtils:
         query_vers = prefixes + "\n" + query
 
         if citation_timestamp is not None:
-            timestamp = citation_timestamp_format(citation_timestamp)
+            timestamp = versioning_timestamp_format(citation_timestamp)
         else:
-            timestamp = self.citation_timestamp
+            timestamp = self.execution_timestamp
 
         bgp_triples = {}
 
@@ -983,10 +983,10 @@ class QueryUtils:
             dummy_triple = rdflib.term.Literal('__{0}dummy_subject__'.format(bgp_identifier)).n3() + " "\
                            + rdflib.term.Literal('__{0}dummy_predicate__'.format(bgp_identifier)).n3() + " "\
                            + rdflib.term.Literal('__{0}dummy_object__'.format(bgp_identifier)).n3() + "."
-            ver_block += 'bind("{0}"^^xsd:dateTime as ?TimeOfCiting{1})'.format(timestamp, bgp_identifier)
+            ver_block += 'bind("{0}"^^xsd:dateTime as ?TimeOfExecution{1})'.format(timestamp, bgp_identifier)
             query_vers_out = query_vers_out.replace(dummy_triple, ver_block)
 
-        query_vers_out = citation_prefixes("") + "\n" + query_vers_out
+        query_vers_out = versioning_prefixes("") + "\n" + query_vers_out
 
         return query_vers_out
 
@@ -1017,8 +1017,8 @@ class QueryUtils:
 
     def generate_query_pid(self, query_checksum: str = None, citation_timestamp: datetime = None):
         """
-        R8 - Query PID (The handling and fulfillment of this recommendation is done in citation.cite)
-        Generates a query PID by concatenating the provided query checksum and the citation timestamp from the
+        R8 - Query PID (The handling and fulfillment of this recommendation is done in q_handler.mint_query_pid)
+        Generates a query PID by concatenating the provided query checksum and the q_handler timestamp from the
         QueryData object.
 
         :return:
@@ -1026,9 +1026,9 @@ class QueryUtils:
         if query_checksum is None:
             query_checksum = self.checksum
         if citation_timestamp is None:
-            citation_timestamp = self.citation_timestamp
+            citation_timestamp = self.execution_timestamp
         else:
-            citation_timestamp = citation_timestamp_format(citation_timestamp)
+            citation_timestamp = versioning_timestamp_format(citation_timestamp)
 
         if None not in (query_checksum, citation_timestamp):
             query_pid = query_checksum + citation_timestamp
@@ -1199,7 +1199,7 @@ class RDFDataSetUtils:
         df_key_finder.drop_duplicates(inplace=True)
         cnt_columns = len(df_key_finder.columns)
         columns = df_key_finder.columns
-        logging.debug(columns)
+
         distinct_occurrences = {}
         for column in columns:
             distinct_occurrences[column] = len(df_key_finder[column].unique().flat)
@@ -1282,7 +1282,7 @@ class MetaData:
         that the user can provide.
         """
         # TODO: Data operator defines which metadata to store. The user is able to change the description
-        #  and other citation data. Possible solution: change other_citation_data to kwargs* (?)
+        #  and other q_handler data. Possible solution: change other_citation_data to kwargs* (?)
 
         # Recommended fields to be populated. They are mandatory in the DataCite's metadata model
         self.identifier = identifier
@@ -1307,9 +1307,9 @@ class MetaData:
 
     def set_metadata(self, meta_data_json: str):
         """
-        Reads the citation metadata provided as a json strings and creates the CitationData object.
+        Reads the q_handler metadata provided as a json strings and creates the CitationData object.
         :param meta_data_json:
-        :return: the citation metadata, but without the citation snippet
+        :return: the q_handler metadata, but without the q_handler snippet
         """
 
         meta_data_dict = json.loads(meta_data_json)
@@ -1326,9 +1326,9 @@ class MetaData:
 
 def generate_citation_snippet(**kwargs) -> str:
     """
-    R10 - Automated citation text
-    Generates the citation snippet out of DataCite's mandatory attributes. Thus, following key parameters must be
-    provided in an arbitrary order. The order will be reflected in the citation snippet:
+    R10 - Automated q_handler text
+    Generates the q_handler snippet out of DataCite's mandatory attributes. Thus, following key parameters must be
+    provided in an arbitrary order. The order will be reflected in the q_handler snippet:
     * identifier (DOI of query_pid)
     * creator
     * title
@@ -1339,7 +1339,7 @@ def generate_citation_snippet(**kwargs) -> str:
     :return:
     """
     # TODO: Let the order of data within the snippet be defined by the user
-    #  also: the user should be able to define which attributes are to be used in the citation snippet
+    #  also: the user should be able to define which attributes are to be used in the q_handler snippet
     # TODO: Also allow other attributes next to the DateCite ones
     mandatory_attributes = ['identifier', 'creator', 'title', 'publisher', 'publication_year', 'resource_type']
     snippet = ", ".join(v for k, v in kwargs.items() if k in mandatory_attributes)

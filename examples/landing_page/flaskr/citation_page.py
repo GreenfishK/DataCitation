@@ -13,7 +13,7 @@ config = configparser.ConfigParser()
 config.read('../../../config.ini')
 logging.getLogger().setLevel(int(config.get('TEST', 'log_level')))
 
-# Example citation data and result set description
+# Example q_handler data and result set description
 citation_metadata = MetaData(creator="Filip Kovacevic",
                              title="Judy Chu occurences", publisher="Filip Kovacevic",
                              publication_year="2021", resource_type="Dataset/RDF data",
@@ -28,7 +28,7 @@ bp = Blueprint('citation_page', __name__, url_prefix='/datacenter_sample_page_1'
 @bp.route('/citation_page', methods=['GET'])
 def show_citation_page():
     """
-    Just for loading the citation page.
+    Just for loading the q_handler page.
     :return:
     """
     return render_template('datacenter_sample_page_1/citation_page.html')
@@ -73,7 +73,7 @@ def execute_query():
 @bp.route('/cite_query', methods=['POST'])
 def cite_query():
     """
-    Cites the query and returns the citation snippet
+    Cites the query and returns the q_handler snippet
     :return:
     """
     logging.info("Cite query")
@@ -82,7 +82,7 @@ def cite_query():
     query_text = request.form['query_text']
     logging.info(query_text, citation_metadata)
     try:
-        citation_data = citation.cite(query_text, citation_metadata=citation_metadata)
+        citation_data = citation.mint_query_pid(query_text, citation_metadata=citation_metadata)
         citation_snippet = citation_data.citation_metadata.citation_snippet
 
         html_response = render_template('datacenter_sample_page_1/citation_page.html',

@@ -7,7 +7,7 @@ import citation_page
 
 def create_app(test_config=None):
     """
-    citation page is on http://127.0.0.1:5000/datacenter_sample_page_1/citation_page
+    q_handler page is on http://127.0.0.1:5000/datacenter_sample_page_1/citation_page
     :param test_config:
     :return:
     """
@@ -16,7 +16,7 @@ def create_app(test_config=None):
     app.secret_key = os.urandom(24)
     app.register_blueprint(citation_page.bp)
     app.register_blueprint(landing_page.bp)
-    print("citation page is on http://127.0.0.1:5000/datacenter_sample_page_1/citation_page")
+    print("q_handler page is on http://127.0.0.1:5000/datacenter_sample_page_1/citation_page")
 
     return app
 

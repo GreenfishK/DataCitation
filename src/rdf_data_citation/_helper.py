@@ -6,7 +6,7 @@ def template_path(template_rel_path: str):
     return os.path.join(os.path.dirname(__file__), template_rel_path)
 
 
-def citation_timestamp_format(citation_timestamp: datetime) -> str:
+def versioning_timestamp_format(citation_timestamp: datetime) -> str:
     """
     This format is taken from the result set of GraphDB's queries.
     :param citation_timestamp:

@@ -1,4 +1,4 @@
-from src.rdf_data_citation.citation_utils import QueryUtils
+from src.rdf_data_citation.persistent_id_utils import QueryUtils
 from tests.test_base import Test, TestExecution
 import logging
 

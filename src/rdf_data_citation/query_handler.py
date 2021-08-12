@@ -1,7 +1,7 @@
 from .query_store import QueryStore
 from .rdf_star import TripleStoreEngine
-from .citation_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
-from ._helper import citation_timestamp_format
+from .persistent_id_utils import RDFDataSetUtils, QueryUtils, MetaData, generate_citation_snippet
+from ._helper import versioning_timestamp_format
 from ._exceptions import MissingSortVariables, SortVariablesNotInSelectError, \
     ExpressionNotCoveredException, NoUniqueSortIndexError, QueryDoesNotExistError
 from copy import copy
@@ -16,11 +16,11 @@ from typing import Callable
 # TODO:  Reconsider role "publisher" in Readme.md and change it to researcher
 
 
-class Citation:
+class QueryHandler:
 
     def __init__(self, get_endpoint: str, post_endpoint: str, credentials: TripleStoreEngine.Credentials = None):
         """
-        Initializes the Citation class.
+        Initializes the QueryHandler class.
 
         :param get_endpoint: RDF* store URL for get/read statements.
         :param post_endpoint:  RDF* store URL for post/write statements.
@@ -35,8 +35,8 @@ class Citation:
         self.result_set_utils = RDFDataSetUtils()
         self.citation_metadata = MetaData()
 
-    def cite(self, select_statement: str, citation_metadata: MetaData, citation_timestamp: datetime = None,
-             create_identifier: Callable[[str], str] = None):
+    def mint_query_pid(self, select_statement: str, citation_metadata: MetaData, timestamp: datetime = None,
+                       create_identifier: Callable[[str], str] = None):
         """
         Persistently Identify Specific Data Sets
 
@@ -52,7 +52,7 @@ class Citation:
         (or the last update to the selection of data affected by the query or the query execution time).
         This allows retrieving the data as it existed at the time a user issued a query. [1]
 
-        The timestamp of the first citation since the last update to the selection of the data
+        The timestamp of the first q_handler since the last update to the selection of the data
         affected by the query will be taken.
 
         R8: Assign a new PID to the query if either the query is new or if the result set returned from an earlier
@@ -61,18 +61,18 @@ class Citation:
         R9: Store query and metadata (e.g. PID, original and normalized  query, query & result set checksum,
         timestamp, superset  PID, data  set description, and other) in the query store. [1]
 
-        R10: Generate citation texts  in  the  format  prevalent  in  the  designated community for lowering the barrier
-        for citing the data. Include the PID into the citation text snippet. [1]
-        Provenance information should be included in a citation snippet in order to cite the correct version,
+        R10: Generate q_handler texts  in  the  format  prevalent  in  the  designated community for lowering the barrier
+        for citing the data. Include the PID into the q_handler text snippet. [1]
+        Provenance information should be included in a q_handler snippet in order to mint_query_pid the correct version,
         manipulation, and transformation of data [2]
 
-        [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
-        [2]: Theory and Practice of Data Citation, Gianmaria Silvello
+        [1]: Data QueryHandler of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
+        [2]: Theory and Practice of Data QueryHandler, Gianmaria Silvello
 
         :param create_identifier: A function that takes the query PID as an input and creates an URL which resolves
         to a landing page. This URL will be set as DataCite's identifier. If no function is provided the
         query PID will be used as identifier.
-        :param citation_timestamp: If this parameter is left out the current system datetime will be used as citation
+        :param timestamp: If this parameter is left out the current system datetime will be used as q_handler
         timestamp.
         :param citation_metadata:
         :param select_statement:
@@ -81,27 +81,29 @@ class Citation:
 
         query_store = QueryStore()
 
-        # Assign citation timestamp to query object
+        # Assign q_handler timestamp to query object
         current_datetime = datetime.now()
         timezone_delta = tzlocal.get_localzone().dst(current_datetime).seconds
-        execution_datetime = datetime.now(timezone(timedelta(seconds=timezone_delta)))
-        execution_timestamp = citation_timestamp_format(execution_datetime)
-        self.execution_timestamp = execution_timestamp
+        if timestamp is None:
+            execution_timestamp = datetime.now(timezone(timedelta(seconds=timezone_delta)))
+        else:
+            execution_timestamp = timestamp
+        self.execution_timestamp = versioning_timestamp_format(execution_timestamp)
 
         try:
-            query_to_cite = QueryUtils(select_statement, citation_timestamp)
+            query_utils = QueryUtils(select_statement, execution_timestamp)
         except ExpressionNotCoveredException as e:
             raise ExpressionNotCoveredException(e)
 
         # Execute query
-        result_set = self.sparqlapi.get_data(select_statement, citation_timestamp)
+        result_set = self.sparqlapi.get_data(select_statement, execution_timestamp)
 
         # Validate order by clause
-        if len(query_to_cite.order_by_variables) > 1:
+        if len(query_utils.order_by_variables) > 1:
             logging.warning("Multiple order by clauses were found. The first one found will be considered. "
                             "In most cases this should be the outer most clause.")
         try:
-            order_by_variables = [v.n3()[1:] for v in query_to_cite.order_by_variables[0]]
+            order_by_variables = [v.n3()[1:] for v in query_utils.order_by_variables[0]]
         except KeyError:
             raise MissingSortVariables("There is no order by clause. Please provide an order by clause with "
                                        "variables that yield a unique sort.")
@@ -131,9 +133,9 @@ class Citation:
         # Compute result set checksum
         rdf_ds.checksum = rdf_ds.compute_checksum(column_order_dependent=True)
 
-        # Get latest query citation and its metadata by query checksum
+        # Get latest query q_handler and its metadata by query checksum
         existing_query_data, existing_query_rdf_ds_data, existing_query_citation_data \
-            = query_store.get_latest_citation(query_to_cite.checksum)
+            = query_store.get_last_execution(query_utils.checksum)
 
         if existing_query_data and existing_query_rdf_ds_data and existing_query_citation_data:
             logging.info("Query was found in query store.")
@@ -143,21 +145,21 @@ class Citation:
                 self.result_set_utils = existing_query_rdf_ds_data
                 self.citation_metadata = existing_query_citation_data
                 logging.info("The result set has not changed since the last execution. "
-                             "The existing citation snippet will be returned.")
+                             "The existing q_handler snippet will be returned.")
                 return
             else:
                 self.yn_result_set_changed = True
 
         # Store new query data
-        self.query_utils = query_to_cite
+        self.query_utils = query_utils
         self.result_set_utils = rdf_ds
         # Create identifier
         if create_identifier:
-            identifier = create_identifier(query_to_cite.pid)
+            identifier = create_identifier(query_utils.pid)
         else:
-            identifier = query_to_cite.pid
+            identifier = query_utils.pid
         citation_metadata.identifier = identifier
-        # Generate citation snippet and save metadata
+        # Generate q_handler snippet and save metadata
         citation_snippet = generate_citation_snippet(identifier=citation_metadata.identifier,
                                                      creator=citation_metadata.creator,
                                                      title=citation_metadata.title,
@@ -169,17 +171,17 @@ class Citation:
 
         if self.yn_query_exists:
             if self.yn_result_set_changed:
-                query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=False)
-                logging.info("The dataset changed since the last citation. The citation and dataset metadata of query "
+                query_store.store(query_utils, rdf_ds, self.citation_metadata, yn_new_query=False)
+                logging.info("The dataset changed since the last q_handler. The q_handler and dataset metadata of query "
                              "with PID {0} were updated with the new PID {1}".format(existing_query_data.pid,
-                                                                                     query_to_cite.pid))
+                                                                                     query_utils.pid))
         else:
-            query_store.store(query_to_cite, rdf_ds, self.citation_metadata, yn_new_query=True)
-            logging.info("A new query citation with PID {0} was stored in the query store.".format(query_to_cite.pid))
+            query_store.store(query_utils, rdf_ds, self.citation_metadata, yn_new_query=True)
+            logging.info("A new query q_handler with PID {0} was stored in the query store.".format(query_utils.pid))
 
     def retrieve(self, query_pid: str) -> [pd.DataFrame, str]:
         """
-        Retrieves metadata (query data, dataset metadata, citation metadata) including citation snippet
+        Retrieves metadata (query data, dataset metadata, q_handler metadata) including q_handler snippet
         as a JSON representation to foster machine actionability and the dataset as pandas dataframe.
         This is done by  first querying aforementioned data from the query store followed by an execution of
         the timestamped query against the RDF store, thus, post_endpoint (post can carry more data then get
@@ -188,20 +190,20 @@ class Citation:
 
         R11 – Landing Page: Make the PIDs resolve to a human readable landing page that provides the data
         (via query re-execution) and metadata, including a link to the superset (PID of the data source)
-        and citation text snippet.[1]
+        and q_handler text snippet.[1]
         R12  – Machine Actionability:  Provide  an  API  / machine actionable
         landing page to access metadata and data via query re-execution.[1]
 
-        [1]: Data Citation of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
+        [1]: Data QueryHandler of Evolving Data: Andreas Rauber, Ari Asmi, Dieter van Uytvanck and Stefan Pröll
 
         :param query_pid:
-        :return: The cited (historic) dataset.
+        :return: The historic dataset.
         """
 
         query_store = QueryStore()
         try:
-            # citation snippet is stored within the citation_metadata object
-            query_data, result_set_data, citation_metadata = query_store.get_cited_query(query_pid)
+            # q_handler snippet is stored within the citation_metadata object
+            query_data, result_set_data, citation_metadata = query_store.get_query(query_pid)
         except QueryDoesNotExistError as e:
             raise QueryDoesNotExistError("{0} The query and its metadata will not be retrieved.".format(e))
         result_set_data.dataset = self.sparqlapi.get_data(query_data.timestamped_query, yn_timestamp_query=False)
@@ -210,7 +212,7 @@ class Citation:
                                               'prefixes': query_data.sparql_prefixes,
                                               'normal_query_algebra': query_data.normal_query_algebra,
                                               'normal_query': query_data.normal_query,
-                                              'citation_timestamp': query_data.citation_timestamp,
+                                              'timestamp': query_data.execution_timestamp,
                                               'pid': query_data.pid,
                                               'checksum': query_data.checksum},
                                'dataset_metadata': {'description': result_set_data.description,

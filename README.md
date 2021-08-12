@@ -49,7 +49,7 @@ how these components interact with each other.
 We see the same actors again as in the use case diagram. In the case of a publisher, we now also see what he/she must 
 provide to the Citation API. The data can be provided through a web interface which also makes use of the offered 
 services "Get live data", "Cite dataset" and "Citation snippet" from the Citation API. The publisher should first 
-query the live data he/she wants to cite using a SPARQL query, then cite the dataset and get the citation snippet 
+query the live data he/she wants to mint_query_pid using a SPARQL query, then mint_query_pid the dataset and get the citation snippet 
 in return. To retrieve the cited dataset along with its metadata (query metadata, dataset metadata, 
 citation and provenance metadata) researchers can use the query PID within the citation snippet which should resolve
 to a human-readable landing page. 
@@ -140,8 +140,8 @@ In fact, this function will retrieve historical data, no matter if cited or not.
 rdf_engine.get_data(select_statement, timestamp)
 ```
 ## Cite data
-To cite your dataset and make it persistently identifiable and retrievable we first provide all necessary citation data
-optionally including a result set description and the dataset's query. Then we use a simple function call to cite 
+To mint_query_pid your dataset and make it persistently identifiable and retrievable we first provide all necessary citation data
+optionally including a result set description and the dataset's query. Then we use a simple function call to mint_query_pid 
 the dataset and thereby persist query and query metadata, citation metadata, result set metadata and the citation snippet 
 within the query store. 
 ```python   
@@ -170,14 +170,14 @@ select ?personLabel ?party_label ?document ?mention where {
     filter(?personLabel = "Barack Obama"@en)
 }
 """
-citation_data = citation.cite(select_statement=query_text, citation_metadata=citation_metadata, 
+citation_data = citation.mint_query_pid(select_statement=query_text, citation_metadata=citation_metadata, 
                               create_identifier=create_identifier)
 
 ```
 The parameters in citation_utils.Metadata are all optional, but recommended by DataCite and us :). If you do not provide 
 any dataset description a description will be derived from the dataset which encompasses basic descriptive 
 statistics and possibly additional natural language sentences if certain heuristics 
-(see citation_utils.RDFDataSetUtils.describe) are met. By executing citation.cite(...) a citation snippet 
+(see citation_utils.RDFDataSetUtils.describe) are met. By executing citation.mint_query_pid(...) a citation snippet 
 will be generated and stored within MetaData object (see above).
 ```python
 citation_snippet = citation_data.citation_metadata.citation_snippet

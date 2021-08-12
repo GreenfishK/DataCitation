@@ -2,13 +2,13 @@
 {0}
 
 delete {{
-        <<?s ?p ?o>>  citing:valid_from ?valid_from.
-        <<?s ?p ?o>>  citing:valid_until ?valid_until.
+        <<?s ?p ?o>>  vers:valid_from ?valid_from.
+        <<?s ?p ?o>>  vers:valid_until ?valid_until.
         ?s ?p ?o.
 }} where {{
     bind({1} as ?s)
     bind({2} as ?p)
     bind({3} as ?o)
-    <<?s ?p ?o>> citing:valid_from ?valid_from.
-    <<?s ?p ?o>> citing:valid_until ?valid_until.
+    <<?s ?p ?o>> vers:valid_from ?valid_from.
+    <<?s ?p ?o>> vers:valid_until ?valid_until.
 }}

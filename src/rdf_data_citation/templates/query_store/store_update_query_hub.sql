@@ -1,8 +1,8 @@
 update query_hub
-set last_citation_pid = (select b.query_pid
+set last_execution_pid = (select b.query_pid
                         from query_hub a
-                        join query_citation b
+                        join query_satellite b
                         on a.query_checksum = b.query_checksum
                         where a.query_checksum = :query_checksum
-                        and citation_timestamp = (select max(citation_timestamp) from query_citation c
+                        and execution_timestamp = (select max(execution_timestamp) from query_satellite c
                                                   where a.query_checksum = c.query_checksum))
