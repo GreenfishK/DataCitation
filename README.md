@@ -13,7 +13,7 @@ does so by implementing the data citation recommendations[1] to make datasets pe
 retrievable. It also makes clever use of the RDF* and SPARQL* concept[2] to timestamp data, thus version them,
 when a user, such as an ontology maintainer or data operator in general, performs write operations against 
 the triple store. Moreover, it uses the same principles to retrieve historical data. To identify semantically 
-identical queries and avoid double citations we use the W3C's SPARQL query algebra[3] to normalize the queries' algebra 
+identical queries we use the W3C's SPARQL query algebra[3] to normalize the queries' algebra 
 trees and back-translate them into SPARQL queries. Then, we compute a checksum for each query in order to compare 
 them against each other. Our main target actors are RDF data operators and researchers including publishers,
 whereas latter make use of data provided by former. We illustrate their use cases 
@@ -30,36 +30,11 @@ Last, if you notice any bugs or major issues please use https://github.com/Green
 them.
 
 # Use&#32;Cases&#32;and&#32;system&#32;components
-Following use case diagram should give an overview of the involved actors and use cases for RDF data citation.
-On the one side we have researchers who are interested in retrieving cited RDF datasets which they might want to use 
-to reproduce a study or do their own research. A cited dataset implies that someone must have published it before. 
-This is what a publisher does, which might but does not have to be a researcher, when he/she wants to preserve his/her
-research data and get credits for it. Hence, the publisher must have at least once queried the RDF store for the 
-dataset. This might not always hold true because the data could be downloaded from somewhere else, however, in the 
-system we are assuming (see component diagram) querying the dataset before citing it, cannot be circumvented. 
-On the other side, we deal with RDF data operators, such as ontology maintainers, who are constantly updating graphs 
-(inserting, updating, deleting) from the RDF store but also checking older versions and comparing to actual ones. Thus, 
-they also need to query live but also historical data.
-![Alt text](RDFDataCitation_UseCase_simplified.svg)
+Description to be written.
+![Alt text](RDFDataCitation_UseCase_simplified.png)
 
-The use cases we discussed are met by our rdf_data_citation package (also referred to as RDF Data Citation API). In 
-the component diagram below we see what services are offered by the Data Citation API to meet the use case goals. 
-It also shows how the system we are assuming looks like, what additional components next to our API it needs and 
-how these components interact with each other. 
-We see the same actors again as in the use case diagram. In the case of a publisher, we now also see what he/she must 
-provide to the Citation API. The data can be provided through a web interface which also makes use of the offered 
-services "Get live data", "Cite dataset" and "Citation snippet" from the Citation API. The publisher should first 
-query the live data he/she wants to mint_query_pid using a SPARQL query, then mint_query_pid the dataset and get the citation snippet 
-in return. To retrieve the cited dataset along with its metadata (query metadata, dataset metadata, 
-citation and provenance metadata) researchers can use the query PID within the citation snippet which should resolve
-to a human-readable landing page. 
-Again, on the other side, the data operator has an interface, too, which he uses to make read and write operations 
-to the RDF store. This interface can come in any shape or form and uses the provided service functions to query 
-live and historical data and make write operations against the underlying RDF store. In case of write statements, 
-the user does not need to worry about versioning data. This is what the RDF Data Citation API does implicitly
-when using the "update Graph" service. There are a few functions behind this service. Find more details about it 
-in chapter [Usage](#Usage).
-![Alt text](Component_diagram_level_1.svg)
+Description to be written.
+![Alt text](RDF_Data_Citation_Framework.png)
 
 # Usage
 Usage for the standard user.
@@ -69,7 +44,7 @@ get_endpoint = http://192.168.0.241:7200/repositories/DataCitation_FHIR
 post_endpoint = http://192.168.0.241:7200/repositories/DataCitation_FHIR/statements
 ``` 
 
-Make your RDF store ready for citation by initially versioning all triples. Depending on the versioning mode triples 
+Make your RDF store ready for versioning by initially versioning all triples. Depending on the versioning mode triples 
 get either annotated with an artificial end date only or also with a start date. By default, the 
 "SAVE_MEM" mode will be used and for every existing triple only one 
 additional (nested) triple with the end_date as the object will be added.
@@ -134,13 +109,13 @@ get_data combined with your own interface or an existing "triple store managemen
 rdf_engine.get_data(select_statement)
 ```
 If for any reasons you need to query data as it was at a specific point in time you can simply pass a timestamp 
-to the very same function. However, this should not be confused with the use case "retrieve cited data" (see below). 
-In fact, this function will retrieve historical data, no matter if cited or not.
+to the very same function. However, this should not be confused with the use case "retrieve data" (see below). 
+In fact, this function will retrieve historical data, no matter if a query PID has been minted or not.
 ```python 
 rdf_engine.get_data(select_statement, timestamp)
 ```
-## Cite data
-To mint_query_pid your dataset and make it persistently identifiable and retrievable we first provide all necessary citation data
+## Mint a query PID for your dataset
+To mint a query pid for your dataset and make it persistently identifiable and retrievable we first provide all necessary citation data
 optionally including a result set description and the dataset's query. Then we use a simple function call to mint_query_pid 
 the dataset and thereby persist query and query metadata, citation metadata, result set metadata and the citation snippet 
 within the query store. 
@@ -149,7 +124,7 @@ def create_identifier(query_pid: str):
     # Write your own code to create an URL out of a query PID
     identifier = "http://www.mylandingpage.com/" + query_pid
     return identifier
-citation_metadata = citation_utils.MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
+citation_metadata = persistent_id_utils.MetaData(identifier="DOI_to_landing_page", creator="Filip Kovacevic",
                                             title="Judy Chu occurences", publisher="Filip Kovacevic",
                                             publication_year="2021", resource_type="Dataset/RDF data",
                                             other_citation_data={"Contributor": "Tomasz Miksa"}, 
@@ -170,27 +145,27 @@ select ?personLabel ?party_label ?document ?mention where {
     filter(?personLabel = "Barack Obama"@en)
 }
 """
-citation_data = citation.mint_query_pid(select_statement=query_text, citation_metadata=citation_metadata, 
-                              create_identifier=create_identifier)
+citation_data = query_handler.mint_query_pid(select_statement=query_text, citation_metadata=citation_metadata, 
+                                             create_identifier=create_identifier)
 
 ```
-The parameters in citation_utils.Metadata are all optional, but recommended by DataCite and us :). If you do not provide 
+The parameters in persistent_id_utils.Metadata are all optional, but recommended by DataCite and us :). If you do not provide 
 any dataset description a description will be derived from the dataset which encompasses basic descriptive 
 statistics and possibly additional natural language sentences if certain heuristics 
-(see citation_utils.RDFDataSetUtils.describe) are met. By executing citation.mint_query_pid(...) a citation snippet 
+(see persistent_id_utils.RDFDataSetUtils.describe) are met. By executing query_handler.mint_query_pid(...) a citation snippet 
 will be generated and stored within MetaData object (see above).
 ```python
 citation_snippet = citation_data.citation_metadata.citation_snippet
 landing_page_url = citation_data.citation_metadata.identifier
 ```
 
-## Retrieve cited data
-To get a cited dataset and all its associated metadata 
-(query data, dataset metadata, citation and provenance metadata) and citation snippet by its query PID 
+## Retrieve data
+To get a minted dataset and all its associated metadata 
+(query data, dataset metadata, citation data and provenance metadata) and citation snippet by its query PID 
 we execute following code snippet.
 ```python
 query_pid = citation_data.query_utils.pid
-dataset, meta_data = citation.retrieve(query_pid)
+dataset, meta_data = query_handler.retrieve(query_pid)
 ```
 These data can now be display on a human-readable landing page.
 
