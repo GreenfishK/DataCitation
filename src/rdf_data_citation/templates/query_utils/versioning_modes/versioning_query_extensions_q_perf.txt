@@ -1,4 +1,4 @@
 <<{0}>> vers:valid_from {1}.
 <<{0}>> vers:valid_until {2}.
-filter({1} <= ?TimeOfExecution && ?TimeOfExecution{3} < {2})
+filter({1} <= ?TimeOfExecution{3} && ?TimeOfExecution{3} < {2})
 
