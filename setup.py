@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     # Metadata
     name="rdf_data_citation",
-    version="1.0.0.5",
+    version="1.0.1.0",
     author="Filip Kovacevic",
     author_email="f.kovacevic@gmx.at",
     description="A package for versioning and citing RDF data.",
@@ -24,11 +24,12 @@ setup(
         include=['rdf_data_citation'],
     ),
     package_dir={"": "src"},
-    package_data={'rdf_data_citation': ['persistence/*.sql', 'persistence/*.db', 'templates/query_utils/*.txt',
+    package_data={'rdf_data_citation': ['persistence/*.db', 'templates/query_utils/*.txt',
                                         'templates/rdf_star_store/*.txt',
                                         'templates/query_utils/versioning_modes/*.txt',
                                         'templates/rdf_star_store/test_connection/*.txt',
-                                        'templates/rdf_star_store/versioning_modes/*.txt']},
+                                        'templates/rdf_star_store/versioning_modes/*.txt',
+                                        'templates/query_store/*.sql']},
     install_requires=['tzlocal>=2.1', 'pandas>=1.1.2', 'sparqlwrapper>=1.8.5', 'rdflib>=5.0.0', 'sqlalchemy>=1.3.19',
                       'numpy>=1.19.1', 'setuptools>=49.6.0']
 
