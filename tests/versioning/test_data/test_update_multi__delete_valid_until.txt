@@ -1,11 +1,11 @@
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX pub: <http://ontology.ontotext.com/taxonomy/>
-PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX vers: <https://github.com/GreenfishK/DataCitation/versioning/>
 
 select ?s ?p ?o where {
     ?person pub:memberOfPoliticalParty ?member .
     ?member pub:hasValue ?party .
-    <<?member pub:hasValue ?party>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime .
+    <<?member pub:hasValue ?party>> vers:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime .
 
     filter(?member = <http://ontology.ontotext.com/resource/Q76SBFD36E46-359B-445A-8EC2-A3BDDFF5E900>
       || ?member = <http://ontology.ontotext.com/resource/Q6176439SB95442FA-96D2-44D3-A994-3560AFAFD7A0>

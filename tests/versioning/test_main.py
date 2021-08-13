@@ -118,7 +118,7 @@ class TestVersioning(TestExecution):
     def test_update_single__delete_valid_until(self):
         test = Test(test_number=3,
                     tc_desc='After a single triple update the triples''s annotation, namely, '
-                            '<<?s ?p ?o>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime '
+                            '<<?s ?p ?o>> vers:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime '
                             'must not exist anymore. Thus, before the update there should be one match and '
                             'after the update there must be no match anymore.',
                     expected_result="1_0")
@@ -263,7 +263,7 @@ class TestVersioning(TestExecution):
     def test_update_multi__delete_valid_until(self):
         test = Test(test_number=8,
                     tc_desc='For each triple matched in the SPARQL select statement the triples'' annotation, namely, '
-                            '<<?s ?p ?o>> citing:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime '
+                            '<<?s ?p ?o>> vers:valid_until "9999-12-31T00:00:00.000+02:00"^^xsd:dateTime '
                             'must not exist anymore. Before the update there should be three matches '
                             '(see multi_triples_update.csv) and after the update there must be no match anymore.',
                     expected_result="3_0")
@@ -504,7 +504,7 @@ class TestVersioning(TestExecution):
 
         test = Test(test_number=15,
                     tc_desc='If a set of triples is updated multiple times each consecutive update must come '
-                            'with a newer citing:valid_until timestamp. The most recent one must have the value'
+                            'with a newer vers:valid_until timestamp. The most recent one must have the value'
                             '"9999-12-31T00:00:00.000+02:00".',
                     expected_result=expected_result)
 
