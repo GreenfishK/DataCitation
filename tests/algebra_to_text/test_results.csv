@@ -1,0 +1,630 @@
+,test_number,test_passed,test_name,test_case_description,expected_result,actual_result
+0,1,True,test_functions__functional_forms,"Test if functional forms are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT (IF(?givenName = ""Obama"", IF(?givenName = 
+""Obama"", ""yes"", ""no""), ""no"") as ?givenName2) 
+(COALESCE(""1""^^<http://www.w3.org/2001/XMLSchema#integer>/ 
+""0""^^<http://www.w3.org/2001/XMLSchema#integer> * 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer> * 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""6""^^<http://www.w3.org/2001/XMLSchema#integer> , 
+?x) as ?col){FILTER(bound(?date) && NOT EXISTS 
+{FILTER(?givenName = ""Clark"") ?givenName 
+<http://xmlns.com/foaf/0.1/name> ?name.} && 
+EXISTS {FILTER((?givenName = ""Obama"" || 
+?givenName = ""Obama2"") && ?givenName = ""Stern"" && 
+SAMETERM(?givenName, ?givenName) && 
+!SAMETERM(?givenName, ?givenName2)) ?givenName 
+<http://xmlns.com/foaf/0.1/name> ?name.}) ?x 
+<http://xmlns.com/foaf/0.1/givenName> 
+?givenName.OPTIONAL{?x 
+<http://purl.org/dc/elements/1.1/date> ?date.}} ","SELECT (IF(?givenName = ""Obama"", IF(?givenName = 
+""Obama"", ""yes"", ""no""), ""no"") as ?givenName2) 
+(COALESCE(""1""^^<http://www.w3.org/2001/XMLSchema#integer>/ 
+""0""^^<http://www.w3.org/2001/XMLSchema#integer> * 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer> * 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""6""^^<http://www.w3.org/2001/XMLSchema#integer> , 
+?x) as ?col){FILTER(bound(?date) && NOT EXISTS 
+{FILTER(?givenName = ""Clark"") ?givenName 
+<http://xmlns.com/foaf/0.1/name> ?name.} && 
+EXISTS {FILTER((?givenName = ""Obama"" || 
+?givenName = ""Obama2"") && ?givenName = ""Stern"" && 
+SAMETERM(?givenName, ?givenName) && 
+!SAMETERM(?givenName, ?givenName2)) ?givenName 
+<http://xmlns.com/foaf/0.1/name> ?name.}) ?x 
+<http://xmlns.com/foaf/0.1/givenName> 
+?givenName.OPTIONAL{?x 
+<http://purl.org/dc/elements/1.1/date> ?date.}} "
+1,2,True,test_functions__functional_forms_not_exists,"Test if the not exists form is properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?s ?p ?o{FILTER(NOT EXISTS {?s 
+<https://github.com/GreenfishK/DataCitation/citing/valid_from> 
+?valid_from.}) ?s ?p ?o.} ","SELECT ?s ?p ?o{FILTER(NOT EXISTS {?s 
+<https://github.com/GreenfishK/DataCitation/citing/valid_from> 
+?valid_from.}) ?s ?p ?o.} "
+4,3,True,test_functions__functions_on_rdf_terms,"Test if functions on rdf terms are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?name ?mbox (STRDT(""iiii"", 
+<http://example/romanNumeral>) as ?strdt) 
+(STRLANG(""chat"", ""en"") as ?strlang) (UUID() as 
+?uuid) (STRUUID() as 
+?struuid){FILTER(isIRI(?mbox) && isBLANK(?mbox) 
+&& isLITERAL(?mbox) && isNUMERIC(?mbox) && 
+STR(?mbox) && LANG(?mbox) && DATATYPE(?mbox) && 
+IRI(?mobox) && BNODE(""string"")) ?x 
+<http://xmlns.com/foaf/0.1/mbox> ?mbox.?x 
+<http://xmlns.com/foaf/0.1/name> ?name.} ","SELECT ?name ?mbox (STRDT(""iiii"", 
+<http://example/romanNumeral>) as ?strdt) 
+(STRLANG(""chat"", ""en"") as ?strlang) (UUID() as 
+?uuid) (STRUUID() as 
+?struuid){FILTER(isIRI(?mbox) && isBLANK(?mbox) 
+&& isLITERAL(?mbox) && isNUMERIC(?mbox) && 
+STR(?mbox) && LANG(?mbox) && DATATYPE(?mbox) && 
+IRI(?mobox) && BNODE(""string"")) ?x 
+<http://xmlns.com/foaf/0.1/mbox> ?mbox.?x 
+<http://xmlns.com/foaf/0.1/name> ?name.} "
+5,4,True,test_functions__functions_on_strings,"Test if functions on strings are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT (STRLEN(""chat"") as ?strlen) 
+(SUBSTR(""foobar"", 4) as ?substr) (UCASE(""foo"") as 
+?ucase) (LCASE(""FOO"") as ?lcase) 
+(STRSTARTS(""foobar"", ""foo"") as ?strstarts) 
+(STRENDS(""foobar"", ""bar"") as ?strends) 
+(CONTAINS(""foobar"", ""bar"") as ?contains) 
+(STRBEFORE(""abc"", ""b"") as ?strbefore) 
+(STRAFTER(""abc"", ""b"") as ?strafter) 
+(ENCODE_FOR_URI(""Los Angeles"") as 
+?encode_for_uri) (CONCAT(""foo""@en, ""bar""@en) as 
+?concat) (REPLACE(""abcd"", ""b"", ""Z"") as ?replace) 
+(REGEX(SUBSTR(""foobar"", 4), ""bar"") as 
+?regex){FILTER(LANGMATCHES(LANG(?o), ""EN"")) ?s ?p 
+?o.}OFFSET 0 LIMIT 1 ","SELECT (STRLEN(""chat"") as ?strlen) 
+(SUBSTR(""foobar"", 4) as ?substr) (UCASE(""foo"") as 
+?ucase) (LCASE(""FOO"") as ?lcase) 
+(STRSTARTS(""foobar"", ""foo"") as ?strstarts) 
+(STRENDS(""foobar"", ""bar"") as ?strends) 
+(CONTAINS(""foobar"", ""bar"") as ?contains) 
+(STRBEFORE(""abc"", ""b"") as ?strbefore) 
+(STRAFTER(""abc"", ""b"") as ?strafter) 
+(ENCODE_FOR_URI(""Los Angeles"") as 
+?encode_for_uri) (CONCAT(""foo""@en, ""bar""@en) as 
+?concat) (REPLACE(""abcd"", ""b"", ""Z"") as ?replace) 
+(REGEX(SUBSTR(""foobar"", 4), ""bar"") as 
+?regex){FILTER(LANGMATCHES(LANG(?o), ""EN"")) ?s ?p 
+?o.}OFFSET 0 LIMIT 1 "
+3,5,True,test_functions__functions_on_numerics,"Test if functions on numerics are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT 
+(ABS(""1.6""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?abs) 
+(ROUND(""5.5""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?round) 
+(CEIL(""5.5""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?ceil) 
+(FLOOR(""5.5""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?floor) (RAND() as ?rand){?s ?p ?o.}OFFSET 0 
+LIMIT 1 ","SELECT 
+(ABS(""1.6""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?abs) 
+(ROUND(""5.5""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?round) 
+(CEIL(""5.5""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?ceil) 
+(FLOOR(""5.5""^^<http://www.w3.org/2001/XMLSchema#decimal>) 
+as ?floor) (RAND() as ?rand){?s ?p ?o.}OFFSET 0 
+LIMIT 1 "
+6,6,True,test_functions__hash_functions,"Test if hash functions are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT (MD5(""abc"") as ?md5) (SHA1(""abc"") as 
+?sha1) (SHA256(""abc"") as ?SHA256) (SHA384(""abc"") 
+as ?SHA384) (SHA512(""abc"") as ?SHA512){?s ?p 
+?o.}OFFSET 0 LIMIT 1 ","SELECT (MD5(""abc"") as ?md5) (SHA1(""abc"") as 
+?sha1) (SHA256(""abc"") as ?SHA256) (SHA384(""abc"") 
+as ?SHA384) (SHA512(""abc"") as ?SHA512){?s ?p 
+?o.}OFFSET 0 LIMIT 1 "
+2,7,True,test_functions__functions_on_dates_and_time,"Test if functions on dates and time are properly translated into the query text. The query must 
+also be executable and shall not violate any SPARQL query syntax. ","SELECT (NOW() as ?now) (YEAR(NOW()) as ?year) 
+(MONTH(NOW()) as ?month) (DAY(NOW()) as ?day) 
+(HOURS(NOW()) as ?hours) (MINUTES(NOW()) as 
+?minutes) (SECONDS(NOW()) as ?seconds) 
+(TIMEZONE(NOW()) as ?timezone) (TZ(NOW()) as 
+?tz){?s ?p ?o.}OFFSET 0 LIMIT 1 ","SELECT (NOW() as ?now) (YEAR(NOW()) as ?year) 
+(MONTH(NOW()) as ?month) (DAY(NOW()) as ?day) 
+(HOURS(NOW()) as ?hours) (MINUTES(NOW()) as 
+?minutes) (SECONDS(NOW()) as ?seconds) 
+(TIMEZONE(NOW()) as ?timezone) (TZ(NOW()) as 
+?tz){?s ?p ?o.}OFFSET 0 LIMIT 1 "
+7,8,True,test_graph_patterns__aggregate_join,"Test if aggregate join including all aggregation functions are properly translated into the query 
+text. The query must also be executable and shall not violate any SPARQL query syntax. ","SELECT (SUM(?s) as ?sum) (COUNT(DISTINCT ?s) as 
+?count) (MIN(?s) as ?min) (MAX(?s) as ?max) 
+(AVG(?s) as ?avg) (SAMPLE(?s) as ?sample) 
+(GROUP_CONCAT(?s;SEPARATOR=""|"") as 
+?group_concat){FILTER(?s = 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 ","SELECT (SUM(?s) as ?sum) (COUNT(DISTINCT ?s) as 
+?count) (MIN(?s) as ?min) (MAX(?s) as ?max) 
+(AVG(?s) as ?avg) (SAMPLE(?s) as ?sample) 
+(GROUP_CONCAT(?s;SEPARATOR=""|"") as 
+?group_concat){FILTER(?s = 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 "
+8,9,True,test_graph_patterns__bgp,"Test if basic graph patterns are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?personLabel ?party_label ?document 
+?mention{?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.}ORDER BY ?mention  ","SELECT ?personLabel ?party_label ?document 
+?mention{?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.}ORDER BY ?mention  "
+9,10,True,test_graph_patterns__extend,"Test if ""extend"" (=Bind explicitly or implicitly in projection) gets properly translated into the 
+query text. The query must also be executable and shall not violate any SPARQL query syntax. ","SELECT ?personLabel (?party_label as ?party_name) 
+?document (?mention as ?men){?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.}ORDER BY ?mention  ","SELECT ?personLabel (?party_label as ?party_name) 
+?document (?mention as ?men){?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.}ORDER BY ?mention  "
+10,11,True,test_graph_patterns__filter,"Test if filter gets properly translated into the query text. The query must also be executable and 
+shall not violate any SPARQL query syntax. ","SELECT ?personLabel ?party_label ?document 
+?mention{FILTER((?personLabel = ""Barack Obama""@en 
+|| ?personLabel = ""Judy Chu""@en) && ?personLabel 
+= ""Michelle Obama""@en) ?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.}ORDER BY ?mention  ","SELECT ?personLabel ?party_label ?document 
+?mention{FILTER((?personLabel = ""Barack Obama""@en 
+|| ?personLabel = ""Judy Chu""@en) && ?personLabel 
+= ""Michelle Obama""@en) ?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.}ORDER BY ?mention  "
+11,12,True,test_graph_patterns__graph,"Test if ""graph"" gets properly translated into the query text. The query must also be executable and 
+shall not violate any SPARQL query syntax. ","SELECT ?mbox ?nick ?ppd{GRAPH 
+<http://example.org/foaf/aliceFoaf> {?alice 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@work.example>.?ppd 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+<http://xmlns.com/foaf/0.1/PersonalProfileDocument>.?alice 
+<http://xmlns.com/foaf/0.1/knows> ?whom.?whom 
+<http://www.w3.org/2000/01/rdf-schema#seeAlso> 
+?ppd.?whom <http://xmlns.com/foaf/0.1/mbox> 
+?mbox.}GRAPH ?ppd {?w 
+<http://xmlns.com/foaf/0.1/mbox> ?mbox.?w 
+<http://xmlns.com/foaf/0.1/nick> ?nick.}} ","SELECT ?mbox ?nick ?ppd{GRAPH 
+<http://example.org/foaf/aliceFoaf> {?alice 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@work.example>.?ppd 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+<http://xmlns.com/foaf/0.1/PersonalProfileDocument>.?alice 
+<http://xmlns.com/foaf/0.1/knows> ?whom.?whom 
+<http://www.w3.org/2000/01/rdf-schema#seeAlso> 
+?ppd.?whom <http://xmlns.com/foaf/0.1/mbox> 
+?mbox.}GRAPH ?ppd {?w 
+<http://xmlns.com/foaf/0.1/mbox> ?mbox.?w 
+<http://xmlns.com/foaf/0.1/nick> ?nick.}} "
+12,13,True,test_graph_patterns__group,"Test if ""group"" gets properly translated into the query text. The query must also be executable and 
+shall not violate any SPARQL query syntax. ","SELECT (SUM(?val) as ?sum) (COUNT(?a) as 
+?count){?a 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#value> 
+?val.}GROUP BY ?a  ","SELECT (SUM(?val) as ?sum) (COUNT(?a) as 
+?count){?a 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#value> 
+?val.}GROUP BY ?a  "
+13,14,True,test_graph_patterns__having,"Test if ""having"" gets properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT (SUM(?lprice) as 
+?totalPrice){FILTER(?lprice < 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer>) 
+?auth <http://books.example/writesBook> 
+?book.?book <http://books.example/price> 
+?lprice.?org <http://books.example/affiliates> 
+?auth.}GROUP BY ?org HAVING(SUM(?lprice) > 
+""10""^^<http://www.w3.org/2001/XMLSchema#integer>) ","SELECT (SUM(?lprice) as 
+?totalPrice){FILTER(?lprice < 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer>) 
+?auth <http://books.example/writesBook> 
+?book.?book <http://books.example/price> 
+?lprice.?org <http://books.example/affiliates> 
+?auth.}GROUP BY ?org HAVING(SUM(?lprice) > 
+""10""^^<http://www.w3.org/2001/XMLSchema#integer>) "
+14,15,True,test_graph_patterns__join,"Test if ""join"" gets properly translated into the query text. The query must also be executable and 
+shall not violate any SPARQL query syntax. ","SELECT ?select 
+?minName{<http://people.example/alice> 
+<http://people.example/knows> ?select.{SELECT 
+(MIN(?name) as ?minName) ?select{?select 
+<http://people.example/name> ?name.}GROUP BY 
+?select }} ","SELECT ?select 
+?minName{<http://people.example/alice> 
+<http://people.example/knows> ?select.{SELECT 
+(MIN(?name) as ?minName) ?select{?select 
+<http://people.example/name> ?name.}GROUP BY 
+?select }} "
+15,16,True,test_graph_patterns__left_join,"Test if ""left join"" gets properly translated into ""OPTIONAL {...}"" in the query text. The query 
+must also be executable and shall not violate any SPARQL query syntax. ","SELECT ?givenName{FILTER(bound(?date)) ?x 
+<http://xmlns.com/foaf/0.1/givenName> 
+?givenName.OPTIONAL{?x 
+<http://purl.org/dc/elements/1.1/date> 
+?date.}OPTIONAL{?x 
+<http://purl.org/dc/elements/1.1/datetime> 
+?datetime.}} ","SELECT ?givenName{FILTER(bound(?date)) ?x 
+<http://xmlns.com/foaf/0.1/givenName> 
+?givenName.OPTIONAL{?x 
+<http://purl.org/dc/elements/1.1/date> 
+?date.}OPTIONAL{?x 
+<http://purl.org/dc/elements/1.1/datetime> 
+?datetime.}} "
+16,17,True,test_graph_patterns__minus,"Test if ""minus"" gets properly translated into the query text. The query must also be executable and 
+shall not violate any SPARQL query syntax. ","SELECT ?m ?x ?n{?x <http://example/p> 
+?n.MINUS{FILTER(?n = ?m) ?x <http://example/q> 
+?m.}} ","SELECT ?m ?x ?n{?x <http://example/p> 
+?n.MINUS{FILTER(?n = ?m) ?x <http://example/q> 
+?m.}} "
+17,18,True,test_graph_patterns__union,"Test if ""union"" gets properly translated into the query text. The query must also be executable and 
+shall not violate any SPARQL query syntax. ","SELECT ?title ?author{{?book 
+<http://purl.org/dc/elements/1.0/creator> 
+?author.?book 
+<http://purl.org/dc/elements/1.0/title> 
+?title.}UNION{?book 
+<http://purl.org/dc/elements/1.1/creator> 
+?author.?book 
+<http://purl.org/dc/elements/1.1/title> ?title.}} ","SELECT ?title ?author{{?book 
+<http://purl.org/dc/elements/1.0/creator> 
+?author.?book 
+<http://purl.org/dc/elements/1.0/title> 
+?title.}UNION{?book 
+<http://purl.org/dc/elements/1.1/creator> 
+?author.?book 
+<http://purl.org/dc/elements/1.1/title> ?title.}} "
+19,19,True,test_operators__arithmetics,"Test if arithmetics are properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as ?test_arithmetics){?s ?p ?o.}OFFSET 0 LIMIT 1 ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as ?test_arithmetics){?s ?p ?o.}OFFSET 0 LIMIT 1 "
+20,20,True,test_operators__conditional_and,"Test if ""conditional ands (&&)"" are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as 
+?test_arithmetics){FILTER(""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+= ""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+&& 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> = 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer>) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as 
+?test_arithmetics){FILTER(""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+= ""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+&& 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> = 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer>) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 "
+21,21,True,test_operators__conditional_or,"Test if ""conditional ors (||)"" are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as 
+?test_arithmetics){FILTER((""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+= ""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> = 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer>)) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as 
+?test_arithmetics){FILTER((""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+= ""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> = 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer>)) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 "
+22,22,True,test_operators__relational,"Test if relational expressions are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as 
+?test_arithmetics){FILTER((""3""^^<http://www.w3.org/2001/XMLSchema#integer> 
+> ""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> < 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+>= 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+<= 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> 
+!= 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer>)) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as 
+?test_arithmetics){FILTER((""3""^^<http://www.w3.org/2001/XMLSchema#integer> 
+> ""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> < 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+>= 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+<= 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer> 
+|| 
+""1""^^<http://www.w3.org/2001/XMLSchema#integer> 
+!= 
+""2""^^<http://www.w3.org/2001/XMLSchema#integer>)) 
+?s ?p ?o.}OFFSET 0 LIMIT 1 "
+23,23,True,test_operators__unary,"Test if unary expressions are properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as ?test_arithmetics){FILTER((?o || ?o)) ?s ?p 
+?o.}OFFSET 0 LIMIT 1 ","SELECT 
+(""2""^^<http://www.w3.org/2001/XMLSchema#integer>* 
+""4""^^<http://www.w3.org/2001/XMLSchema#integer> - 
+""5""^^<http://www.w3.org/2001/XMLSchema#integer> + 
+""3""^^<http://www.w3.org/2001/XMLSchema#integer>  
+as ?test_arithmetics){FILTER((?o || ?o)) ?s ?p 
+?o.}OFFSET 0 LIMIT 1 "
+24,24,False,test_other__service1,"Test if a nested service pattern is properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ",0 ,Not executable. Error returned from parseQuery 
+25,25,True,test_other__service2,"Test if ""service"" along with its service string is properly translated into the query text. The 
+query must also be executable and shall not violate any SPARQL query syntax. ","SELECT ?name{<http://example.org/myfoaf/I> 
+<http://xmlns.com/foaf/0.1/knows> ?person.SERVICE 
+<http://people.example.org/sparql>{?person 
+<http://xmlns.com/foaf/0.1/name> ?name.}} ","SELECT ?name{<http://example.org/myfoaf/I> 
+<http://xmlns.com/foaf/0.1/knows> ?person.SERVICE 
+<http://people.example.org/sparql>{?person 
+<http://xmlns.com/foaf/0.1/name> ?name.}} "
+26,26,True,test_other__values,"Test if ""values"" gets properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT ?book ?title ?price{?book 
+<http://example.org/ns#price> ?price.?book 
+<http://purl.org/dc/elements/1.1/title> 
+?title.{{VALUES (?book ?title){(UNDEF ""SPARQL 
+Tutorial"")(<http://example.org/book/book2> 
+UNDEF)}}}} ","SELECT ?book ?title ?price{?book 
+<http://example.org/ns#price> ?price.?book 
+<http://purl.org/dc/elements/1.1/title> 
+?title.{{VALUES (?book ?title){(UNDEF ""SPARQL 
+Tutorial"")(<http://example.org/book/book2> 
+UNDEF)}}}} "
+27,27,True,test_property_path__alternative_path,"Test if an alternative path gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?o ?x ?p ?s{FILTER((?s = 
+<http://www.w3.org/2001/XMLSchema#string> || ?s = 
+<http://www.w3.org/2000/01/rdf-schema#domain>)) 
+?s 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|<http://www.w3.org/2000/01/rdf-schema#subPropertyOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#subClassOf> 
+?x.?s ?p ?o.}OFFSET 0 LIMIT 100 ","SELECT ?o ?x ?p ?s{FILTER((?s = 
+<http://www.w3.org/2001/XMLSchema#string> || ?s = 
+<http://www.w3.org/2000/01/rdf-schema#domain>)) 
+?s 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|<http://www.w3.org/2000/01/rdf-schema#subPropertyOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#subClassOf> 
+?x.?s ?p ?o.}OFFSET 0 LIMIT 100 "
+28,28,True,test_property_path__inverse_path,"Test if an inverse path gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+^<http://xmlns.com/foaf/0.1/knows>/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+^<http://xmlns.com/foaf/0.1/knows>/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 "
+29,29,False,test_property_path__negated_property_set,"Test if a negated property set gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ",0 ,"Not executable. n3() method of NegatedPath class 
+should be fixed.  "
+30,30,True,test_property_path__one_or_more_path,"Test if a oneOrMore path gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>+/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>+/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 "
+31,31,True,test_property_path__sequence_path,"Test if a sequence path gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>/<http://xmlns.com/foaf/0.1/knows>/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>/<http://xmlns.com/foaf/0.1/knows>/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 "
+32,32,True,test_property_path__zero_or_more_path,"Test if a zeroOrMore path gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>*/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>*/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 "
+33,33,True,test_property_path__zero_or_one_path,"Test if a zeroOrOne path gets properly translated into the query text. The query must also be 
+executable and shall not violate any SPARQL query syntax. ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>?/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 ","SELECT ?x ?name{?x 
+<http://xmlns.com/foaf/0.1/mbox> 
+<mailto:alice@example>.?x 
+<http://xmlns.com/foaf/0.1/knows>?/<http://xmlns.com/foaf/0.1/name> 
+?name.}OFFSET 0 LIMIT 100 "
+34,34,True,test_solution_modifiers__distinct,"Test if ""distinct"" gets properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT DISTINCT ?x (COUNT(DISTINCT ?y) as 
+?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x  ","SELECT DISTINCT ?x (COUNT(DISTINCT ?y) as 
+?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x  "
+35,35,True,test_solution_modifiers__order_by,"Test if ""order by"" gets properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT DISTINCT ?x (COUNT(DISTINCT ?y) as 
+?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x ORDER BY DESC(?x)  ","SELECT DISTINCT ?x (COUNT(DISTINCT ?y) as 
+?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x ORDER BY DESC(?x)  "
+36,36,True,test_solution_modifiers__reduced,"Test if ""reduced"" gets properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT REDUCED ?x (COUNT(DISTINCT ?y) as ?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x ORDER BY ?x  ","SELECT REDUCED ?x (COUNT(DISTINCT ?y) as ?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x ORDER BY ?x  "
+37,37,True,test_solution_modifiers__slice,"Test if slice get properly translated into the limit and offset. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT REDUCED ?x (COUNT(DISTINCT ?y) as ?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x ORDER BY ?x OFFSET 0 LIMIT 50 ","SELECT REDUCED ?x (COUNT(DISTINCT ?y) as ?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.}GROUP BY ?x ORDER BY ?x OFFSET 0 LIMIT 50 "
+38,38,True,test_solution_modifiers__to_multiset,"Test if subqueries get properly translated into the query text. The query must also be executable 
+and shall not violate any SPARQL query syntax. ","SELECT REDUCED ?x (COUNT(DISTINCT ?y) as ?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.?y ?a ?z.}GROUP BY ?x ORDER BY ?x OFFSET 0 
+LIMIT 50 ","SELECT REDUCED ?x (COUNT(DISTINCT ?y) as ?cnt){?x 
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+?y.?y ?a ?z.}GROUP BY ?x ORDER BY ?x OFFSET 0 
+LIMIT 50 "
+18,39,True,test_integration__complex_query1,"Test a query with multiple graph patterns and solution modifiers gets properly translated into the 
+query text. The query must also be executable and shall not violate any SPARQL query syntax. ","SELECT ?document ?mention ?personLabel 
+?party_label{{{SELECT ?party_label ?party ?value 
+?document ?person ?mention 
+?personLabel{FILTER(?personLabel = ""Judy Chu""@en) 
+?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.{SELECT ?person ?mention{?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.}}}}}UNION{{SELECT ?party_label ?document 
+?person ?mention ?personLabel{FILTER(?personLabel 
+= ""Barack Obama""@en) ?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty>/<http://ontology.ontotext.com/taxonomy/hasValue>/<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.}}}} ","SELECT ?document ?mention ?personLabel 
+?party_label{{{SELECT ?party_label ?party ?value 
+?document ?person ?mention 
+?personLabel{FILTER(?personLabel = ""Judy Chu""@en) 
+?party 
+<http://ontology.ontotext.com/taxonomy/hasValue> 
+?value.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty> 
+?party.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?value 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.{SELECT ?person ?mention{?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.}}}}}UNION{{SELECT ?party_label ?document 
+?person ?mention ?personLabel{FILTER(?personLabel 
+= ""Barack Obama""@en) ?mention 
+<http://ontology.ontotext.com/publishing#hasInstance> 
+?person.?person 
+<http://ontology.ontotext.com/taxonomy/memberOfPoliticalParty>/<http://ontology.ontotext.com/taxonomy/hasValue>/<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?party_label.?person 
+<http://ontology.ontotext.com/taxonomy/preferredLabel> 
+?personLabel.?document 
+<http://ontology.ontotext.com/publishing#containsMention> 
+?mention.}}}} "

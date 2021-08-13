@@ -33,6 +33,7 @@ class TestAlgebraToTest(TestExecution):
                                                      self.test_config.get('RDFSTORE', 'post'))
 
     def test_functions__functional_forms(self):
+        # TODO: issue with literals. They get quoted two times. E.g. "Obama" is translated to ""Obama""
         query_tree = parser.parseQuery(self.query_text)
         query_algebra = algebra.translateQuery(query_tree)
         self.query_from_algebra = _translate_algebra(query_algebra)

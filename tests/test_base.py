@@ -146,5 +146,6 @@ class TestExecution:
                                             'actual_result': formatted_actual_result}, ignore_index=True)
 
         tests_df.sort_values('test_number', inplace=True)
+        print(tests_df.to_csv("test_results.csv"))
         pdtabulate = lambda df: tabulate(df, headers='keys', tablefmt='grid', )
         print(pdtabulate(tests_df))

@@ -84,8 +84,8 @@ class TestQueryHandler(TestExecution):
 
         # Actual results
         handler.mint_query_pid(select_statement=self.select_statement,
-                                citation_metadata=self.citation_metadata,
-                                timestamp=self.execution_timestamp)
+                               citation_metadata=self.citation_metadata,
+                               timestamp=self.execution_timestamp)
         actual_result = handler.result_set_utils.description + "\n" + handler.citation_metadata.citation_snippet
         self.q_handler = handler
 
@@ -101,7 +101,7 @@ class TestQueryHandler(TestExecution):
 
         # Test object
         test = Test(test_number=1,
-                    tc_desc='Test if an empty dataset can be cited and a q_handler snippet is returned.',
+                    tc_desc='Test if an empty dataset can minted and a citation snippet is returned.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
@@ -133,7 +133,7 @@ class TestQueryHandler(TestExecution):
 
         # Test object
         test = Test(test_number=2,
-                    tc_desc='Test if a non-empty dataset can be cited and a q_handler snippet is returned.',
+                    tc_desc='Test if a non-empty dataset can be minted and a citation snippet is returned.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
@@ -166,12 +166,13 @@ class TestQueryHandler(TestExecution):
         vie_tz = timezone(timedelta(hours=2))
         execution_timestamp2 = datetime.now(vie_tz)
         handler2.mint_query_pid(select_statement=self.select_statement,
-                                 citation_metadata=self.citation_metadata,
-                                 timestamp=execution_timestamp2)
+                                citation_metadata=self.citation_metadata,
+                                timestamp=execution_timestamp2)
 
         # Concat snippet1 + snippet2 into actual results
         actual_result = handler1.citation_metadata.citation_snippet \
-                        + "\n" + handler2.citation_metadata.citation_snippet
+                        + "\n" + handler2.citation_metadata.citation_snippet \
+                        + "\n" + "checksum:" + handler2.query_utils.checksum
 
         self.q_handler = handler1
 
@@ -193,21 +194,21 @@ class TestQueryHandler(TestExecution):
                                                       pulication_year=self.citation_metadata.publication_year,
                                                       resource_type=self.citation_metadata.resource_type)
 
-        expected_result = citation_snippet1 + "\n" + citation_snippet2
+        expected_result = citation_snippet1 + "\n" + citation_snippet2 + "\n" + "checksum:" + handler1.query_utils.checksum
 
         # Clean up
         self.rdf_engine._delete_triples([mention, hasInstance, person], prefixes)
         self.rdf_engine._delete_triples([document, containsMention, mention], prefixes)
 
         test = Test(test_number=3,
-                    tc_desc='Test if a new query PID is created if the dataset has changed since the last q_handler and'
+                    tc_desc='Test if a new query PID is created if the dataset has changed since the last execution and '
                             'the query stayed the same (=same query checksum).',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_qh__recite_unchanged_dataset(self):
+    def test_qh__reexecute_unchanged_dataset(self):
         handler1 = self.q_handler
         handler2 = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
@@ -243,15 +244,15 @@ class TestQueryHandler(TestExecution):
         expected_result = citation_snippet1 + "\n" + citation_snippet1
 
         test = Test(test_number=4,
-                    tc_desc='Test if reciting a query where the dataset has not changed since the last q_handler '
-                            'returns the q_handler snippet as of last q_handler where the query was either new '
+                    tc_desc='Test if re-executing a query where the dataset has not changed since the last execution '
+                            'returns the citation snippet as of last execution where the query was either new '
                             'or the dataset changed.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
         return test
 
-    def test_qh__recite_semantically_identical(self):
+    def test_qh__reexecute_semantically_identical(self):
         handler1 = self.q_handler
         handler2 = qh.QueryHandler(self.test_config.get('RDFSTORE', 'get'), self.test_config.get('RDFSTORE', 'post'))
         self.citation_metadata.title = "Obama occurrences, new mention"
@@ -265,7 +266,7 @@ class TestQueryHandler(TestExecution):
         # Execution2
         vie_tz = timezone(timedelta(hours=2))
         execution_timestamp2 = datetime.now(vie_tz)
-        select_statement2 = open("test_data/test_qh__recite_semantically_identical2.txt", "r").read()
+        select_statement2 = open("test_data/test_qh__reexecute_semantically_identical2.txt", "r").read()
         handler2.mint_query_pid(select_statement=select_statement2,
                                  citation_metadata=self.citation_metadata,
                                  timestamp=execution_timestamp2)
@@ -287,8 +288,8 @@ class TestQueryHandler(TestExecution):
 
         expected_result = citation_snippet1 + "\n" + citation_snippet1
         test = Test(test_number=5,
-                    tc_desc='Test if citing a query which is semantically equivalent to an existing query in the '
-                            'query store will return the existing q_handler snippet. The test needs to pass only '
+                    tc_desc='Test if executing a query which is semantically equivalent to an existing query in the '
+                            'query store will return the existing citation snippet. The test needs to pass only '
                             'for covered normalization measures where two queries would be transformed to the same '
                             'normal query and thus recognized as semantically identical.',
                     expected_result=expected_result,
@@ -368,7 +369,7 @@ class TestQueryHandler(TestExecution):
                                 citation_metadata=self.citation_metadata,
                                 timestamp=self.execution_timestamp)
 
-        # Insert two new triple
+        # Insert two new triples
         prefixes = {'pub': 'http://ontology.ontotext.com/taxonomy/',
                     'publishing': 'http://ontology.ontotext.com/publishing#'}
         mention = "<http://data.ontotext.com/publishing#newMention>"
@@ -418,8 +419,7 @@ class TestQueryHandler(TestExecution):
         self.rdf_engine._delete_triples([document, containsMention, mention], prefixes)
 
         test = Test(test_number=9,
-                    tc_desc='Test if a query that uses aggregation functions yields the right result before '
-                            'and after an insert.',
+                    tc_desc='Test if a citation snippet for a query that uses aggregation functions can be generated.',
                     expected_result=expected_result,
                     actual_result=actual_result)
 
