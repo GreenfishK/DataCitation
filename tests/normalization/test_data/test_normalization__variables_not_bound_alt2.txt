@@ -1,6 +1,6 @@
-PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX vers: <https://github.com/GreenfishK/DataCitation/versioning/>
 
 select ?s ?p ?o {
 	?s ?p ?o .
-    filter not exists {?s citing:valid_from ?valid_from} .
+    filter not exists {?s vers:valid_from ?valid_from} .
 }

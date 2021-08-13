@@ -124,6 +124,7 @@ class TestNormalization(TestExecution):
         return test
 
     def test_normalization__variables_not_bound(self):
+        # TODO: Exception is being because triple blocks are not recognized. Fix this
         test = Test(test_number=9,
                     tc_desc='Finding variables that are not bound can be written in two ways: '
                             '1. with optional keyword adding the optional triplet combined with filter condition: '
@@ -132,7 +133,6 @@ class TestNormalization(TestExecution):
                             '2. with "filter not exists {triple}"',
                     expected_result=self.query_data_alt1.checksum,
                     actual_result=self.query_data_alt2.checksum)
-
         return test
 
     def test_normalization__inverted_paths(self):
@@ -217,8 +217,8 @@ class TestNormalization(TestExecution):
 
         return test
 
-    def x_test_normalization__nested_paths(self):
-        # Alternative paths not implemented yet
+    def xx_test_normalization__nested_paths(self):
+        # TODO: Alternative paths not implemented yet. Implement this
         test = Test(test_number=17,
                     tc_desc="Test if two queries with a combination of sequence and alternative paths is given in one "
                             "query and the alternative statement (resolved alternative path using UNION) "

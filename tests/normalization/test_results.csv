@@ -1,0 +1,73 @@
+,test_number,test_passed,test_name,test_case_description,expected_result,actual_result
+9,1,True,test_normalization__optional_where_clause,"Tests if leaving out the ""where"" keyword yields the same checksum. ","
+e7b7e615129d90f1cb003dc8c1b6a9d7bee818898f191b5bb221e9c82a847936 ","
+e7b7e615129d90f1cb003dc8c1b6a9d7bee818898f191b5bb221e9c82a847936 "
+12,2,True,test_normalization__rdf_type_predicate,"Tests if replacing the predicate rdf:type by ""a"" yields the same checksum. ","
+7adc2286400089c79d46499a93b8ba512473a0fd230c5e8509c65a5b4d33f1c5 ","
+7adc2286400089c79d46499a93b8ba512473a0fd230c5e8509c65a5b4d33f1c5 "
+4,3,False,test_normalization__asterisk,"Tests if replacing the variable names in the select clause with an asterisk yields the same 
+checksum only in one case, namely, if the explicitly stated variables in query1 have the same 
+permutation as the projected variables in query2 after the asterisk is resolved. ","
+09d16f7606c94a06750a707fe9802942a5d6b5329c6a17bd1c2a63b8322d7295 ","
+5cdfb89903192c9f975961b8a89517ddae301bece3316cfa8939e7daa5a99a71 "
+8,4,True,test_normalization__leave_out_subject_in_triple_statements,"If the same subject is used multiple times in subsequent triple statements (separated by a dot) it 
+can be left out in all the subsequent triple statements where the subject occurs. Instead of the 
+subject variable name a semicolon is written in subsequent triple statements where the same subject 
+as in the first statement should be used. ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 "
+10,5,True,test_normalization__order_of_triple_statements,Tests if differently permuted tripled statements yield the same checksum. ,"
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 "
+3,6,True,test_normalization__alias_via_bind,"Test if binding an alias to a variable using the BIND keyword yields the same checksum as when not 
+using any alias. ","
+a4f77e470366730a85d457174233564747d82f71b06ae303dbc472e6adba2663 ","
+a4f77e470366730a85d457174233564747d82f71b06ae303dbc472e6adba2663 "
+2,7,True,test_normalization__alias_in_select,"Test if binding an alias to a variable using the BIND keyword yields the same checksum as when not 
+using any alias. ","
+77a5363b34e5d0bd69a9c2ecb3794902b482bf9b857fea46851cb71b51968d84 ","
+77a5363b34e5d0bd69a9c2ecb3794902b482bf9b857fea46851cb71b51968d84 "
+16,8,True,test_normalization__variable_names,"Test if two queries with different variable names but consistent variable order in the select 
+clause yield the same checksum. In addition to different variable names the second query should 
+also have differently ordered triple statements and one variable alias assigned using the BIND 
+keyword. ","
+b89fce38170015eebc5920083b248bdfebb900c626ff598235c4a227d7a1fe48 ","
+b89fce38170015eebc5920083b248bdfebb900c626ff598235c4a227d7a1fe48 "
+7,10,True,test_normalization__inverted_paths,"Test if inverted paths and its explicit version using no paths but only triple statements yield the 
+same checksum.  ","
+04158a07dd16f706ebe7f8bd4edbd5637765cb6e591a635d321e659f3b5ff0b4 ","
+04158a07dd16f706ebe7f8bd4edbd5637765cb6e591a635d321e659f3b5ff0b4 "
+13,11,True,test_normalization__sequence_paths,"Test if two queries - one with a sequence path and the second with the sequence path resolved as 
+explicit triple statements yield the same checksum. The resolved triple statements are 'in the same 
+order' as the sequence path ","
+ebbcf929e476908a16762b99ec79b208812887d50fe7daae13dd3ebb0f87938b ","
+ebbcf929e476908a16762b99ec79b208812887d50fe7daae13dd3ebb0f87938b "
+14,12,True,test_normalization__sequence_paths2,"Test if two queries - one with a sequence path and the second with the sequence path resolved as 
+explicit triple statements yield the same checksum. The resolved triple statements are in different 
+order compared to the sequence path.  ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 "
+11,13,True,test_normalization__prefix_alias,"Prefixes can be interchanged in the prefix section before the query and subsequently in the query 
+without changing the outcome. ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 ","
+fdb137f830ad12f4641d755ca86c966a01288d80c586418ee7457cff69a81a66 "
+15,14,False,test_normalization__switched_filter_statements,"Filters can stated in different orders in a MultiSet or Basic Graph Pattern (BGP) without affecting 
+the result.  ","
+33db7dccf20229b6071b95ba7fc8cb599f63568d66707ff879f536f7f2d6e466 ","
+d1c930268319d76b558f62d02ffda82e0d8149c6b58fb9a51b79921d66f0b853 "
+5,15,True,test_normalization__complex_bind_expression,"Test if two queries where a complex bind expression (e.g. arithmetic operations) is given different 
+names yields the same query checksum. The bind must be used in the select clause. ","
+7dcfb18472bb5393202b0997134cacd7e3ecb0acb7cd0831d118f2e060390b2c ","
+7dcfb18472bb5393202b0997134cacd7e3ecb0acb7cd0831d118f2e060390b2c "
+6,16,True,test_normalization__complex_bind_expression2,"Test if two queries where a complex expression (e.g. arithmetic operations) is given different 
+names yields the same query checksum.The bind must be explicitly used via BIND keyword. ","
+7dcfb18472bb5393202b0997134cacd7e3ecb0acb7cd0831d118f2e060390b2c ","
+7dcfb18472bb5393202b0997134cacd7e3ecb0acb7cd0831d118f2e060390b2c "
+1,18,True,test_normalization__aggr_vars,"Test if two queries with different aliases for variables used in the group by clause or different 
+aliases for aggregation functions in the select clause yield the same checksum. ","
+fa035fb3a76fdb35ed5755e8b5b34db4226e6dd0121ac05261eff04ac0bd37a5 ","
+fa035fb3a76fdb35ed5755e8b5b34db4226e6dd0121ac05261eff04ac0bd37a5 "
+0,19,False,test_normalization__aggr_fx,"Test if an aggregation function can be used in the order by clause instead of its alias. e.g ?cnt_a 
+instead of count(?a) if the projection is (count(?a) as ?cnt_a). ","
+fa035fb3a76fdb35ed5755e8b5b34db4226e6dd0121ac05261eff04ac0bd37a5 ","
+067de56e3c682d4c477f03985140a580d28fdde01d39585a35e4247d9121de95 "

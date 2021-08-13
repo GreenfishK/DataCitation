@@ -1,7 +1,7 @@
-PREFIX citing: <https://github.com/GreenfishK/DataCitation/citing/>
+PREFIX vers: <https://github.com/GreenfishK/DataCitation/versioning/>
 
 select ?s ?p ?o {
 	?s ?p ?o .
-    OPTIONAL {?s citing:valid_from ?valid_from} .
+    OPTIONAL {?s vers:valid_from ?valid_from} .
     filter(!bound(?valid_from))
 }

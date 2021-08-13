@@ -10,4 +10,4 @@ select ?personLabel ?party_label ?document ?mention {
     ?value pub:preferredLabel ?party_label .
 
     filter(?personLabel = "Barack Obama"@en)
-} order by ?mention
+}
